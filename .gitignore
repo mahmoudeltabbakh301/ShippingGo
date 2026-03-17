@@ -8,7 +8,7 @@
 /.idea/
 /*.iml
 .vscode/
-/.mvn/
+
 
 # OS files
 .DS_Store
