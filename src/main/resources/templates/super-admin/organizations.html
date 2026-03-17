@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{super_admin.orgs.title} + ' - ' + #{app.title}">إدارة المنظمات - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🏢 <span th:text="#{super_admin.orgs.title}">إدارة المنظمات</span></h1>
+                    <p class="page-subtitle" th:text="#{super_admin.orgs.subtitle}">عرض وإدارة جميع المنظمات على المنصة</p>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <form th:action="@{/super-admin/organizations}" method="get" style="display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap;">
+                    <input type="text" name="search" class="form-control" th:value="${search}"
+                           th:placeholder="#{super_admin.orgs.search_placeholder}"
+                           style="flex: 1; min-width: 200px;">
+                    <button type="submit" class="btn btn-primary" th:text="#{network.search.btn}">بحث</button>
+                    <a th:if="${search != null && !search.isEmpty()}" th:href="@{/super-admin/organizations}"
+                       class="btn btn-outline" th:text="#{network.search.cancel}">إلغاء</a>
+                </form>
+            </div>
+
+            <!-- Organizations Table -->
+            <div class="card">
+                <div th:if="${organizations.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-text" th:text="#{super_admin.orgs.empty}">لا توجد منظمات مسجلة بعد</div>
+                </div>
+
+                <div th:if="${!organizations.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th th:text="#{super_admin.orgs.col_name}">الاسم</th>
+                                <th th:text="#{super_admin.orgs.col_type}">النوع</th>
+                                <th th:text="#{super_admin.orgs.col_admin}">المدير</th>
+                                <th th:text="#{super_admin.orgs.col_phone}">الهاتف</th>
+                                <th th:text="#{super_admin.orgs.col_governorate}">المحافظة</th>
+                                <th th:text="#{super_admin.orgs.col_status}">الحالة</th>
+                                <th th:text="#{super_admin.orgs.col_created}">التسجيل</th>
+                                <th th:text="#{super_admin.orgs.col_actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="org, iter : ${organizations}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td>
+                                    <a th:href="@{/super-admin/organizations/{id}(id=${org.id})}"
+                                       th:text="${org.name}" style="text-decoration: none; font-weight: 600;">اسم المنظمة</a>
+                                </td>
+                                <td>
+                                    <span class="badge" th:text="${org.type.arabicName}">نوع</span>
+                                </td>
+                                <td th:text="${org.admin != null ? org.admin.fullName : '-'}">المدير</td>
+                                <td th:text="${org.phone}">الهاتف</td>
+                                <td th:text="${org.governorate != null ? org.governorate.name() : '-'}">المحافظة</td>
+                                <td>
+                                    <span class="badge badge-delivered" th:if="${org.active}"
+                                          th:text="#{super_admin.status.active}">مفعّلة</span>
+                                    <span class="badge badge-refused" th:unless="${org.active}"
+                                          th:text="#{super_admin.status.inactive}">معطّلة</span>
+                                </td>
+                                <td th:text="${#temporals.format(org.createdAt, 'yyyy/MM/dd')}">التاريخ</td>
+                                <td>
+                                    <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
+                                        <a th:href="@{/super-admin/organizations/{id}(id=${org.id})}"
+                                           class="btn btn-sm btn-outline" th:text="#{super_admin.btn.details}">تفاصيل</a>
+                                        <form th:action="@{/super-admin/organizations/{id}/toggle(id=${org.id})}"
+                                              method="post" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm"
+                                                    th:classappend="${org.active} ? 'btn-danger' : 'btn-success'"
+                                                    th:text="${org.active} ? #{super_admin.btn.deactivate} : #{super_admin.btn.activate}"
+                                                    onclick="return confirm(this.textContent + '?');">تعطيل</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

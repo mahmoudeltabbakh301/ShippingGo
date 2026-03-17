@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{super_admin.org_detail.title} + ' - ' + #{app.title}">تفاصيل المنظمة - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .info-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                <div>
+                    <h1 class="page-title">🏢 <span th:text="${org.name}">اسم المنظمة</span></h1>
+                    <p class="page-subtitle">
+                        <span class="badge" th:text="${org.type.arabicName}">نوع</span>
+                        <span class="badge badge-delivered" th:if="${org.active}" th:text="#{super_admin.status.active}">مفعّلة</span>
+                        <span class="badge badge-refused" th:unless="${org.active}" th:text="#{super_admin.status.inactive}">معطّلة</span>
+                    </p>
+                </div>
+                <div style="display: flex; gap: var(--space-2);">
+                    <a th:href="@{/super-admin/organizations}" class="btn btn-outline">← <span th:text="#{super_admin.btn.back}">رجوع</span></a>
+                    <a th:href="@{/audit-logs/organization/{id}(id=${org.id})}" class="btn btn-outline">📜 <span th:text="#{super_admin.org_detail.logs}">سجلات المنظمة</span></a>
+                    <form th:action="@{/super-admin/organizations/{id}/toggle(id=${org.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn"
+                                th:classappend="${org.active ? 'btn-danger' : 'btn-success'}"
+                                th:text="${org.active} ? #{super_admin.btn.deactivate} : #{super_admin.btn.activate}"
+                                onclick="return confirm(this.textContent + '?');">تعطيل</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Organization Info -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">📋 <span th:text="#{super_admin.org_detail.info}">معلومات المنظمة</span></h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_name}">الاسم</span>
+                        <span class="info-value" th:text="${org.name}">اسم</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_type}">النوع</span>
+                        <span class="info-value" th:text="${org.type.arabicName}">نوع</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_phone}">الهاتف</span>
+                        <span class="info-value" th:text="${org.phone}">هاتف</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_email}">البريد</span>
+                        <span class="info-value" th:text="${org.email}">بريد</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_address}">العنوان</span>
+                        <span class="info-value" th:text="${org.address}">عنوان</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_governorate}">المحافظة</span>
+                        <span class="info-value" th:text="${org.governorate != null ? org.governorate.name() : '-'}">محافظة</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_admin}">المدير</span>
+                        <span class="info-value">
+                            <a th:if="${admin != null}" th:href="@{/super-admin/users/{id}(id=${admin.id})}"
+                               th:text="${admin.fullName}" style="text-decoration: none;">المدير</a>
+                            <span th:if="${admin == null}">-</span>
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label" th:text="#{super_admin.orgs.col_created}">تاريخ التسجيل</span>
+                        <span class="info-value" th:text="${#temporals.format(org.createdAt, 'yyyy/MM/dd HH:mm')}">التاريخ</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Members -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">👥 <span th:text="#{super_admin.org_detail.members}">أعضاء المنظمة</span>
+                    <span class="badge" th:text="${members.size()}">0</span>
+                </h2>
+
+                <div th:if="${members.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">👥</div>
+                    <div class="table-empty-text" th:text="#{super_admin.org_detail.members_empty}">لا يوجد أعضاء في هذه المنظمة</div>
+                </div>
+
+                <div th:if="${!members.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th th:text="#{super_admin.users.col_name}">الاسم</th>
+                                <th th:text="#{super_admin.users.col_email}">البريد</th>
+                                <th th:text="#{super_admin.users.col_role}">الصلاحية</th>
+                                <th th:text="#{super_admin.users.col_status}">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="membership, iter : ${members}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td>
+                                    <a th:href="@{/super-admin/users/{id}(id=${membership.user.id})}"
+                                       th:text="${membership.user.fullName}" style="text-decoration: none; font-weight: 600;">اسم العضو</a>
+                                </td>
+                                <td th:text="${membership.user.email}">البريد</td>
+                                <td>
+                                    <span class="badge" th:text="${membership.assignedRole}">دور</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-delivered" th:if="${membership.user.enabled}"
+                                          th:text="#{super_admin.status.active}">مفعّل</span>
+                                    <span class="badge badge-refused" th:unless="${membership.user.enabled}"
+                                          th:text="#{super_admin.status.inactive}">معطّل</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pending Members -->
+            <div class="card" th:if="${!pendingMembers.isEmpty()}">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">⏳ <span th:text="#{super_admin.org_detail.pending_members}">طلبات انضمام معلقة</span>
+                    <span class="badge" th:text="${pendingMembers.size()}">0</span>
+                </h2>
+                <div class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th th:text="#{super_admin.users.col_name}">الاسم</th>
+                                <th th:text="#{super_admin.users.col_email}">البريد</th>
+                                <th th:text="#{super_admin.users.col_role}">الصلاحية المطلوبة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="membership, iter : ${pendingMembers}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td th:text="${membership.user.fullName}">اسم</td>
+                                <td th:text="${membership.user.email}">بريد</td>
+                                <td>
+                                    <span class="badge" th:text="${membership.assignedRole}">دور</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{dashboard.map.title} + ' - ' + #{app.title}">تتبع المناديب - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">🗺 <span th:text="#{dashboard.map.title}">الخريطة الحية للمناديب</span></h1>
+            </div>
+
+            <div class="card" style="height: 70vh;">
+                <div id="map" style="width: 100%; height: 100%; border-radius: var(--radius-lg); z-index: 1;"></div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        document.addEventListener('DOMContentLoaded', function() {
+            var map = L.map('map').setView([30.0444, 31.2357], 10); // Default to Cairo
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            var couriers = /*[[${couriers}]]*/ [];
+            var bounds = [];
+            
+            var labelLastUpdate = /*[[#{dashboard.map.last_update('')}]]*/ 'آخر تحديث: ';
+            var labelNotAvailable = /*[[#{dashboard.courier.status_choose}]]*/ 'غير متوفر'; 
+
+            couriers.forEach(function(courier) {
+                if (courier.lastLatitude && courier.lastLongitude) {
+                    var lastUpdate = courier.lastLocationUpdateTime;
+                    var marker = L.marker([courier.lastLatitude, courier.lastLongitude]).addTo(map);
+                    
+                    var lang = /*[[${#locale.language}]]*/ 'en';
+                    var dateStr = lastUpdate ? new Date(lastUpdate).toLocaleString(lang === 'ar' ? 'ar-EG' : 'en-US') : labelNotAvailable;
+                    var textAlign = lang === 'ar' ? 'right' : 'left';
+                    var direction = lang === 'ar' ? 'rtl' : 'ltr';
+
+                    marker.bindPopup(`
+                        <div style="text-align: ${textAlign}; direction: ${direction}; font-family: 'Cairo', sans-serif;">
+                            <strong style="font-size: 16px;">👤 ${courier.fullName}</strong><br/>
+                            📞 ${courier.phone}<br/>
+                            ⏱ ${labelLastUpdate.replace('{0}', dateStr)}
+                        </div>
+                    `);
+                    
+                    bounds.push([courier.lastLatitude, courier.lastLongitude]);
+                }
+            });
+
+            if (bounds.length > 0) {
+                map.fitBounds(bounds);
+            }
+        });
+        /*]]>*/
+    </script>
+</body>
+
+</html>

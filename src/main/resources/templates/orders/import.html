@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{orders.import.title} + ' - ' + #{app.title}">استيراد من Excel - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <a th:href="@{/orders}" th:text="#{orders.breadcrumb.orders}">الطلبات</a>
+                <span class="breadcrumb-separator">/</span>
+                <span th:text="#{orders.import.desc}">استيراد من Excel</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">📥 <span th:text="#{orders.import.title}">استيراد الطلبات من Excel</span></h1>
+            </div>
+
+            <div class="card" style="max-width: 700px;">
+                <!-- Instructions -->
+                <div
+                    style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-6);">
+                    <h4 style="color: var(--primary-400); margin-bottom: var(--space-2);"
+                        th:text="#{orders.import.format_title}">📋 تنسيق الملف المطلوب:</h4>
+                    <p style="color: var(--text-tertiary); margin: 0;">
+                        <span th:text="#{orders.import.format_desc}">يجب أن يحتوي ملف Excel على الأعمدة التالية بالترتيب
+                            (من اليسار لليمين):</span>
+                        <br>
+                        <strong style="color: var(--text-primary);" th:text="#{orders.import.format_cols}">
+                            م (الرقم) | اسم العميل | الهاتف | العنوان | الكمية | الشحن | السعر | الاجمالي | الشركة |
+                            الكود | المحافظة
+                        </strong>
+                    </p>
+                </div>
+
+                <form th:action="@{/orders/import}" method="post" enctype="multipart/form-data">
+                    <!-- Business Day Selection -->
+                    <div class="form-group">
+                        <label class="form-label form-label-required" for="businessDayId"
+                            th:text="#{orders.import.bd}">يوم العمل</label>
+                        <select id="businessDayId" name="businessDayId" class="form-select" required>
+                            <option value="" th:text="#{orders.import.bd_select}">-- اختر يوم العمل --</option>
+                            <option th:each="bd : ${businessDays}" th:value="${bd.id}"
+                                th:text="${bd.name + ' (' + #temporals.format(bd.date, 'yyyy/MM/dd') + ')'}">
+                            </option>
+                        </select>
+                        <div style="margin-top: var(--space-2);">
+                            <a th:href="@{/business-days/new}" style="color: var(--primary-400); font-size: 0.875rem;"
+                                th:text="#{orders.import.bd_new}">
+                                ➕ إنشاء يوم عمل جديد
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Assign To Office/Company Selection -->
+                    <div class="form-group" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                        <label class="form-label" for="assignedToOrganizationId"
+                            th:if="${organization != null && organization.type.name() == 'STORE'}"
+                            th:text="#{orders.import.assign_company}">إسناد
+                            الطلبات إلى شركة (اختياري)</label>
+                        <label class="form-label" for="assignedToOrganizationId"
+                            th:unless="${organization != null && organization.type.name() == 'STORE'}"
+                            th:text="#{orders.import.assign_office}">إسناد الطلبات
+                            إلى مكتب (اختياري)</label>
+
+                        <select id="assignedToOrganizationId" name="assignedToOrganizationId" class="form-select">
+                            <option value="">-- بدون إسناد --</option>
+
+                            <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                                <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}">
+                                </option>
+                            </optgroup>
+
+                            <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                                <option th:each="office : ${offices}" th:value="${office.id}" th:text="${office.name}">
+                                </option>
+                            </optgroup>
+
+                            <optgroup label="المكاتب الافتراضية"
+                                th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
+                                <option th:each="vo : ${virtualOffices}" th:value="${vo.id}" th:text="${vo.name}">
+                                </option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label form-label-required" th:text="#{orders.import.file}">ملف Excel</label>
+                        <div class="form-file">
+                            <input type="file" id="file" name="file" class="form-file-input" accept=".xlsx,.xls"
+                                required onchange="updateFileName(this)">
+                            <label class="form-file-label" for="file">
+                                <div class="form-file-icon">📎</div>
+                                <div>
+                                    <div id="fileLabel" style="color: var(--text-secondary);"
+                                        th:text="#{orders.import.file_placeholder}">اضغط لاختيار الملف أو اسحبه هنا
+                                    </div>
+                                    <div style="font-size: 0.875rem; color: var(--text-secondary);"
+                                        th:text="#{orders.import.file_types}">xlsx, xls</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+
+
+                    <button type="submit" id="importSubmitBtn" class="btn btn-primary btn-lg"
+                        style="margin-bottom: var(--space-4);">
+                        <span id="btnText" th:text="#{orders.btn.import}">📥 استيراد الطلبات</span>
+                        <span id="btnSpinner" style="display: none;">⏳ جاري الاستيراد...</span>
+                    </button>
+                    <a th:href="@{/business-days}" class="btn btn-secondary btn-lg" id="importCancelBtn"
+                        th:text="#{orders.btn.cancel}">إلغاء</a>
+            </div>
+            </form>
+    </div>
+    </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <script th:inline="javascript">
+        const fileInput = document.getElementById('file');
+        const fileLabel = document.querySelector('.form-file-label');
+        const fileLabelText = document.getElementById('fileLabel');
+        const form = document.getElementById('importForm') || document.querySelector('form');
+        const submitBtn = document.getElementById('importSubmitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+
+        // Drag & Drop visual feedback
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileLabel.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileLabel.addEventListener(eventName, () => {
+                fileLabel.style.borderColor = 'var(--primary-500)';
+                fileLabel.style.backgroundColor = 'rgba(99, 102, 241, 0.05)';
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileLabel.addEventListener(eventName, () => {
+                fileLabel.style.borderColor = 'var(--surface-border)';
+                fileLabel.style.backgroundColor = 'var(--surface-card)';
+            }, false);
+        });
+
+        fileLabel.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            fileInput.files = files;
+            updateFileName(fileInput);
+        }, false);
+
+        function updateFileName(input) {
+            if (input.files && input.files[0]) {
+                fileLabelText.textContent = input.files[0].name;
+                fileLabelText.style.color = 'var(--primary-600)';
+                fileLabelText.style.fontWeight = 'bold';
+            } else {
+                fileLabelText.textContent = /*[[#{orders.import.file_placeholder}]]*/ 'اضغط لاختيار الملف أو اسحبه هنا';
+                fileLabelText.style.color = 'var(--text-secondary)';
+                fileLabelText.style.fontWeight = 'normal';
+            }
+        }
+
+        // Form submission loading state
+        form.addEventListener('submit', function () {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.7';
+            submitBtn.style.cursor = 'wait';
+            btnText.style.display = 'none';
+            btnSpinner.style.display = 'inline-block';
+
+            // disable cancel btn
+            document.getElementById('importCancelBtn').style.pointerEvents = 'none';
+            document.getElementById('importCancelBtn').style.opacity = '0.5';
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${organization.name} + ' - ' + #{app.title}">ملف المؤسسة</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+            color: white;
+            padding: var(--space-8);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: var(--space-6);
+        }
+
+        @media (max-width: 768px) {
+            .profile-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        [data-theme="dark"] .info-card {
+            background: var(--dark-surface);
+            border-color: var(--dark-border);
+        }
+
+        .info-item {
+            margin-bottom: var(--space-4);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+
+        .info-item-icon {
+            font-size: 1.25rem;
+            color: var(--primary-500);
+            min-width: 24px;
+        }
+
+        .info-item-content {
+            flex: 1;
+        }
+
+        .info-item-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-1);
+        }
+
+        .info-item-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar is optional here since it's a public profile, we'll keep it for navigation consistency if logged in -->
+        <div sec:authorize="isAuthenticated()">
+            <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        </div>
+
+        <main class="main-content">
+            <div class="page-header" style="margin-bottom: var(--space-4);">
+                <button type="button" class="btn btn-secondary" onclick="window.history.back()">⬅ <span
+                        th:text="#{org.profile.btn_back}">رجوع</span></button>
+            </div>
+
+            <div class="profile-header">
+                <div style="position: relative; z-index: 1;">
+                    <div class="badge"
+                        style="background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: white; border: none; margin-bottom: var(--space-4);">
+                        <span th:if="${organization.type.name() == 'COMPANY'}"
+                            th:text="#{user.ship.js.type_company}">شركة</span>
+                        <span th:if="${organization.type.name() == 'STORE'}"
+                            th:text="#{user.ship.js.type_store}">متجر</span>
+                        <span th:if="${organization.type.name() == 'OFFICE'}"
+                            th:text="#{user.ship.js.type_office}">مكتب</span>
+                    </div>
+                    <h1 style="font-size: 2.5rem; margin-bottom: var(--space-2);" th:text="${organization.name}">اسم
+                        المنظمة</h1>
+                    <p th:if="${organization.about != null and !organization.about.isEmpty()}"
+                        style="opacity: 0.9; max-width: 600px;" th:text="${organization.about}">وصف المنظمة</p>
+                    <p th:unless="${organization.about != null and !organization.about.isEmpty()}"
+                        style="opacity: 0.9; max-width: 600px;" th:text="#{org.profile.no_about}">لا يوجد وصف</p>
+                </div>
+                <!-- Optional decorative background element -->
+                <div
+                    style="position: absolute; right: -5%; top: -20%; font-size: 15rem; opacity: 0.05; transform: rotate(15deg); user-select: none;">
+                    🏢</div>
+            </div>
+
+            <div class="profile-content">
+                <!-- Main Info -->
+                <div class="info-card">
+                    <h3 style="margin-bottom: var(--space-6); color: var(--text-primary); border-bottom: 2px solid var(--border-color); padding-bottom: var(--space-3);"
+                        th:text="#{org.profile.info_title}">المعلومات الأساسية</h3>
+
+                    <div class="info-item">
+                        <div class="info-item-icon">📍</div>
+                        <div class="info-item-content">
+                            <div class="info-item-label" th:text="#{org.profile.label_address}">العنوان</div>
+                            <div class="info-item-value" th:text="${organization.address}">العنوان بالتفصيل</div>
+                        </div>
+                    </div>
+
+                    <div class="info-item" th:if="${organization.governorate}">
+                        <div class="info-item-icon">🗺️</div>
+                        <div class="info-item-content">
+                            <div class="info-item-label" th:text="#{org.profile.label_gov}">المحافظة</div>
+                            <div class="info-item-value" th:text="${organization.governorate.arabicName}">
+                                المحافظة</div>
+                        </div>
+                    </div>
+
+                    <div class="info-item">
+                        <div class="info-item-icon">📅</div>
+                        <div class="info-item-content">
+                            <div class="info-item-label" th:text="#{org.profile.label_joined}">تاريخ الانضمام</div>
+                            <div class="info-item-value"
+                                th:text="${#temporals.format(organization.createdAt, 'yyyy/MM')}">2023/10</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact & Services -->
+                <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+                    <div class="info-card">
+                        <h3 style="margin-bottom: var(--space-4); color: var(--text-primary);"
+                            th:text="#{org.profile.contact_title}">تواصل معنا</h3>
+
+                        <div class="info-item">
+                            <div class="info-item-icon">📞</div>
+                            <div class="info-item-content">
+                                <div class="info-item-label" th:text="#{org.profile.label_phone}">رقم الهاتف</div>
+                                <div class="info-item-value" dir="ltr" style="text-align: right;"
+                                    th:text="${organization.phone}">0123456789</div>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-item-icon">📧</div>
+                            <div class="info-item-content">
+                                <div class="info-item-label" th:text="#{org.profile.label_email}">البريد الإلكتروني
+                                </div>
+                                <div class="info-item-value" th:text="${organization.email}">email@example.com</div>
+                            </div>
+                        </div>
+
+                        <a sec:authorize="isAuthenticated()" th:href="@{/user/ship/request/{id}(id=${organization.id})}"
+                            class="btn btn-primary" style="width: 100%; margin-top: var(--space-4);"
+                            th:text="#{org.profile.btn_ship}">توصيل شحنة عبر هذه المنظمة</a>
+                    </div>
+
+                    <div class="info-card">
+                        <h3 style="margin-bottom: var(--space-4); color: var(--text-primary);"
+                            th:text="#{org.profile.services_title}">الخدمات المتاحة</h3>
+
+                        <div style="display: flex; flex-direction: column; gap: var(--space-3);">
+                            <div th:if="${organization.acceptsInternalShipments}" class="badge badge-success"
+                                style="padding: var(--space-2); display: flex; align-items: center; gap: var(--space-2); font-size: 0.9rem;">
+                                <span>✅</span> <span th:text="#{org.profile.service_internal}">تقبل شحنات داخلية</span>
+                            </div>
+                            <div th:if="${organization.acceptsExternalShipments}" class="badge badge-primary"
+                                style="padding: var(--space-2); display: flex; align-items: center; gap: var(--space-2); font-size: 0.9rem;">
+                                <span>🌍</span> <span th:text="#{org.profile.service_external}">تقبل شحنات خارجية
+                                    (محافظات)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar')?.classList.toggle('open')">☰</button>
+</body>
+
+</html>

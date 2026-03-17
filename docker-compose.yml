@@ -1,0 +1,85 @@
+# ====================================
+# ShippingGo - Docker Compose
+# ====================================
+# Usage:
+#   Development:  docker-compose up -d
+#   Production:   docker-compose --env-file .env.prod up -d
+#   Stop:         docker-compose down
+#   Rebuild:      docker-compose up -d --build
+# ====================================
+
+services:
+  # ---- MySQL Database ----
+  db:
+    image: mysql:8.0
+    container_name: shippinggo-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-asd123}
+      MYSQL_DATABASE: shippinggo_db
+      MYSQL_USER: ${MYSQL_USER:-shippinggo_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-shippinggo_pass}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - shippinggo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-asd123}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ---- Spring Boot Application ----
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shippinggo-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/shippinggo_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-shippinggo_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-shippinggo_pass}
+      JWT_SECRET: ${JWT_SECRET:-9a4f2c8d3b7a1e6f45c8a0b3f267d8b1d4e6f3c8a9d2b5f8e3a9c8b5f6a8a3d9}
+    volumes:
+      - uploads_data:/app/uploads
+      - app_logs:/app/logs
+    networks:
+      - shippinggo-network
+
+  # ---- Nginx Reverse Proxy ----
+  nginx:
+    image: nginx:alpine
+    container_name: shippinggo-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - shippinggo-network
+
+volumes:
+  mysql_data:
+    driver: local
+  uploads_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  shippinggo-network:
+    driver: bridge

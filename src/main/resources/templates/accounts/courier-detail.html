@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' - ' + #{app.title}">حساب المندوب - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">
+                    🚚 <span th:text="${courier.fullName}">اسم المندوب</span>
+                </h1>
+                <div class="page-actions">
+                    <a th:if="${businessDayId != null}" th:href="@{/accounts/day/{id}(id=${businessDayId})}"
+                        class="btn btn-secondary" th:text="#{accounts.courier.btn_back_day}">← العودة لحسابات اليوم</a>
+                    <a th:unless="${businessDayId != null}" th:href="@{/accounts}" class="btn btn-secondary"
+                        th:text="#{accounts.days.btn_back}">← العودة
+                        للحسابات</a>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-6);">
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_total_orders}">إجمالي
+                            الأوردرات</p>
+                        <h3 style="margin: 0; color: var(--text-primary);" th:text="${summary.totalOrders}">0</h3>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_delivered}">الأوردرات
+                            المسلمة</p>
+                        <h3 style="margin: 0; color: var(--success-400);" th:text="${summary.deliveredOrders}">0</h3>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_refused}">الأوردرات
+                            المرفوضة</p>
+                        <h3 style="margin: 0; color: var(--danger-400);" th:text="${summary.refusedOrders}">0</h3>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.courier.stat_total_amount}">إجمالي المبلغ
+                        </p>
+                        <h3 style="margin: 0; color: var(--text-primary);"
+                            th:text="${#numbers.formatDecimal(summary.totalAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                            0.00 ج.م</h3>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_delivered_amount}">المبلغ المسلم
+                        </p>
+                        <h3 style="margin: 0; color: var(--success-400);"
+                            th:text="${#numbers.formatDecimal(summary.deliveredAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                            0.00 ج.م</h3>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_returned_amount}">مبلغ الرفض
+                        </p>
+                        <h3 style="margin: 0; color: var(--danger-400);"
+                            th:text="${#numbers.formatDecimal(summary.returnedAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                            0.00 ج.م</h3>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.day.col_total_commission}">العمولة</p>
+                        <h3 style="margin: 0; color: var(--warning-400);"
+                            th:text="${#numbers.formatDecimal(summary.totalCommission, 1, 2)} + ' ' + #{business_days.view.currency}">
+                            0.00 ج.م</h3>
+                    </div>
+                </div>
+                <div class="card"
+                    style="background: linear-gradient(135deg, var(--primary-500)/20, var(--primary-600)/10);">
+                    <div style="text-align: center;">
+                        <p style="margin: 0 0 var(--space-1); color: var(--text-tertiary); font-size: 0.75rem;"
+                            th:text="#{accounts.courier.stat_net}">الصافي (بعد
+                            الخصم)</p>
+                        <h3 style="margin: 0; color: var(--primary-400);"
+                            th:text="${#numbers.formatDecimal(summary.netAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                            0.00 ج.م</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" th:text="#{accounts.courier.orders_title}">📦 الأوردرات المسندة</h3>
+                </div>
+
+                <div th:if="${orders != null && !orders.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{accounts.courier.col_order_date}">تاريخ الأوردر</th>
+                                <th th:text="#{accounts.courier.col_code}">الكود</th>
+                                <th th:text="#{accounts.courier.col_recipient}">المستلم</th>
+                                <th th:text="#{accounts.courier.col_amount}">المبلغ</th>
+                                <th th:text="#{accounts.courier.col_status}">الحالة</th>
+                                <th th:text="#{accounts.courier.col_org}">المكتب/الشركة</th>
+                                <th th:text="#{accounts.courier.col_manual_courier_commission}">العمولة الفردية</th>
+                                <th th:text="#{accounts.courier.col_rejection_value}">قيمة الرفض</th>
+                                <th th:text="#{accounts.courier.col_assign_date}">تاريخ الإسناد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders}">
+                                <td th:text="${order.businessDay != null ? order.businessDay.date : '-'}">التاريخ</td>
+                                <td th:text="${order.code}">ORD-001</td>
+                                <td th:text="${order.recipientName}">اسم المستلم</td>
+                                <td
+                                    th:text="${#numbers.formatDecimal(order.status.name() == 'PARTIAL_DELIVERY' && order.partialDeliveryAmount != null ? order.partialDeliveryAmount : (order.amount != null ? order.amount : 0), 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م</td>
+                                <td>
+                                    <span class="badge"
+                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-success' : (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-success' : (order.status.name() == 'PENDING' ? 'badge-pending' : (order.status.name() == 'CANCELLED' ? 'badge-warning' : (order.status.name() == 'REFUSED' ? 'badge-danger' : (order.status.name() == 'DEFERRED' ? 'badge-pending' : 'badge-active')))))}"
+                                        th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
+                                </td>
+                                <td
+                                    th:text="${order.assignedToOrganization != null ? order.assignedToOrganization.name : order.ownerOrganization.name}">
+                                    المنظمة</td>
+                                <td>
+                                    <form th:action="@{/accounts/update-manual-courier-commission}" method="post"
+                                        style="display: flex; align-items: center; gap: 4px; margin: 0;">
+                                        <input type="hidden" name="orderId" th:value="${order.id}">
+                                        <input type="hidden" name="businessDayId" th:value="${businessDayId}">
+                                        <input type="hidden" name="courierId" th:value="${courier.id}">
+                                        <input type="number" name="manualCourierCommission" step="0.01" min="0"
+                                            placeholder="تلقائي"
+                                            th:value="${order.manualCourierCommission != null ? order.manualCourierCommission : ''}"
+                                            style="width: 80px; padding: 2px 6px; font-size: 0.8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-primary);">
+                                        <button type="submit" class="btn btn-sm btn-primary"
+                                            style="padding: 2px 8px; font-size: 0.7rem;"
+                                            title="حفظ العمولة الفردية">💾</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form th:action="@{/accounts/update-rejection-payment}" method="post"
+                                        style="display: flex; align-items: center; gap: 4px; margin: 0;">
+                                        <input type="hidden" name="orderId" th:value="${order.id}">
+                                        <input type="hidden" name="businessDayId" th:value="${businessDayId}">
+                                        <input type="hidden" name="courierId" th:value="${courier.id}">
+                                        <input type="number" name="rejectionPayment" step="0.01" min="0"
+                                            th:value="${order.rejectionPayment != null ? order.rejectionPayment : '0'}"
+                                            style="width: 80px; padding: 2px 6px; font-size: 0.8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-primary);">
+                                        <button type="submit" class="btn btn-sm btn-primary"
+                                            style="padding: 2px 8px; font-size: 0.7rem;"
+                                            title="حفظ قيمة الرفض">💾</button>
+                                    </form>
+                                </td>
+                                <td
+                                    th:text="${order.courierAssignmentDate != null ? #temporals.format(order.courierAssignmentDate, 'yyyy/MM/dd') : '-'}">
+                                    التاريخ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${orders == null || orders.isEmpty()}" class="text-center" style="padding: var(--space-8);">
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📦</div>
+                    <h3 th:text="#{accounts.courier.empty_orders}">لا توجد أوردرات</h3>
+                    <p class="text-muted" th:text="#{accounts.courier.empty_orders_desc}">لم يتم إسناد أي أوردرات لهذا
+                        المندوب</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+.git
+.gitignore
+.gitattributes
+
+# IDEs and Text Editors
+.vscode
+.idea
+*.iml
+
+# Maven output
+target/
+*.jar
+*.war
+
+# Logs and databases
+logs/
+*.log
+*.sqlite
+*.db
+
+# Docker files (don't need them inside the container context)
+docker-compose.yml
+.dockerignore
+
+# Environment variables
+.env
+.env.*
+
+# Temporary files
+/tmp
+uploads/
+
+# Other unnecessary files
+HELP.md
+README.md
+README2.MD
+patch.txt
+compile_errors.txt
+download_font.ps1
+plans/
+shippinggo_desktop/
+shippinggo_mobile/

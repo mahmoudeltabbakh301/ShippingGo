@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{accounts.transactions.title} + ' - ' + #{app.title}">سجل المعاملات - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span>
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">📋 <span th:text="#{accounts.transactions.title}">سجل المعاملات</span></h1>
+                <div class="page-actions">
+                    <a th:href="@{/accounts}" class="btn btn-secondary" th:text="#{accounts.days.btn_back}">← العودة
+                        للحسابات</a>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div th:if="${transactions != null && !transactions.isEmpty()}" class="table-container"
+                    style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th th:text="#{accounts.index.col_date}">التاريخ</th>
+                                <th th:text="#{accounts.transactions.col_desc}">الوصف</th>
+                                <th th:text="#{accounts.transactions.col_order_amount}">مبلغ الأوردر</th>
+                                <th th:text="#{accounts.transactions.col_commission}">العمولة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="trans, iterStat : ${transactions}">
+                                <td th:text="${iterStat.count}">1</td>
+                                <td th:text="${#temporals.format(trans.createdAt, 'yyyy/MM/dd HH:mm')}">2024/01/01</td>
+                                <td th:text="${trans.description} ?: #{accounts.transactions.desc_commission}">عمولة
+                                </td>
+                                <td
+                                    th:text="${#numbers.formatDecimal(trans.orderAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م</td>
+                                <td style="color: var(--success-400); font-weight: 600;"
+                                    th:text="${#numbers.formatDecimal(trans.amount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${transactions == null || transactions.isEmpty()}" class="text-center"
+                    style="padding: var(--space-8);">
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📊</div>
+                    <h3 th:text="#{accounts.transactions.empty}">لا توجد معاملات بعد</h3>
+                    <p class="text-muted" th:text="#{accounts.transactions.empty_desc}">ستظهر المعاملات هنا عند تسليم
+                        الأوردرات</p>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

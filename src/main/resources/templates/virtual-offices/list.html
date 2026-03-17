@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/main}" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{page.title.virtual-offices}">المكاتب الافتراضية - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" th:text="'🏢 ' + #{virtual_offices.title}">🏢 المكاتب الافتراضية</h1>
+                    <p class="text-muted" th:text="#{virtual_offices.description}">إدارة المكاتب الافتراضية وإسناد
+                        الطلبات لها</p>
+                </div>
+                <!-- Create action trigger -->
+                <div class="page-header-actions" sec:authorize="hasRole('ADMIN')">
+                    <button class="btn btn-primary"
+                        onclick="document.getElementById('createModal').style.display='block'"
+                        th:text="#{virtual_offices.create-btn}">
+                        + إنشاء مكتب افتراضي
+                    </button>
+                </div>
+            </div>
+
+            <div th:if="${successMessage}" class="alert alert-success">
+                <span class="alert-icon">✓</span>
+                <span th:text="${successMessage}"></span>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{virtual_offices.table.name}">اسم المكتب</th>
+                                <th th:text="#{virtual_offices.table.createdAt}">تاريخ الإنشاء</th>
+                                <th th:text="#{virtual_offices.table.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${virtualOffices == null or virtualOffices.isEmpty()}">
+                                <td colspan="3" class="text-center text-muted" th:text="#{virtual_offices.table.empty}">
+                                    لا يوجد مكاتب افتراضية تابعة لك.</td>
+                            </tr>
+                            <tr th:each="vo : ${virtualOffices}">
+                                <td>
+                                    <div style="font-weight: 500;" th:text="${vo.name}"></div>
+                                    <small><span class="badge badge-primary"
+                                            th:text="#{virtual_offices.badge.virtual}">افتراضي</span></small>
+                                </td>
+                                <td th:text="${#temporals.format(vo.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <form th:action="@{/virtual-offices/delete/{id}(id=${vo.id})}" method="post"
+                                        th:data-confirm="#{virtual_offices.table.delete.confirm}"
+                                        onsubmit="return confirm(this.getAttribute('data-confirm'));">
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                            th:text="#{virtual_offices.table.delete.btn}">حذف</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Create Modal -->
+            <div id="createModal" class="modal"
+                style="display:none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+                <div class="modal-content"
+                    style="background-color: var(--bg-primary); margin: 10% auto; padding: 20px; border-radius: 8px; max-width: 500px; color: var(--text-primary);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2 style="margin: 0;" th:text="#{virtual_offices.modal.title}">إنشاء مكتب افتراضي جديد</h2>
+                        <span onclick="document.getElementById('createModal').style.display='none'"
+                            style="cursor: pointer; font-size: 24px;">&times;</span>
+                    </div>
+                    <form th:action="@{/virtual-offices/create}" method="post">
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="name" style="display: block; margin-bottom: 5px;"
+                                th:text="#{virtual_offices.modal.name-label}">اسم المكتب الافتراضي</label>
+                            <input type="text" id="name" name="name" class="form-control"
+                                style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);"
+                                required>
+                        </div>
+                        <!-- إعدادات العمولات -->
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border-color);">
+                        <h4 style="margin-bottom: 15px;">إعدادات العمولات (اختياري)</h4>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                            <div class="form-group">
+
+
+                                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                                    <button type="button" class="btn btn-secondary"
+                                        onclick="document.getElementById('createModal').style.display='none'">إلغاء</button>
+                                    <button type="submit" class="btn btn-primary">حفظ</button>
+                                </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+
+</html>

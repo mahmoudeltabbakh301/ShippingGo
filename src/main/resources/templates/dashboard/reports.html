@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{dashboard.reports.title} + ' - ' + #{app.title}">التقارير - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/cards.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .tabs-header {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-color);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .filters-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
+        }
+
+        .quick-filters {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .quick-btn {
+            padding: 0.4rem 0.8rem;
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        .quick-btn.active,
+        .quick-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .form-control {
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--bg-primary);
+            color: var(--text-color);
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h1 class="page-title">📊 <span>التقارير والإحصائيات</span></h1>
+                <button class="btn btn-outline" onclick="window.print()">🖨️ طباعة</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab('dashboard')">لوحة المعلومات</button>
+                <button class="tab-btn" onclick="switchTab('couriers')">أداء المناديب</button>
+                <button class="tab-btn" onclick="switchTab('orgs')" th:if="${!linkedOrgs.isEmpty()}">الماليات
+                    والحركة</button>
+                <button class="tab-btn" onclick="switchTab('geo')">خريطة المحافظات</button>
+            </div>
+
+            <!-- Global Filters -->
+            <div class="filters-bar">
+                <div class="quick-filters">
+                    <button class="quick-btn" onclick="setDateRange('today')">اليوم</button>
+                    <button class="quick-btn" onclick="setDateRange('week')">هذا الأسبوع</button>
+                    <button class="quick-btn active" onclick="setDateRange('month')">هذا الشهر</button>
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <label>من:</label>
+                    <input type="date" id="dateFrom" class="form-control" onchange="loadData()">
+                    <label>إلى:</label>
+                    <input type="date" id="dateTo" class="form-control" onchange="loadData()">
+                </div>
+            </div>
+
+            <!-- Tab 1: Dashboard -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="stats-grid" style="margin-bottom: var(--space-6);">
+                    <div class="stat-card">
+                        <div class="stat-icon new">📦</div>
+                        <div class="stat-value" id="dash-total">0</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon delivered">✅</div>
+                        <div class="stat-value" id="dash-delivered">0</div>
+                        <div class="stat-label">تم التسليم</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon refused">❌</div>
+                        <div class="stat-value" id="dash-refused">0</div>
+                        <div class="stat-label">مرفوض</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon cancelled">⛔</div>
+                        <div class="stat-value" id="dash-cancelled">0</div>
+                        <div class="stat-label">ملغي</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon in-progress">🎯</div>
+                        <div class="stat-value" id="dash-success-rate">0%</div>
+                        <div class="stat-label">نسبة النجاح</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon waiting">💰</div>
+                        <div class="stat-value" id="dash-revenue">0 ج.م</div>
+                        <div class="stat-label">الصافي المتوقع</div>
+                    </div>
+                </div>
+
+                <div class="chart-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">اتجاه الطلبات والمبالغ</h3>
+                        </div>
+                        <div style="padding: 20px;"><canvas id="trendChart"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">توزيع الحالات</h3>
+                        </div>
+                        <div style="padding: 20px; max-width:400px; margin:auto;"><canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Couriers -->
+            <div id="tab-couriers" class="tab-content">
+                <div class="filters-bar" style="background:transparent; padding:0; margin-bottom:1rem;">
+                    <select id="courierSelect" class="form-control" style="min-width:250px;"
+                        onchange="loadCourierData()">
+                        <option value="">-- اختر المندوب --</option>
+                        <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.fullName}"></option>
+                    </select>
+                </div>
+
+                <div id="courierDataSection" style="display:none;">
+                    <div class="stats-grid" style="margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <div class="stat-icon delivered">✅</div>
+                            <div class="stat-value" id="c-success">0%</div>
+                            <div class="stat-label">نسبة النجاح</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon new">📦</div>
+                            <div class="stat-value" id="c-total">0</div>
+                            <div class="stat-label">الطلبات المسندة</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon waiting">💵</div>
+                            <div class="stat-value" id="c-commission">0 ج.م</div>
+                            <div class="stat-label">العمولة المستحقة</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">التوزيع الجغرافي للمندوب</h3>
+                        </div>
+                        <div style="padding: 20px;"><canvas id="courierGeoChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Organizations (Finance) -->
+            <div id="tab-orgs" class="tab-content" th:if="${!linkedOrgs.isEmpty()}">
+                <div class="filters-bar" style="background:transparent; padding:0; margin-bottom:1rem;">
+                    <select id="orgSelect" class="form-control" style="min-width:250px;" onchange="loadOrgData()">
+                        <option value="">-- اختر المنظمة التابعة --</option>
+                        <option th:each="o : ${linkedOrgs}" th:value="${o.id}" th:text="${o.name}"></option>
+                    </select>
+                </div>
+
+                <div id="orgDataSection" style="display:none;">
+                    <div class="chart-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">الداخل (الوارد إلينا)</h3>
+                            </div>
+                            <div style="padding: 20px; text-align:center;">
+                                <h1 id="o-in-orders" style="color:var(--primary-color)">0</h1>
+                                <p>طلب</p>
+                                <h2 id="o-in-amount" style="margin-top:1rem; color:var(--success-color)">0 ج.م</h2>
+                                <p>مبالغ محصلة</p>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">الخارج (الصادر لهم)</h3>
+                            </div>
+                            <div style="padding: 20px; text-align:center;">
+                                <h1 id="o-out-orders" style="color:var(--warning-color)">0</h1>
+                                <p>طلب</p>
+                                <h2 id="o-out-amount" style="margin-top:1rem; color:var(--danger-color)">0 ج.م</h2>
+                                <p>مبالغ مطلوبة</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" style="margin-top:2rem; text-align:center; padding:2rem;">
+                        <h3>الميزان المالي (الصافي)</h3>
+                        <h1 id="o-balance" style="font-size:3rem; margin-top:1rem;">0 ج.م</h1>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Geographic Map -->
+            <div id="tab-geo" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">توزيع الطلبات على المحافظات</h3>
+                    </div>
+                    <div style="padding: 20px;"><canvas id="geoChart"></canvas></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <script>
+        let trendChartObj = null;
+        let statusChartObj = null;
+        let cGeoChartObj = null;
+        let geoChartObj = null;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#f3f4f6' : '#1f2937';
+        const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+        function initDates() {
+            setDateRange('month'); // default
+        }
+
+        function setDateRange(range) {
+            document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const to = new Date();
+            let from = new Date();
+
+            if (range === 'today') {
+                // from is today
+            } else if (range === 'week') {
+                from.setDate(to.getDate() - 7);
+            } else if (range === 'month') {
+                from.setMonth(to.getMonth() - 1);
+            }
+
+            document.getElementById('dateTo').value = to.toISOString().split('T')[0];
+            document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
+
+            loadData();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            if (tabId === 'geo' && !geoChartObj) loadGeoData();
+        }
+
+        function getDatesQS() {
+            const f = document.getElementById('dateFrom').value;
+            const t = document.getElementById('dateTo').value;
+            return `?from=${f}&to=${t}`;
+        }
+
+        function loadData() {
+            loadDashboardData();
+            if (document.getElementById('courierSelect') && document.getElementById('courierSelect').value) loadCourierData();
+            if (document.getElementById('orgSelect') && document.getElementById('orgSelect').value) loadOrgData();
+            if (document.getElementById('tab-geo').classList.contains('active')) loadGeoData();
+        }
+
+        async function loadDashboardData() {
+            try {
+                const res = await fetch('/api/reports/period' + getDatesQS());
+                const data = await res.json();
+
+                document.getElementById('dash-total').innerText = data.totalOrders;
+                document.getElementById('dash-delivered').innerText = data.delivered;
+                document.getElementById('dash-refused').innerText = data.refused;
+                document.getElementById('dash-cancelled').innerText = data.cancelled;
+                document.getElementById('dash-success-rate').innerText = data.deliveryRate + '%';
+                document.getElementById('dash-revenue').innerText = data.totalCollected + ' ج.م';
+
+                updateStatusChart(data);
+
+                const trendRes = await fetch('/api/reports/trends' + getDatesQS());
+                const trendData = await trendRes.json();
+                updateTrendChart(trendData);
+            } catch (e) { console.error('Error loading dashboard data', e); }
+        }
+
+        async function loadCourierData() {
+            const cid = document.getElementById('courierSelect').value;
+            if (!cid) return;
+            document.getElementById('courierDataSection').style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/reports/courier/${cid}` + getDatesQS());
+                const data = await res.json();
+
+                document.getElementById('c-total').innerText = data.periodStats.totalOrders;
+                document.getElementById('c-success').innerText = data.periodStats.deliveryRate + '%';
+                document.getElementById('c-commission').innerText = data.totalCommission + ' ج.م';
+
+                updateCourierGeoChart(data.ordersByGovernorate);
+            } catch (e) { console.error('Error loading courier data', e); }
+        }
+
+        async function loadOrgData() {
+            const oid = document.getElementById('orgSelect').value;
+            if (!oid) return;
+            document.getElementById('orgDataSection').style.display = 'block';
+
+            try {
+                const res = await fetch(`/api/reports/organization/${oid}` + getDatesQS());
+                const data = await res.json();
+
+                document.getElementById('o-in-orders').innerText = data.incomingOrders;
+                document.getElementById('o-in-amount').innerText = data.incomingAmount + ' ج.م';
+                document.getElementById('o-out-orders').innerText = data.outgoingOrders;
+                document.getElementById('o-out-amount').innerText = data.outgoingAmount + ' ج.م';
+
+                const balEl = document.getElementById('o-balance');
+                balEl.innerText = data.netBalance + ' ج.م';
+                if (data.netBalance > 0) balEl.style.color = 'var(--success-color)';
+                else if (data.netBalance < 0) balEl.style.color = 'var(--danger-color)';
+                else balEl.style.color = 'var(--text-color)';
+
+            } catch (e) { console.error('Error loading org data', e); }
+        }
+
+        async function loadGeoData() {
+            try {
+                const res = await fetch('/api/reports/geographic' + getDatesQS());
+                const data = await res.json();
+                updateGeoChart(data.statsByGovernorate);
+            } catch (e) { console.error('Error loading geo data', e); }
+        }
+
+        // Charts Helpers
+        function updateStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const cData = [data.delivered, data.refused, data.cancelled, data.partial, data.inTransit, data.deferred];
+
+            if (statusChartObj) statusChartObj.destroy();
+
+            statusChartObj = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['تم التسليم', 'مرفوض', 'ملغي', 'استلام جزئي', 'في الطريق', 'مؤجل'],
+                    datasets: [{
+                        data: cData,
+                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'],
+                        borderWidth: 1, borderColor: isDark ? '#1f2937' : '#ffffff'
+                    }]
+                },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } } }
+            });
+        }
+
+        function updateTrendChart(data) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartObj) trendChartObj.destroy();
+
+            trendChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        { label: 'الطلبات', data: data.orderCounts, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+                        { label: 'الإيرادات', data: data.revenues, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.4, yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        y: { type: 'linear', display: true, position: 'left', grid: { color: gridColor }, ticks: { color: textColor } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        function updateCourierGeoChart(dataMap) {
+            const ctx = document.getElementById('courierGeoChart').getContext('2d');
+            if (cGeoChartObj) cGeoChartObj.destroy();
+
+            const labels = Object.keys(dataMap);
+            const data = Object.values(dataMap);
+
+            cGeoChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{ label: 'الطلبات', data: data, backgroundColor: '#8b5cf6' }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
+                    scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor }, beginAtZero: true } }
+                }
+            });
+        }
+
+        function updateGeoChart(dataMap) {
+            const ctx = document.getElementById('geoChart').getContext('2d');
+            if (geoChartObj) geoChartObj.destroy();
+
+            const labels = Object.keys(dataMap);
+            const dataCounts = labels.map(l => dataMap[l].totalOrders);
+            const dataRates = labels.map(l => dataMap[l].deliveryRate);
+
+            geoChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'الطلبات المسندة', data: dataCounts, backgroundColor: '#3b82f6', yAxisID: 'y' },
+                        { label: 'نسبة النجاح %', data: dataRates, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'y1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
+                    scales: {
+                        x: { ticks: { color: textColor } },
+                        y: { position: 'left', ticks: { color: textColor }, beginAtZero: true },
+                        y1: { position: 'right', ticks: { color: textColor }, max: 100, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        window.onload = initDates;
+
+    </script>
+</body>
+
+</html>

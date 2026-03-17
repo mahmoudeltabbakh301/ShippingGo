@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{invitations.page_title} + ' - ' + #{app.title}">الدعوات - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📩 <span th:text="#{invitations.title}">الدعوات</span></h1>
+                    <p class="text-muted" th:text="#{invitations.subtitle}">دعوات الانضمام لفرق العمل</p>
+                </div>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Pending Invitations -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3 class="card-title">🔔 <span th:text="#{invitations.pending_title}">دعوات بانتظار الرد</span>
+                    </h3>
+                </div>
+
+                <div th:if="${pendingInvitations.isEmpty()}"
+                    style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📭</div>
+                    <h4 th:text="#{invitations.empty}">لا توجد دعوات حالياً</h4>
+                    <p class="text-muted" th:text="#{invitations.empty_desc}">ستظهر هنا الدعوات عندما تدعوك منظمة
+                        للانضمام لفريقها</p>
+                </div>
+
+                <div th:unless="${pendingInvitations.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{invitations.col_org}">المنظمة</th>
+                                <th th:text="#{invitations.col_role}">الوظيفة المحددة</th>
+                                <th th:text="#{invitations.col_invited_by}">الدعوة من</th>
+                                <th th:text="#{invitations.col_date}">تاريخ الدعوة</th>
+                                <th th:text="#{invitations.col_actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="inv : ${pendingInvitations}">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                        <div
+                                            style="width: 36px; height: 36px; background: var(--primary-100); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--primary-600); font-weight: 700;">
+                                            🏢</div>
+                                        <div>
+                                            <div style="font-weight: 600;" th:text="${inv.organization.name}">اسم
+                                                المنظمة</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);"
+                                                th:text="${inv.organization.phone} ?: '-'">الهاتف</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-transit"
+                                        th:text="#{ 'role.' + ${inv.assignedRole.name()} }">الوظيفة</span>
+                                </td>
+                                <td th:text="${inv.invitedBy != null ? inv.invitedBy.fullName : '-'}">المدعو بواسطة</td>
+                                <td th:text="${#temporals.format(inv.invitedAt, 'yyyy/MM/dd HH:mm')}">التاريخ</td>
+                                <td>
+                                    <div style="display: flex; gap: var(--space-2);">
+                                        <form th:action="@{/members/invitations/{id}/accept(id=${inv.id})}"
+                                            method="post">
+                                            <button type="submit" class="btn btn-sm btn-success"
+                                                th:text="#{invitations.btn_accept}">✓ قبول</button>
+                                        </form>
+                                        <form th:action="@{/members/invitations/{id}/decline(id=${inv.id})}"
+                                            method="post">
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                th:text="#{invitations.btn_decline}">✕ رفض</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

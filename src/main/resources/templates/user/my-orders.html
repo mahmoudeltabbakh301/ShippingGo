@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{user.orders.page_title} + ' - ' + #{app.title}">أوردراتي - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-accepted {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-completed {
+            background: #cce5ff;
+            color: #004085;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">📦 <span th:text="#{user.orders.title}">أوردراتي</span></h1>
+                <a th:href="@{/user/ship}" class="btn btn-primary" th:text="#{user.orders.btn_new_shipment}">➕ إرسال
+                    شحنة جديدة</a>
+            </div>
+
+            <!-- Orders List -->
+            <div class="card">
+                <div class="table-container">
+                    <table class="table" th:if="${!#lists.isEmpty(requests)}">
+                        <thead>
+                            <tr>
+                                <th th:text="#{user.orders.col_order_num}">رقم الطلب</th>
+                                <th th:text="#{user.orders.col_org}">المنظمة</th>
+                                <th th:text="#{user.orders.col_recipient}">المستلم</th>
+                                <th th:text="#{user.orders.col_recipient_phone}">جوال المستلم</th>
+                                <th th:text="#{user.orders.col_amount}">المبلغ</th>
+                                <th th:text="#{user.orders.col_date}">التاريخ</th>
+                                <th th:text="#{user.orders.col_status}">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="request : ${requests}">
+                                <td th:text="${'#' + request.id}">#123</td>
+                                <td th:text="${request.organization.name}">Org Name</td>
+                                <td th:text="${request.recipientName}">Recipient Name</td>
+                                <td th:text="${request.recipientPhone}">01xxxxxxxxx</td>
+                                <td
+                                    th:text="${request.estimatedAmount != null ? request.estimatedAmount + ' ' : ''} + (${request.estimatedAmount != null} ? #{business_days.view.currency} : '-')">
+                                    -</td>
+                                <td th:text="${#temporals.format(request.createdAt, 'yyyy-MM-dd HH:mm')}">2023-01-01
+                                </td>
+                                <td>
+                                    <span class="status-badge"
+                                        th:classappend="${'status-' + #strings.toLowerCase(request.status)}"
+                                        th:text="${request.status}">PENDING</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Empty State -->
+                    <div class="table-empty" th:if="${#lists.isEmpty(requests)}">
+                        <div class="table-empty-icon">📦</div>
+                        <div class="table-empty-text" th:text="#{user.orders.empty}">ليس لديك أي طلبات شحن حتى الآن
+                        </div>
+                        <a th:href="@{/user/ship}" class="btn btn-outline btn-sm" style="margin-top: 1rem;"
+                            th:text="#{user.orders.btn_start_now}">ابدأ
+                            الآن</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        }
+    </script>
+</body>
+
+</html>
