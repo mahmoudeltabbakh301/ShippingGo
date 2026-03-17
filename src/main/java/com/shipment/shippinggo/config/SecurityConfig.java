@@ -79,8 +79,8 @@ public class SecurityConfig {
                                                 // Public Verification API & WebSocket
                                                 .requestMatchers("/api/verify/**", "/api/orders/*/qr-image", "/ws/**")
                                                 .permitAll()
-                                                // Auth pages
-                                                .requestMatchers("/", "/login", "/register", "/register/**", "/verify").permitAll()
+                                                // Auth pages & Health checks
+                                                .requestMatchers("/", "/login", "/register", "/register/**", "/verify", "/actuator/**").permitAll()
                                                 // Member Invitations (Accessible to all authenticated users)
                                                 .requestMatchers("/members/invitations",
                                                                 "/members/invitations/**")
