@@ -182,6 +182,20 @@ public class OrderQueryService {
         return orderRepository.findByCreatedByIdOrderByCreatedAtDesc(createdById);
     }
 
+    public List<Order> getOrdersByRecipientPhone(String phone) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return List.of();
+        }
+        return orderRepository.findByRecipientPhoneOrderByCreatedAtDesc(phone);
+    }
+
+    public Order getOrderByCode(String code) {
+        if (code == null || code.trim().isEmpty()) {
+            return null;
+        }
+        return orderRepository.findByCode(code).orElse(null);
+    }
+
     public List<Order> getOrdersAssignedToCourierToday(Long courierId) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();

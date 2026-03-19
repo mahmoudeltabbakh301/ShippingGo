@@ -105,16 +105,8 @@ public class ApiDashboardController {
             );
 
         } else if (user.getRole() == Role.MEMBER) {
-            Organization org = organizationService.getOrganizationByUser(user);
-            if (org != null) {
-                data.put("organization", org);
-                List<Order> memberOrders = orderService.getOrdersByOrganization(org.getId()).stream()
-                        .filter(o -> o.getCreatedBy() != null && o.getCreatedBy().getId().equals(user.getId()))
-                        .toList();
-                data.put("orders", memberOrders);
-            } else {
-                data.put("orders", List.of());
-            }
+            List<Order> memberOrders = orderService.getOrdersByRecipientPhone(user.getPhone());
+            data.put("orders", memberOrders);
         } else {
             // Admin / Manager / Org Role Logic
             Organization org = organizationService.getOrganizationByUser(user);

@@ -1,4 +1,4 @@
-   package com.shipment.shippinggo.service;
+package com.shipment.shippinggo.service;
 
 import com.shipment.shippinggo.dto.AccountSummaryDTO;
 import com.shipment.shippinggo.dto.DirectionalSummaryDto;
@@ -11,6 +11,7 @@ import com.shipment.shippinggo.enums.OrganizationType;
 import com.shipment.shippinggo.repository.BusinessDayRepository;
 import com.shipment.shippinggo.repository.OrderAssignmentRepository;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,24 +29,40 @@ public class AccountSummaryService {
     private final OrderAssignmentRepository orderAssignmentRepository;
     private final TransactionService transactionService;
     private final CommissionService commissionService;
+    private final VirtualOfficeRepository virtualOfficeRepository;
 
     public AccountSummaryService(OrderRepository orderRepository,
             BusinessDayRepository businessDayRepository,
             OrderAssignmentRepository orderAssignmentRepository,
             TransactionService transactionService,
-            CommissionService commissionService) {
+            CommissionService commissionService,
+            VirtualOfficeRepository virtualOfficeRepository) {
         this.orderRepository = orderRepository;
         this.businessDayRepository = businessDayRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.transactionService = transactionService;
         this.commissionService = commissionService;
+        this.virtualOfficeRepository = virtualOfficeRepository;
+    }
+
+    private boolean isHolderMatchingOrg(Organization holder, Organization targetOrg) {
+        if (holder == null || targetOrg == null) return false;
+        if (holder.getId().equals(targetOrg.getId())) return true;
+        if (holder.getType() == OrganizationType.VIRTUAL_OFFICE) {
+            return virtualOfficeRepository.findById(holder.getId())
+                    .map(vo -> vo.getParentOrganization() != null && vo.getParentOrganization().getId().equals(targetOrg.getId()))
+                    .orElse(false);
+        }
+        return false;
     }
 
     // جلب ملخص حساب المنظمة الشامل يشمل المبالغ المُسلمة والمرتجعة والعمولات
     public AccountSummaryDTO getOrganizationAccountSummary(Organization organization) {
         List<Order> orders = orderRepository.findByOwnerOrganizationIdOrderByCreatedAtDesc(organization.getId());
 
-        long deliveredOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY).count();
+        long deliveredOrders = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
+                .count();
         long returnedOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.REFUSED).count();
         long otherOrders = orders.size() - deliveredOrders - returnedOrders;
 
@@ -93,7 +110,16 @@ public class AccountSummaryService {
     public AccountSummaryDTO getCourierAccountSummary(User courier, Organization courierOrg) {
         List<Order> orders = orderRepository.findByAssignedToCourierIdOrderByCreatedAtDesc(courier.getId());
 
-        long deliveredOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY).count();
+        if (courierOrg != null) {
+            orders = orders.stream().filter(o -> {
+                Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization() : o.getOwnerOrganization();
+                return isHolderMatchingOrg(holder, courierOrg);
+            }).collect(Collectors.toList());
+        }
+
+        long deliveredOrders = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
+                .count();
         long returnedOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.REFUSED).count();
         long otherOrders = orders.size() - deliveredOrders - returnedOrders;
 
@@ -166,10 +192,11 @@ public class AccountSummaryService {
     // حساب جميع ملخصات الحسابات بناءً على يوم عمل محدد
     public List<AccountSummaryDTO> getAllAccountSummariesByBusinessDay(Organization org,
             List<Organization> organizations, List<User> couriers, Long businessDayId) {
-        
+
         List<AccountSummaryDTO> summaries = new ArrayList<>();
         BusinessDay businessDay = businessDayRepository.findById(businessDayId).orElse(null);
-        if (businessDay == null) return summaries;
+        if (businessDay == null)
+            return summaries;
         java.time.LocalDate businessDate = businessDay.getDate();
 
         // 1. INCOMING (وارد للمنظمة في يوم العمل هذا)
@@ -180,9 +207,9 @@ public class AccountSummaryService {
                 .filter(oa -> oa.getAssignerOrganization() != null)
                 .collect(Collectors.groupingBy(
                         oa -> oa.getAssignerOrganization().getId(),
-                        Collectors.mapping(com.shipment.shippinggo.entity.OrderAssignment::getOrder, Collectors.toList())
-                ));
-                
+                        Collectors.mapping(com.shipment.shippinggo.entity.OrderAssignment::getOrder,
+                                Collectors.toList())));
+
         Map<Long, Organization> incomingAssignerMap = incomingAssignments.stream()
                 .filter(oa -> oa.getAssignerOrganization() != null)
                 .map(com.shipment.shippinggo.entity.OrderAssignment::getAssignerOrganization)
@@ -207,8 +234,8 @@ public class AccountSummaryService {
                 .filter(oa -> oa.getAssigneeOrganization() != null)
                 .collect(Collectors.groupingBy(
                         oa -> oa.getAssigneeOrganization().getId(),
-                        Collectors.mapping(com.shipment.shippinggo.entity.OrderAssignment::getOrder, Collectors.toList())
-                ));
+                        Collectors.mapping(com.shipment.shippinggo.entity.OrderAssignment::getOrder,
+                                Collectors.toList())));
 
         Map<Long, Organization> outgoingAssigneeMap = outgoingAssignments.stream()
                 .filter(oa -> oa.getAssigneeOrganization() != null)
@@ -227,7 +254,7 @@ public class AccountSummaryService {
                 summaries.add(dto);
             }
         }
-            
+
         // 3. COURIER (أوردرات المندوبين المسندة في يوم العمل الفعلي)
         java.time.LocalDateTime startOfDay = businessDate.atStartOfDay();
         java.time.LocalDateTime startOfNextDay = businessDate.plusDays(1).atStartOfDay();
@@ -235,10 +262,11 @@ public class AccountSummaryService {
         for (User courier : couriers) {
             List<Order> orders = orderRepository.findByAssignedToCourierIdAndCourierAssignmentDate(
                     courier.getId(), startOfDay, startOfNextDay);
-            
+
             orders = orders.stream().filter(o -> {
-                Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization() : o.getOwnerOrganization();
-                return holder != null && holder.getId().equals(org.getId());
+                Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization()
+                        : o.getOwnerOrganization();
+                return isHolderMatchingOrg(holder, org);
             }).collect(Collectors.toList());
 
             AccountSummaryDTO dto = calculateDirectionalSummaryGlobal(courier, null, org, orders);
@@ -268,19 +296,24 @@ public class AccountSummaryService {
         return getOrganizationAccountSummaryByBusinessDay(bd, organization, assigner, assignee, summaryDirection);
     }
 
-    // جلب الطلبات المسندة لمنظمة في يوم عمل معين بناءً على اتجاه الإسناد (صادر أو وارد)
+    // جلب الطلبات المسندة لمنظمة في يوم عمل معين بناءً على اتجاه الإسناد (صادر أو
+    // وارد)
     public List<Order> getOrdersAssignedToOrganizationByBusinessDay(BusinessDay businessDay, Organization org,
             Organization assigner, Organization assignee) {
         if (assignee != null) {
             // OUTGOING
             Organization effectiveAssigner = assigner != null ? assigner : org;
             return orderRepository.findAllById(orderAssignmentRepository
-                    .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndAssignerBusinessDayId(effectiveAssigner.getId(), assignee.getId(), businessDay.getId()).stream()
+                    .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndAssignerBusinessDayId(
+                            effectiveAssigner.getId(), assignee.getId(), businessDay.getId())
+                    .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else if (assigner != null) {
             // INCOMING
             return orderRepository.findAllById(orderAssignmentRepository
-                    .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndBusinessDayId(assigner.getId(), org.getId(), businessDay.getId()).stream()
+                    .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndBusinessDayId(assigner.getId(),
+                            org.getId(), businessDay.getId())
+                    .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else {
             return orderRepository.findByOwnerOrganizationIdAndBusinessDayId(org.getId(), businessDay.getId());
@@ -307,11 +340,13 @@ public class AccountSummaryService {
         if (assignee != null) { // orders sent to user from assigner
             Organization effectiveAssigner = assigner != null ? assigner : organization;
             return orderRepository.findAllById(orderAssignmentRepository
-                    .findByAssignerOrganizationIdAndAssigneeOrganizationId(effectiveAssigner.getId(), assignee.getId()).stream()
+                    .findByAssignerOrganizationIdAndAssigneeOrganizationId(effectiveAssigner.getId(), assignee.getId())
+                    .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else if (assigner != null) { // orders sent by user to assignee
             return orderRepository.findAllById(orderAssignmentRepository
-                    .findByAssignerOrganizationIdAndAssigneeOrganizationId(assigner.getId(), organization.getId()).stream()
+                    .findByAssignerOrganizationIdAndAssigneeOrganizationId(assigner.getId(), organization.getId())
+                    .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else { // overall
             return orderRepository.findByOwnerOrganizationIdOrderByCreatedAtDesc(organization.getId());
@@ -329,8 +364,9 @@ public class AccountSummaryService {
         List<Order> orders = orderRepository.findByAssignedToCourierIdAndCourierAssignmentDate(
                 courier.getId(), startOfDay, startOfNextDay);
         return orders.stream().filter(o -> {
-            Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization() : o.getOwnerOrganization();
-            return holder != null && holder.getId().equals(bd.getOrganization().getId());
+            Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization()
+                    : o.getOwnerOrganization();
+            return isHolderMatchingOrg(holder, bd.getOrganization());
         }).collect(Collectors.toList());
     }
 
@@ -338,7 +374,9 @@ public class AccountSummaryService {
     public AccountSummaryDTO calculateDirectionalSummary(Organization organization, Organization otherOrg,
             List<Order> orders, String summaryDirection) {
 
-        long deliveredOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY).count();
+        long deliveredOrders = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
+                .count();
         long returnedOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.REFUSED).count();
         long cancelledOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count();
 
@@ -349,19 +387,21 @@ public class AccountSummaryService {
         BigDecimal returnedAmount = BigDecimal.ZERO;
         BigDecimal partialDeliveryAmount = BigDecimal.ZERO;
         BigDecimal totalAmount = BigDecimal.ZERO;
-        
+
         BigDecimal deliveryCommission = BigDecimal.ZERO;
         BigDecimal rejectionCommission = BigDecimal.ZERO;
         BigDecimal cancellationCommission = BigDecimal.ZERO;
 
         // العمولة يتحكم فيها المُسند دائماً:
-        // صادر: المنظمة الحالية (organization) هي المُسند → commissionSource = organization
+        // صادر: المنظمة الحالية (organization) هي المُسند → commissionSource =
+        // organization
         // وارد: المنظمة الأخرى (otherOrg) هي المُسند → commissionSource = otherOrg
         Organization commissionSource = "INCOMING".equals(summaryDirection) ? otherOrg : organization;
         Organization commissionTarget = "INCOMING".equals(summaryDirection) ? organization : otherOrg;
 
         Map<com.shipment.shippinggo.enums.Governorate, java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting>> settingsCache = new HashMap<>();
-        java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> defaultSetting = commissionService.getOrganizationCommission(commissionSource, commissionTarget, null);
+        java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> defaultSetting = commissionService
+                .getOrganizationCommission(commissionSource, commissionTarget, null);
 
         for (Order order : orders) {
             boolean isReturned = order.getStatus() == OrderStatus.REFUSED;
@@ -371,17 +411,20 @@ public class AccountSummaryService {
 
             java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> setting;
             if (order.getGovernorate() != null) {
-                setting = settingsCache.computeIfAbsent(order.getGovernorate(), g -> commissionService.getOrganizationCommission(commissionSource, commissionTarget, g));
-                if (setting.isEmpty()) setting = defaultSetting;
+                setting = settingsCache.computeIfAbsent(order.getGovernorate(),
+                        g -> commissionService.getOrganizationCommission(commissionSource, commissionTarget, g));
+                if (setting.isEmpty())
+                    setting = defaultSetting;
             } else {
                 setting = defaultSetting;
             }
-            
+
             BigDecimal currentDeliveryCommission = BigDecimal.ZERO;
             BigDecimal currentRejectionCommission = BigDecimal.ZERO;
             BigDecimal currentCancellationCommission = BigDecimal.ZERO;
 
-            // 1-إجمالي المبلغ= مبلغ الاوردرات التي توجد فعليا لدي المندوب او المنظمه (مجموع مبالغ الاوردرات كاملة مهما كانت حالتها)
+            // 1-إجمالي المبلغ= مبلغ الاوردرات التي توجد فعليا لدي المندوب او المنظمه (مجموع
+            // مبالغ الاوردرات كاملة مهما كانت حالتها)
             totalAmount = totalAmount.add(order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
 
             if (order.getManualOrgCommission() != null) {
@@ -394,7 +437,8 @@ public class AccountSummaryService {
                 }
             } else if (setting.isPresent()) {
                 if (isDelivered || isPartial) {
-                    BigDecimal baseAmount = isPartial ? order.getPartialDeliveryAmount() : (order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount());
+                    BigDecimal baseAmount = isPartial ? order.getPartialDeliveryAmount()
+                            : (order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount());
                     if (baseAmount != null && baseAmount.compareTo(BigDecimal.ZERO) > 0) {
                         currentDeliveryCommission = commissionService.calculateCommission(setting.get(), baseAmount);
                     }
@@ -412,24 +456,30 @@ public class AccountSummaryService {
                     }
                 }
             }
-            
+
             if (isDelivered) {
                 // المبلغ المسلم من التوصيل الكامل (collectedAmount أو amount)
-                BigDecimal collected = order.getCollectedAmount() != null ? order.getCollectedAmount() : (order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
+                BigDecimal collected = order.getCollectedAmount() != null ? order.getCollectedAmount()
+                        : (order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
                 deliveredAmount = deliveredAmount.add(collected);
             } else if (isReturned) {
-                // مبالغ الرفض للمؤسسة المُسندة لا تظهر نهائياً من الأساس (لا في المستلم ولا المطلوب)
+                // مبالغ الرفض للمؤسسة المُسندة لا تظهر نهائياً من الأساس (لا في المستلم ولا
+                // المطلوب)
                 if ("INCOMING".equals(summaryDirection)) {
-                     // 2- فقط المنظمة التي عينت المندوب هي من تستفيد وتظهر لها مبالغ الرفض
-                     Organization finalOrg = order.getAssignedToOrganization() != null ? order.getAssignedToOrganization() : order.getOwnerOrganization();
-                     if (finalOrg != null && finalOrg.getId().equals(organization.getId())) {
-                         returnedAmount = returnedAmount.add(order.getRejectionPayment() != null ? order.getRejectionPayment() : BigDecimal.ZERO);
-                     }
+                    // 2- فقط المنظمة التي عينت المندوب هي من تستفيد وتظهر لها مبالغ الرفض
+                    Organization finalOrg = order.getAssignedToOrganization() != null
+                            ? order.getAssignedToOrganization()
+                            : order.getOwnerOrganization();
+                    if (finalOrg != null && finalOrg.getId().equals(organization.getId())) {
+                        returnedAmount = returnedAmount.add(
+                                order.getRejectionPayment() != null ? order.getRejectionPayment() : BigDecimal.ZERO);
+                    }
                 }
             } else if (isPartial) {
-                partialDeliveryAmount = partialDeliveryAmount.add(order.getPartialDeliveryAmount() != null ? order.getPartialDeliveryAmount() : BigDecimal.ZERO);
+                partialDeliveryAmount = partialDeliveryAmount.add(
+                        order.getPartialDeliveryAmount() != null ? order.getPartialDeliveryAmount() : BigDecimal.ZERO);
             }
-            
+
             deliveryCommission = deliveryCommission.add(currentDeliveryCommission);
             rejectionCommission = rejectionCommission.add(currentRejectionCommission);
             cancellationCommission = cancellationCommission.add(currentCancellationCommission);
@@ -457,19 +507,19 @@ public class AccountSummaryService {
         summary.setRefusedOrders(returnedOrders);
         summary.setReturnedOrders(returnedOrders);
         summary.setCancelledOrders(cancelledOrders);
-        
+
         summary.setOtherOrders(otherOrders);
-        
+
         summary.setDeliveredAmount(finalDeliveredAmount);
         summary.setReturnedAmount(returnedAmount);
         summary.setPartialDeliveryAmount(partialDeliveryAmount);
         summary.setTotalAmount(totalAmount);
         summary.setTotalSales(totalAmount);
-        
+
         summary.setDeliveryCommission(deliveryCommission);
         summary.setRejectionCommission(rejectionCommission);
         summary.setCancellationCommission(cancellationCommission);
-        
+
         summary.setTotalCommissions(totalCommissions);
         summary.setTotalCommission(totalCommissions);
         summary.setNetAmount(netAmount);
@@ -482,18 +532,20 @@ public class AccountSummaryService {
     public AccountSummaryDTO calculateDirectionalSummaryGlobal(User courier, Organization otherOrg,
             Organization myOrg, List<Order> orders) {
 
-        long deliveredOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY).count();
+        long deliveredOrders = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
+                .count();
         long returnedOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.REFUSED).count();
         long cancelledOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count();
 
         long otherOrders = orders.size() - deliveredOrders - returnedOrders - cancelledOrders;
 
         BigDecimal requiredAmountFromCourier = BigDecimal.ZERO;
-        
+
         BigDecimal deliveryCommission = BigDecimal.ZERO;
         BigDecimal rejectionCommission = BigDecimal.ZERO;
         BigDecimal cancellationCommission = BigDecimal.ZERO;
-        
+
         BigDecimal totalAmount = BigDecimal.ZERO; // إجمالي المبلغ للطلبات التي في حوزتهم
         BigDecimal deliveredAmount = BigDecimal.ZERO;
         BigDecimal partialDeliveryAmount = BigDecimal.ZERO;
@@ -508,32 +560,37 @@ public class AccountSummaryService {
             // 1-إجمالي المبلغ= مبلغ الاوردرات التي توجد فعليا لدي المندوب او المنظمه
             totalAmount = totalAmount.add(order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
 
-            Organization commissionOrg = order.getAssignedToOrganization() != null ? order.getAssignedToOrganization() : order.getOwnerOrganization();
-            java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> courierSetting = commissionService.getCourierCommission(commissionOrg, courier);
-            
+            Organization commissionOrg = order.getAssignedToOrganization() != null ? order.getAssignedToOrganization()
+                    : order.getOwnerOrganization();
+            java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> courierSetting = commissionService
+                    .getCourierCommission(commissionOrg, courier);
+
             BigDecimal currentDeliveryCommission = BigDecimal.ZERO;
             BigDecimal currentRejectionCommission = BigDecimal.ZERO;
             BigDecimal currentCancellationCommission = BigDecimal.ZERO;
 
             if (order.getManualCourierCommission() != null) {
                 if (isReturned) {
-                     currentRejectionCommission = order.getManualCourierCommission();
+                    currentRejectionCommission = order.getManualCourierCommission();
                 } else if (isCancelled) {
-                     currentCancellationCommission = order.getManualCourierCommission();
+                    currentCancellationCommission = order.getManualCourierCommission();
                 } else {
-                     // يشمل المستلم والجزئي والمؤجل وغيرها
-                     currentDeliveryCommission = order.getManualCourierCommission();
+                    // يشمل المستلم والجزئي والمؤجل وغيرها
+                    currentDeliveryCommission = order.getManualCourierCommission();
                 }
             } else if (courierSetting.isPresent()) {
                 if (isDelivered || isPartial) {
-                    BigDecimal baseAmount = isPartial ? order.getPartialDeliveryAmount() : (order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount());
+                    BigDecimal baseAmount = isPartial ? order.getPartialDeliveryAmount()
+                            : (order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount());
                     if (baseAmount != null && baseAmount.compareTo(BigDecimal.ZERO) > 0) {
-                        currentDeliveryCommission = commissionService.calculateCommission(courierSetting.get(), baseAmount);
+                        currentDeliveryCommission = commissionService.calculateCommission(courierSetting.get(),
+                                baseAmount);
                     }
                 } else if (isReturned) {
                     BigDecimal rejectionPayment = order.getRejectionPayment();
                     if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
-                         currentRejectionCommission = commissionService.calculateCommission(courierSetting.get(), rejectionPayment);
+                        currentRejectionCommission = commissionService.calculateCommission(courierSetting.get(),
+                                rejectionPayment);
                     } else if (courierSetting.get().getRejectionCommission() != null) {
                         currentRejectionCommission = courierSetting.get().getRejectionCommission();
                     }
@@ -543,17 +600,20 @@ public class AccountSummaryService {
                     }
                 }
             }
-            
+
             if (isDelivered) {
                 // المبلغ المسلم من التوصيل الكامل (collectedAmount أو amount)
-                BigDecimal collected = order.getCollectedAmount() != null ? order.getCollectedAmount() : (order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
+                BigDecimal collected = order.getCollectedAmount() != null ? order.getCollectedAmount()
+                        : (order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
                 deliveredAmount = deliveredAmount.add(collected);
             } else if (isReturned) {
-                returnedAmount = returnedAmount.add(order.getRejectionPayment() != null ? order.getRejectionPayment() : BigDecimal.ZERO);
+                returnedAmount = returnedAmount
+                        .add(order.getRejectionPayment() != null ? order.getRejectionPayment() : BigDecimal.ZERO);
             } else if (isPartial) {
-                partialDeliveryAmount = partialDeliveryAmount.add(order.getPartialDeliveryAmount() != null ? order.getPartialDeliveryAmount() : BigDecimal.ZERO);
+                partialDeliveryAmount = partialDeliveryAmount.add(
+                        order.getPartialDeliveryAmount() != null ? order.getPartialDeliveryAmount() : BigDecimal.ZERO);
             }
-            
+
             deliveryCommission = deliveryCommission.add(currentDeliveryCommission);
             rejectionCommission = rejectionCommission.add(currentRejectionCommission);
             cancellationCommission = cancellationCommission.add(currentCancellationCommission);
@@ -565,7 +625,8 @@ public class AccountSummaryService {
         // 2-المبلغ المسلم = مبلغ الاستلام + الاستلام الجزئي + المبلغ المدفوع من الرفض
         BigDecimal finalDeliveredAmount = deliveredAmount.add(partialDeliveryAmount).add(returnedAmount);
 
-        // 4-الصافي (بعد الخصم) = المبلغ المسلم - اجمالي العموله (للمناديب فقط، الرفض يحتسب ضمن المبلغ المسلم)
+        // 4-الصافي (بعد الخصم) = المبلغ المسلم - اجمالي العموله (للمناديب فقط، الرفض
+        // يحتسب ضمن المبلغ المسلم)
         BigDecimal netAmount = finalDeliveredAmount.subtract(totalCommissions);
 
         AccountSummaryDTO summary = new AccountSummaryDTO();
@@ -579,18 +640,18 @@ public class AccountSummaryService {
         summary.setRefusedOrders(returnedOrders);
         summary.setReturnedOrders(returnedOrders);
         summary.setCancelledOrders(cancelledOrders);
-        
+
         summary.setOtherOrders(otherOrders);
-        
+
         summary.setTotalAmount(totalAmount);
         summary.setDeliveredAmount(finalDeliveredAmount);
         summary.setReturnedAmount(returnedAmount);
         summary.setPartialDeliveryAmount(partialDeliveryAmount);
-        
+
         summary.setDeliveryCommission(deliveryCommission);
         summary.setRejectionCommission(rejectionCommission);
         summary.setCancellationCommission(cancellationCommission);
-        
+
         summary.setTotalCommissions(totalCommissions);
         summary.setTotalCommission(totalCommissions);
         summary.setNetAmount(netAmount);

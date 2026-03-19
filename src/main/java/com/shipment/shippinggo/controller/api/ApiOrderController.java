@@ -44,7 +44,7 @@ public class ApiOrderController {
         if (user.getRole() == Role.COURIER) {
             orders = orderService.getOrdersAssignedToCourier(user.getId());
         } else if (user.getRole() == Role.MEMBER) {
-            orders = orderService.getOrdersByCreatedBy(user.getId());
+            orders = orderService.getOrdersByRecipientPhone(user.getPhone());
         } else {
             Organization org = organizationService.getOrganizationByUser(user);
             if (org == null) {
@@ -60,6 +60,21 @@ public class ApiOrderController {
         }
 
         return ResponseEntity.ok(ApiResponse.success(orders));
+    }
+
+    @GetMapping("/track")
+    public ResponseEntity<ApiResponse<Order>> trackOrder(
+            @RequestParam String code,
+            @AuthenticationPrincipal User user) {
+        try {
+            Order order = orderService.getOrderByCode(code);
+            if (order == null) {
+                return ResponseEntity.status(404).body(ApiResponse.error("Order not found"));
+            }
+            return ResponseEntity.ok(ApiResponse.success(order));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     @GetMapping("/{id}")

@@ -194,6 +194,14 @@ public class OrderService {
         return orderQueryService.getOrdersByCreatedBy(createdById);
     }
 
+    public List<Order> getOrdersByRecipientPhone(String phone) {
+        return orderQueryService.getOrdersByRecipientPhone(phone);
+    }
+
+    public Order getOrderByCode(String code) {
+        return orderQueryService.getOrderByCode(code);
+    }
+
     public List<Order> getOrdersAssignedToCourierToday(Long courierId) {
         return orderQueryService.getOrdersAssignedToCourierToday(courierId);
     }

@@ -9,6 +9,7 @@ import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.repository.BusinessDayRepository;
 import com.shipment.shippinggo.repository.OrderAssignmentRepository;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +35,8 @@ class AccountSummaryServiceTest {
     private TransactionService transactionService;
     @Mock
     private CommissionService commissionService;
+    @Mock
+    private VirtualOfficeRepository virtualOfficeRepository;
 
     private AccountSummaryService accountSummaryService;
     private Organization testOrg;
@@ -41,7 +44,7 @@ class AccountSummaryServiceTest {
     @BeforeEach
     void setUp() {
         accountSummaryService = new AccountSummaryService(orderRepository, businessDayRepository,
-                orderAssignmentRepository, transactionService, commissionService);
+                orderAssignmentRepository, transactionService, commissionService, virtualOfficeRepository);
 
         testOrg = new Company();
         testOrg.setId(1L);

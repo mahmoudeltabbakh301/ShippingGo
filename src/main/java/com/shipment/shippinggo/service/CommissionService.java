@@ -5,6 +5,7 @@ import com.shipment.shippinggo.enums.CommissionType;
 import com.shipment.shippinggo.enums.Governorate;
 import com.shipment.shippinggo.enums.OrganizationType;
 import com.shipment.shippinggo.repository.CommissionSettingRepository;
+import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,17 +22,32 @@ public class CommissionService {
 
     private final CommissionSettingRepository commissionSettingRepository;
     private final TransactionService transactionService;
+    private final VirtualOfficeRepository virtualOfficeRepository;
 
     public CommissionService(CommissionSettingRepository commissionSettingRepository,
-            TransactionService transactionService) {
+            TransactionService transactionService,
+            VirtualOfficeRepository virtualOfficeRepository) {
         this.commissionSettingRepository = commissionSettingRepository;
         this.transactionService = transactionService;
+        this.virtualOfficeRepository = virtualOfficeRepository;
+    }
+
+    private Organization resolveEffectiveOrganization(Organization org) {
+        if (org != null && org.getType() == OrganizationType.VIRTUAL_OFFICE) {
+            return virtualOfficeRepository.findById(org.getId())
+                    .map(vo -> vo.getParentOrganization() != null ? vo.getParentOrganization() : org)
+                    .orElse(org);
+        }
+        return org;
     }
 
     // حفظ أو تحديث إعدادات عمولة منظمة (تعريف عمولة بين منظمتين)
     public CommissionSetting saveOrganizationCommission(Organization sourceOrg, Organization targetOrg,
             CommissionType type, BigDecimal value, BigDecimal rejectionCommission, BigDecimal cancellationCommission,
             Governorate governorate) {
+
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
+        targetOrg = resolveEffectiveOrganization(targetOrg);
 
         Optional<CommissionSetting> existing;
         if (governorate != null) {
@@ -66,6 +82,7 @@ public class CommissionService {
     // حفظ أو تحديث إعدادات عمولة مندوب
     public CommissionSetting saveCourierCommission(Organization sourceOrg, User courier,
             CommissionType type, BigDecimal value, BigDecimal rejectionCommission, BigDecimal cancellationCommission) {
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
         Optional<CommissionSetting> existing = commissionSettingRepository
                 .findBySourceOrganizationAndCourier(sourceOrg, courier);
 
@@ -92,6 +109,8 @@ public class CommissionService {
     // جلب إعدادات العمولة لمنظمة معينة (استناداً إلى المحافظة إن وجدت)
     public Optional<CommissionSetting> getOrganizationCommission(Organization sourceOrg, Organization targetOrg,
             Governorate governorate) {
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
+        targetOrg = resolveEffectiveOrganization(targetOrg);
         if (governorate != null) {
             Optional<CommissionSetting> govSetting = commissionSettingRepository
                     .findBySourceOrganizationAndTargetOrganizationAndGovernorate(sourceOrg, targetOrg, governorate);
@@ -104,6 +123,7 @@ public class CommissionService {
     }
 
     public Optional<CommissionSetting> getCourierCommission(Organization sourceOrg, User courier) {
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
         return commissionSettingRepository.findBySourceOrganizationAndCourier(sourceOrg, courier);
     }
 
@@ -124,9 +144,11 @@ public class CommissionService {
             String description) {
         BigDecimal orderAmount = order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount();
 
+        Organization effectiveOrg = resolveEffectiveOrganization(organization);
+
         AccountTransaction transaction = AccountTransaction.builder()
                 .order(order)
-                .organization(organization)
+                .organization(effectiveOrg)
                 .courier(courier)
                 .amount(amount)
                 .orderAmount(orderAmount != null ? orderAmount : BigDecimal.ZERO)

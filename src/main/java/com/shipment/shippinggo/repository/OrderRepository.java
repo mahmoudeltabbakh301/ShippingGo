@@ -27,6 +27,9 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         // Orders by Creator
         List<Order> findByCreatedByIdOrderByCreatedAtDesc(Long createdById);
 
+        // Orders by Recipient Phone (for MEMBER linking)
+        List<Order> findByRecipientPhoneOrderByCreatedAtDesc(String recipientPhone);
+
         // Orders by BusinessDay
         List<Order> findByBusinessDay(BusinessDay businessDay);
 

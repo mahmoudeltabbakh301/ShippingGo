@@ -5,6 +5,7 @@ import com.shipment.shippinggo.enums.CommissionType;
 import com.shipment.shippinggo.enums.Governorate;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.repository.CommissionSettingRepository;
+import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,6 +28,8 @@ class CommissionServiceTest {
     private CommissionSettingRepository commissionSettingRepository;
     @Mock
     private TransactionService transactionService;
+    @Mock
+    private VirtualOfficeRepository virtualOfficeRepository;
 
     private CommissionService commissionService;
     private Organization sourceOrg;
@@ -34,7 +37,7 @@ class CommissionServiceTest {
 
     @BeforeEach
     void setUp() {
-        commissionService = new CommissionService(commissionSettingRepository, transactionService);
+        commissionService = new CommissionService(commissionSettingRepository, transactionService, virtualOfficeRepository);
 
         sourceOrg = new Company();
         sourceOrg.setId(1L);

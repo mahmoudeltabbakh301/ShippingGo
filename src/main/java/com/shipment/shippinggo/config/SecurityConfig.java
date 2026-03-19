@@ -55,13 +55,10 @@ public class SecurityConfig {
                                                 .frameOptions(frame -> frame.sameOrigin()) // Prevent Clickjacking
                                                 .contentSecurityPolicy(csp -> csp
                                                                 .policyDirectives(
-                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:;")))
+                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self';")))
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // Disable CSRF for APIs
-                                .requiresChannel(channel -> {
-                                        // During testing, allow HTTP for all requests to avoid redirection issues on IP-based hosting
-                                        channel.anyRequest().requiresInsecure();
-                                })
+
                                 .authenticationProvider(authenticationProvider())
                                 .authorizeHttpRequests(authz -> authz
                                                 // Allow CORS preflight requests
@@ -75,7 +72,9 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/verify/**", "/api/orders/*/qr-image", "/ws/**")
                                                 .permitAll()
                                                 // Auth pages & Health checks
-                                                .requestMatchers("/", "/login", "/register", "/register/**", "/verify", "/actuator/**").permitAll()
+                                                .requestMatchers("/", "/login", "/register", "/register/**", "/verify",
+                                                                "/actuator/**")
+                                                .permitAll()
                                                 // Member Invitations (Accessible to all authenticated users)
                                                 .requestMatchers("/members/invitations",
                                                                 "/members/invitations/**")
@@ -87,7 +86,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/members/**", "/network/**")
                                                 .hasAnyRole("ADMIN", "MANAGER")
                                                 // Admin and Manager only
-                                                .requestMatchers("/admin/**").hasAnyRole("SUPER_ADMIN", "ADMIN", "MANAGER")
+                                                .requestMatchers("/admin/**")
+                                                .hasAnyRole("SUPER_ADMIN", "ADMIN", "MANAGER")
                                                 // Accounts - ADMIN, MANAGER, ACCOUNTANT
                                                 .requestMatchers("/accounts/**")
                                                 .hasAnyRole("ADMIN", "MANAGER", "ACCOUNTANT")
@@ -127,6 +127,9 @@ public class SecurityConfig {
                                                 .loginProcessingUrl("/login")
                                                 .defaultSuccessUrl("/dashboard", true)
                                                 .failureUrl("/login?error=true")
+                                                .successHandler((request, response, authentication) -> {
+                                                        response.sendRedirect("/dashboard");
+                                                })
                                                 .permitAll())
                                 .logout(logout -> logout
                                                 .logoutUrl("/logout")
@@ -142,7 +145,11 @@ public class SecurityConfig {
                                                                 response.getWriter().write(
                                                                                 "{\"success\":false,\"message\":\"Unauthorized\"}");
                                                         } else {
-                                                                response.sendRedirect("/login");
+                                                                // الحل هنا
+                                                                String redirectUrl = request.getScheme() + "://" +
+                                                                                request.getServerName() + ":" +
+                                                                                request.getServerPort() + "/login";
+                                                                response.sendRedirect(redirectUrl);
                                                         }
                                                 })
                                                 // Return JSON 403 for forbidden API requests instead of redirecting to
@@ -177,7 +184,9 @@ public class SecurityConfig {
                         // Default to localhost for local dev if env not set
                         // Include 10.0.2.2 for Android emulator access
                         configuration.setAllowedOrigins(
-                                        java.util.List.of("http://localhost:3000", "http://localhost:8080", "http://10.0.2.2:8080", "http://192.168.1.6:8080"));
+                                        java.util.List.of("http://localhost:3000", "http://localhost:8080",
+                                                        "http://10.0.2.2:8080", "http://192.168.1.6:8080",
+                                                        "https://*.ngrok-free.dev"));
                 }
 
                 configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
