@@ -59,13 +59,8 @@ public class SecurityConfig {
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // Disable CSRF for APIs
                                 .requiresChannel(channel -> {
-                                        // Only enforce HTTPS if NOT on localhost/emulator to allow easy development
-                                        channel.requestMatchers(r -> r.getServerName().equals("localhost") ||
-                                                        r.getServerName().equals("127.0.0.1") ||
-                                                        r.getServerName().equals("10.0.2.2") ||
-                                                        r.getServerName().startsWith("192.168."))
-                                                        .requiresInsecure();
-                                        channel.anyRequest().requiresSecure();
+                                        // During testing, allow HTTP for all requests to avoid redirection issues on IP-based hosting
+                                        channel.anyRequest().requiresInsecure();
                                 })
                                 .authenticationProvider(authenticationProvider())
                                 .authorizeHttpRequests(authz -> authz
