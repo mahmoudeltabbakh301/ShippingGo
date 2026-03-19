@@ -49,7 +49,8 @@ EXPOSE 8080
 # Run the application with production profile
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
-    "-XX:MaxRAMPercentage=75.0", \
+    "-XX:MaxRAMPercentage=60.0", \
+    "-XX:InitialRAMPercentage=30.0", \
     "-XX:TieredStopAtLevel=1", \
     "-noverify", \
     "-Djava.security.egd=file:/dev/./urandom", \
