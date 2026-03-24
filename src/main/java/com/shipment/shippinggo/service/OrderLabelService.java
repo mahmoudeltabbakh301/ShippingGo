@@ -72,8 +72,9 @@ public class OrderLabelService {
         }
         
         Font titleFont = new Font(cairoBaseFont, 16, Font.BOLD);
-        Font normalFont = new Font(cairoBaseFont, 12, Font.NORMAL);
-        Font largeFont = new Font(cairoBaseFont, 20, Font.BOLD);
+        Font normalFont = new Font(cairoBaseFont, 14, Font.NORMAL);
+        Font largeFont = new Font(cairoBaseFont, 24, Font.BOLD);
+        Font hugeFont = new Font(cairoBaseFont, 28, Font.BOLD);
 
         PdfPTable table = new PdfPTable(1);
         table.setWidthPercentage(100);
@@ -89,10 +90,10 @@ public class OrderLabelService {
 
         // 2. QR Code
         try {
-            byte[] qrBytes = qrCodeService.generateQrCodeImage(order.getCode(), 150, 150);
+            byte[] qrBytes = qrCodeService.generateQrCodeImage(order.getCode(), 250, 250);
             Image qrImage = Image.getInstance(qrBytes);
             qrImage.setAlignment(Element.ALIGN_CENTER);
-            qrImage.scaleToFit(120, 120);
+            qrImage.scaleToFit(220, 220);
 
             PdfPCell qrCell = new PdfPCell(qrImage);
             qrCell.setBorder(Rectangle.NO_BORDER);
@@ -103,35 +104,13 @@ public class OrderLabelService {
             e.printStackTrace();
         }
 
-        // 3. Order Code
-        PdfPCell codeCell = new PdfPCell();
-        codeCell.setBorder(Rectangle.NO_BORDER);
-        codeCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        codeCell.setPhrase(new Phrase(order.getCode(), FontFactory.getFont(FontFactory.COURIER_BOLD, 18)));
-        table.addCell(codeCell);
-
-        // Spacer
-        PdfPCell spacer = new PdfPCell(new Phrase(" "));
-        spacer.setBorder(Rectangle.NO_BORDER);
-        table.addCell(spacer);
-
-        // 4. Recipient Details
-        addDetailRow(table, "المستلم: " + order.getRecipientName(), normalFont);
-        addDetailRow(table, "رقم الهاتف: " + order.getRecipientPhone(), normalFont);
-
-        if (order.getRecipientAddress() != null && !order.getRecipientAddress().isEmpty()) {
-            addDetailRow(table, "العنوان: " + order.getRecipientAddress(), normalFont);
-        }
-
-        // 5. Amount
-        PdfPCell amountCell = new PdfPCell();
-        amountCell.setBorder(Rectangle.BOX);
-        amountCell.setBorderWidth(2);
-        amountCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-        amountCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-        amountCell.setPadding(10);
-        amountCell.setPhrase(new Phrase(order.getAmount() + " ج.م", largeFont));
-        table.addCell(amountCell);
+        // 3. Phone Number
+        PdfPCell phoneCell = new PdfPCell(new Phrase("هاتف: " + order.getRecipientPhone(), hugeFont));
+        phoneCell.setBorder(Rectangle.NO_BORDER);
+        phoneCell.setPaddingTop(10);
+        phoneCell.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
+        phoneCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell(phoneCell);
 
         document.add(table);
     }

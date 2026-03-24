@@ -27,6 +27,8 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <!-- Leaflet.js Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         .org-grid {
@@ -104,6 +106,8 @@
             <!-- Nearby Results -->
             <div id="nearbyResults" style="display: none;">
                 <h2 class="section-title" th:text="#{user.ship.nearby_title}">الأقرب إليك</h2>
+                <!-- Map View -->
+                <div id="nearbyMap" style="height: 400px; border-radius: var(--border-radius-lg); border: 2px solid var(--border-color); margin-bottom: 1.5rem; z-index: 0;"></div>
                 <div class="org-grid" id="nearbyGrid">
                     <!-- Results will be injected here -->
                 </div>
@@ -169,10 +173,15 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('open');
         }
+
+        var nearbyMap = null;
+        var userLat = null;
+        var userLng = null;
 
         function findNearby() {
             const statusDiv = document.getElementById('locationStatus');
@@ -190,9 +199,9 @@
 
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    fetchNearbyOrganizations(lat, lng);
+                    userLat = position.coords.latitude;
+                    userLng = position.coords.longitude;
+                    fetchNearbyOrganizations(userLat, userLng);
                 },
                 (error) => {
                     let msg = '[[#{user.ship.js.error_default}]]';
@@ -241,10 +250,47 @@
                 return;
             }
 
-            results.forEach(item => {
+            // Initialize or reset the map
+            var mapEl = document.getElementById('nearbyMap');
+            if (nearbyMap) {
+                nearbyMap.remove();
+            }
+            nearbyMap = L.map('nearbyMap').setView([userLat, userLng], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(nearbyMap);
+
+            // Add user location marker (blue circle)
+            L.circleMarker([userLat, userLng], {
+                radius: 10,
+                fillColor: '#3388ff',
+                color: '#fff',
+                weight: 2,
+                fillOpacity: 0.9
+            }).addTo(nearbyMap).bindPopup('📍 موقعك الحالي');
+
+            var bounds = L.latLngBounds([[userLat, userLng]]);
+
+            results.forEach((item, index) => {
                 const org = item.organization;
                 const distance = item.distance.toFixed(1);
 
+                // Add marker on map
+                if (org.latitude && org.longitude) {
+                    var orgIcon = L.divIcon({
+                        className: 'org-map-marker',
+                        html: '<div style="background: var(--primary-color, #6C5CE7); color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.3); border: 2px solid white;">' + (index + 1) + '</div>',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    });
+                    L.marker([org.latitude, org.longitude], { icon: orgIcon })
+                        .addTo(nearbyMap)
+                        .bindPopup('<b>' + org.name + '</b><br>' + distance + ' [[#{user.ship.js.km}]]<br><a href="/user/ship/request/' + org.id + '" class="btn btn-primary btn-sm" style="margin-top: 8px; display: inline-block; padding: 4px 12px; text-decoration: none;">[[#{user.ship.js.btn_choose}]]</a>');
+                    bounds.extend([org.latitude, org.longitude]);
+                }
+
+                // Add card to grid
                 const card = document.createElement('div');
                 card.className = 'org-card';
                 card.style.borderColor = 'var(--primary-color)';
@@ -252,7 +298,10 @@
 
                 card.innerHTML = `
                     <div style="display:flex; justify-content:space-between; align-items:start;">
-                        <div class="org-name">${org.name}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="background: var(--primary-color, #6C5CE7); color: white; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px;">${index + 1}</span>
+                            <div class="org-name">${org.name}</div>
+                        </div>
                         <div class="badge badge-primary">${distance} [[#{user.ship.js.km}]]</div>
                     </div>
                     <div class="org-details">
@@ -267,6 +316,9 @@
                 `;
                 grid.appendChild(card);
             });
+
+            // Fit map to show all markers
+            nearbyMap.fitBounds(bounds, { padding: [50, 50] });
 
             container.style.display = 'block';
             container.scrollIntoView({ behavior: 'smooth' });

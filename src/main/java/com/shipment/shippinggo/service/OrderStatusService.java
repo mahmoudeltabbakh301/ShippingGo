@@ -256,14 +256,45 @@ public class OrderStatusService {
             throw new BusinessLogicException("تم تأكيد جميع المراحل. بانتظار تأكيد المالك الأصلي.");
         }
 
-        if (!userOrg.getId().equals(pendingAssignment.getAssigneeOrganization().getId())) {
+        Organization rawAssigneeOrg = pendingAssignment.getAssigneeOrganization();
+        Organization unproxiedAssigneeOrg = org.hibernate.Hibernate.unproxy(rawAssigneeOrg, Organization.class);
+
+        boolean canConfirmOnBehalf = false;
+        if (unproxiedAssigneeOrg instanceof VirtualOffice) {
+            VirtualOffice vo = (VirtualOffice) unproxiedAssigneeOrg;
+            if (vo.getParentOrganization() != null && vo.getParentOrganization().getId().equals(userOrg.getId())) {
+                canConfirmOnBehalf = true;
+            }
+        }
+
+        if (!userOrg.getId().equals(rawAssigneeOrg.getId()) && !canConfirmOnBehalf) {
             throw new UnauthorizedAccessException("ليس دورك لتأكيد استلام المرتجع. الدور الحالي للمنظمة: "
-                    + pendingAssignment.getAssigneeOrganization().getName());
+                    + rawAssigneeOrg.getName());
         }
 
         pendingAssignment.setReturnConfirmed(true);
         pendingAssignment.setReturnConfirmedAt(LocalDateTime.now());
         orderAssignmentRepository.save(pendingAssignment);
+
+        // إذا تم التأكيد نيابة عن المكتب الافتراضي، وكان الدور القادم على المنظمة الأساسية،
+        // نقوم بتأكيد استلام المنظمة الأساسية تلقائياً لأنها تسلمت الطلب بالفعل.
+        if (canConfirmOnBehalf) {
+            OrderAssignment nextPending = null;
+            for (int i = chain.size() - 1; i >= 0; i--) {
+                if (!chain.get(i).isReturnConfirmed()) {
+                    nextPending = chain.get(i);
+                    break;
+                }
+            }
+            
+            if (nextPending != null && nextPending.getAssigneeOrganization().getId().equals(userOrg.getId())) {
+                nextPending.setReturnConfirmed(true);
+                nextPending.setReturnConfirmedAt(LocalDateTime.now());
+                orderAssignmentRepository.save(nextPending);
+            } else if (nextPending == null && userOrg.getId().equals(order.getOwnerOrganization().getId())) {
+                order.setReturnedToOwner(true);
+            }
+        }
 
         return orderRepository.save(order);
     }

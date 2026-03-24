@@ -13,26 +13,26 @@ import java.util.Optional;
 
 @Repository
 public interface MembershipRepository extends JpaRepository<Membership, Long> {
-    List<Membership> findByOrganizationAndStatus(Organization organization, MembershipStatus status);
+        List<Membership> findByOrganizationAndStatus(Organization organization, MembershipStatus status);
 
-    List<Membership> findByOrganizationIdAndStatus(Long organizationId, MembershipStatus status);
+        List<Membership> findByOrganizationIdAndStatus(Long organizationId, MembershipStatus status);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "organization" })
-    List<Membership> findByUserAndStatus(User user, MembershipStatus status);
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "organization" })
+        List<Membership> findByUserAndStatus(User user, MembershipStatus status);
 
-    List<Membership> findByUser(User user);
+        List<Membership> findByUser(User user);
 
-    List<Membership> findByUserId(Long userId);
+        List<Membership> findByUserId(Long userId);
 
-    Optional<Membership> findByUserAndOrganization(User user, Organization organization);
+        Optional<Membership> findByUserAndOrganization(User user, Organization organization);
 
-    List<Membership> findByOrganizationAndStatusAndAssignedRole(Organization organization, MembershipStatus status,
-            Role role);
+        List<Membership> findByOrganizationAndStatusAndAssignedRole(Organization organization, MembershipStatus status,
+                        Role role);
 
-    boolean existsByUserAndOrganization(User user, Organization organization);
+        boolean existsByUserAndOrganization(User user, Organization organization);
 
-    boolean existsByUserAndOrganizationAndStatus(User user, Organization organization, MembershipStatus status);
+        boolean existsByUserAndOrganizationAndStatus(User user, Organization organization, MembershipStatus status);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "organization" })
-    List<Membership> findByUserAndStatusAndAssignedRole(User user, MembershipStatus status, Role role);
+        @org.springframework.data.jpa.repository.EntityGraph(attributePaths = { "organization" })
+        List<Membership> findByUserAndStatusAndAssignedRole(User user, MembershipStatus status, Role role);
 }

@@ -9,14 +9,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
     private final int MAX_REQUESTS_PER_MINUTE = 100;
-    private final ConcurrentHashMap<String, RequestInfo> requestCounts = new ConcurrentHashMap<>();
+    private final Cache<String, Integer> requestCounts = Caffeine.newBuilder()
+            .expireAfterWrite(1, TimeUnit.MINUTES)
+            .maximumSize(10000)
+            .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -37,21 +41,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     }
 
     private boolean isRateLimited(String clientIp) {
-        long currentTime = System.currentTimeMillis();
-        
-        requestCounts.compute(clientIp, (key, requestInfo) -> {
-            if (requestInfo == null || (currentTime - requestInfo.timestamp > TimeUnit.MINUTES.toMillis(1))) {
-                // Reset or initialize count for the new minute
-                return new RequestInfo(currentTime, 1);
-            } else {
-                // Increment count within the same minute
-                requestInfo.count++;
-                return requestInfo;
-            }
-        });
-
-        RequestInfo info = requestCounts.get(clientIp);
-        return info != null && info.count > MAX_REQUESTS_PER_MINUTE;
+        Integer count = requestCounts.getIfPresent(clientIp);
+        if (count == null) {
+            requestCounts.put(clientIp, 1);
+            return false;
+        } else if (count >= MAX_REQUESTS_PER_MINUTE) {
+            return true;
+        } else {
+            requestCounts.put(clientIp, count + 1);
+            return false;
+        }
     }
 
     private String getClientIP(HttpServletRequest request) {
@@ -62,13 +61,5 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         return xfHeader.split(",")[0].trim();
     }
 
-    private static class RequestInfo {
-        long timestamp;
-        int count;
 
-        RequestInfo(long timestamp, int count) {
-            this.timestamp = timestamp;
-            this.count = count;
-        }
-    }
 }

@@ -46,11 +46,14 @@ public class AccountSummaryService {
     }
 
     private boolean isHolderMatchingOrg(Organization holder, Organization targetOrg) {
-        if (holder == null || targetOrg == null) return false;
-        if (holder.getId().equals(targetOrg.getId())) return true;
+        if (holder == null || targetOrg == null)
+            return false;
+        if (holder.getId().equals(targetOrg.getId()))
+            return true;
         if (holder.getType() == OrganizationType.VIRTUAL_OFFICE) {
             return virtualOfficeRepository.findById(holder.getId())
-                    .map(vo -> vo.getParentOrganization() != null && vo.getParentOrganization().getId().equals(targetOrg.getId()))
+                    .map(vo -> vo.getParentOrganization() != null
+                            && vo.getParentOrganization().getId().equals(targetOrg.getId()))
                     .orElse(false);
         }
         return false;
@@ -112,7 +115,8 @@ public class AccountSummaryService {
 
         if (courierOrg != null) {
             orders = orders.stream().filter(o -> {
-                Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization() : o.getOwnerOrganization();
+                Organization holder = o.getAssignedToOrganization() != null ? o.getAssignedToOrganization()
+                        : o.getOwnerOrganization();
                 return isHolderMatchingOrg(holder, courierOrg);
             }).collect(Collectors.toList());
         }
@@ -442,7 +446,9 @@ public class AccountSummaryService {
                     if (baseAmount != null && baseAmount.compareTo(BigDecimal.ZERO) > 0) {
                         currentDeliveryCommission = commissionService.calculateCommission(setting.get(), baseAmount);
                     }
-                } else if (isReturned) {
+                }
+
+                if (isReturned) {
                     BigDecimal rejectionPayment = order.getRejectionPayment();
                     // إذا كان هناك مبلغ مدفوع في الرفض يخصم عمولة الرفض ويجمدها للشركة المسندة
                     if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
@@ -450,7 +456,9 @@ public class AccountSummaryService {
                     } else if (setting.get().getRejectionCommission() != null) {
                         currentRejectionCommission = setting.get().getRejectionCommission();
                     }
-                } else if (isCancelled) {
+                }
+
+                if (isCancelled) {
                     if (setting.get().getCancellationCommission() != null) {
                         currentCancellationCommission = setting.get().getCancellationCommission();
                     }
@@ -586,7 +594,9 @@ public class AccountSummaryService {
                         currentDeliveryCommission = commissionService.calculateCommission(courierSetting.get(),
                                 baseAmount);
                     }
-                } else if (isReturned) {
+                }
+
+                if (isReturned) {
                     BigDecimal rejectionPayment = order.getRejectionPayment();
                     if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
                         currentRejectionCommission = commissionService.calculateCommission(courierSetting.get(),
@@ -594,7 +604,9 @@ public class AccountSummaryService {
                     } else if (courierSetting.get().getRejectionCommission() != null) {
                         currentRejectionCommission = courierSetting.get().getRejectionCommission();
                     }
-                } else if (isCancelled) {
+                }
+
+                if (isCancelled) {
                     if (courierSetting.get().getCancellationCommission() != null) {
                         currentCancellationCommission = courierSetting.get().getCancellationCommission();
                     }

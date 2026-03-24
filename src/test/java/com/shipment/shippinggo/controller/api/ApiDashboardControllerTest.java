@@ -4,6 +4,8 @@ import com.shipment.shippinggo.entity.Company;
 import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.enums.Role;
+import com.shipment.shippinggo.repository.AppNotificationRepository;
+import com.shipment.shippinggo.repository.ShipmentRequestRepository;
 import com.shipment.shippinggo.service.CourierDayLogService;
 import com.shipment.shippinggo.service.OrderService;
 import com.shipment.shippinggo.service.OrganizationService;
@@ -36,6 +38,12 @@ class ApiDashboardControllerTest {
 
     @MockBean
     private CourierDayLogService courierDayLogService;
+
+    @MockBean
+    private ShipmentRequestRepository shipmentRequestRepository;
+
+    @MockBean
+    private AppNotificationRepository notificationRepository;
 
     @MockBean
     private CustomUserDetailsService customUserDetailsService;

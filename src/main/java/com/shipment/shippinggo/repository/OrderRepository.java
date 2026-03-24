@@ -8,6 +8,7 @@ import com.shipment.shippinggo.enums.Governorate;
 import com.shipment.shippinggo.enums.OrderStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -25,9 +26,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         boolean existsByCode(String code);
 
         // Orders by Creator
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByCreatedByIdOrderByCreatedAtDesc(Long createdById);
 
         // Orders by Recipient Phone (for MEMBER linking)
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByRecipientPhoneOrderByCreatedAtDesc(String recipientPhone);
 
         // Orders by BusinessDay
@@ -141,6 +144,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         List<Order> findByOwnerOrganizationIdAndStatusAndInvoiceIsNull(Long organizationId, OrderStatus status);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByOwnerOrganizationIdOrderByCreatedAtDesc(Long organizationId);
 
         List<Order> findByInvoiceId(Long invoiceId);
@@ -154,6 +158,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         LocalDate fromDate, LocalDate toDate);
 
         // Orders by Creator Organization (for Stores)
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByCreatorOrganizationIdOrderByCreatedAtDesc(Long organizationId);
 
         // Orders assigned to Courier
@@ -169,6 +174,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         // Orders by Status
         List<Order> findByOwnerOrganizationIdAndStatus(Long organizationId, OrderStatus status);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByAssignedToCourierIdOrderByCreatedAtDesc(Long courierId);
 
         // Count queries
@@ -237,6 +243,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("status") OrderStatus status);
 
         // Courier orders by date (for daily reset)
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.assignedToCourier.id = :courierId AND o.courierAssignmentDate >= :startOfDay AND o.courierAssignmentDate < :startOfNextDay ORDER BY o.courierAssignmentDate DESC")
         List<Order> findByAssignedToCourierIdAndCourierAssignmentDate(
                         @Param("courierId") Long courierId,
@@ -472,6 +479,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("assignedId") Long assignedId, @Param("date") java.time.LocalDate date,
                         @Param("status") OrderStatus status);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o JOIN OrderAssignment oa ON oa.order = o WHERE oa.assignerOrganization.id = :ownerId AND oa.assigneeOrganization.id = :assignedId AND oa.assignmentDate = :date ORDER BY o.createdAt DESC")
         List<Order> findByOwnerOrgAndAssignedOrgAndDate(@Param("ownerId") Long ownerId,
                         @Param("assignedId") Long assignedId, @Param("date") java.time.LocalDate date);
@@ -497,6 +505,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("startOfDay") LocalDateTime startOfDay,
                         @Param("startOfNextDay") LocalDateTime startOfNextDay, @Param("status") OrderStatus status);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.assignedToCourier.id = :courierId AND o.courierAssignmentDate >= :startOfDay AND o.courierAssignmentDate < :startOfNextDay ORDER BY o.createdAt DESC")
         List<Order> findByAssignedToCourierIdAndAssignmentDate(@Param("courierId") Long courierId,
                         @Param("startOfDay") LocalDateTime startOfDay,
@@ -705,6 +714,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("businessDayId") Long businessDayId);
 
         // Get recent orders for an organization within a business day
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId ORDER BY o.updatedAt DESC NULLS LAST, o.createdAt DESC")
         List<Order> findTodayOrdersByOwnerOrg(@Param("orgId") Long orgId, @Param("businessDayId") Long businessDayId);
 
@@ -775,6 +785,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         java.math.BigDecimal sumAllDeliveredAmountForOrgDashboard(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT DISTINCT o FROM Order o " +
                         "WHERE (o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
                         "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +

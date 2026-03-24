@@ -340,8 +340,16 @@ public class OrderQueryService {
                 }
 
                 if (pendingAssignment != null) {
-                    if (pendingAssignment.getAssigneeOrganization().getId().equals(orgId)) {
+                    Organization rawAssignee = pendingAssignment.getAssigneeOrganization();
+                    Organization unproxiedAssignee = org.hibernate.Hibernate.unproxy(rawAssignee, Organization.class);
+                    
+                    if (rawAssignee.getId().equals(orgId)) {
                         ctx.put("canConfirm", true);
+                    } else if (unproxiedAssignee instanceof VirtualOffice) {
+                        VirtualOffice vo = (VirtualOffice) unproxiedAssignee;
+                        if (vo.getParentOrganization() != null && vo.getParentOrganization().getId().equals(orgId)) {
+                            ctx.put("canConfirm", true);
+                        }
                     }
                 } else {
                     if (isOwner && !order.isReturnedToOwner()) {

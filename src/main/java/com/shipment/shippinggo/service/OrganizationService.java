@@ -575,7 +575,8 @@ public class OrganizationService {
         organizationRepository.save(organization);
     }
 
-    // البحث عن المنظمات المتاحة لاستقبال الشحنات (الداخلية أو الخارجية) في محافظة المستخدم
+    // البحث عن المنظمات المتاحة لاستقبال الشحنات (الداخلية أو الخارجية) في محافظة
+    // المستخدم
     public List<Organization> findAvailableOrganizationsForMember(User member) {
         if (member == null || member.getGovernorate() == null) {
             return List.of();
@@ -600,6 +601,9 @@ public class OrganizationService {
     public List<OrganizationDistance> findNearbyOrganizations(double userLat, double userLng) {
         List<Organization> allOrgs = organizationRepository.findAllWithLocation();
         return allOrgs.stream()
+                .filter(org -> org.isActive())
+                .filter(org -> !org.isVirtual())
+                .filter(org -> org.isAcceptsInternalShipments() || org.isAcceptsExternalShipments())
                 .map(org -> new OrganizationDistance(org,
                         calculateDistance(userLat, userLng, org.getLatitude(), org.getLongitude())))
                 .sorted((a, b) -> Double.compare(a.getDistance(), b.getDistance()))

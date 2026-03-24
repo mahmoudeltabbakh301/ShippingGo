@@ -136,31 +136,33 @@ public class NetworkController {
         }
         model.addAttribute("organization", org);
 
-        List<Company> allAvailable;
-        if (org.getType() == OrganizationType.OFFICE || org.getType() == OrganizationType.STORE) {
-            List<Company> joinedCompanies = (org.getType() == OrganizationType.STORE)
-                    ? organizationService.getCompaniesByStore(org.getId())
-                    : organizationService.getCompaniesByOffice(org.getId());
-            List<OrganizationRelation> pendingCompanyRequests = organizationRelationRepository
-                    .findByChildOrganizationAndStatus(org, RelationStatus.PENDING);
-
-            Set<Long> excludedCompanyIds = joinedCompanies.stream().map(Company::getId).collect(Collectors.toSet());
-            excludedCompanyIds.addAll(pendingCompanyRequests.stream()
-                    .map(r -> r.getParentOrganization().getId()).toList());
-            allAvailable = organizationService.getAllCompanies().stream()
-                    .filter(c -> !excludedCompanyIds.contains(c.getId()))
-                    .toList();
-        } else {
-            allAvailable = organizationService.getAllCompanies().stream()
-                    .filter(c -> !c.getId().equals(org.getId()))
-                    .toList();
-        }
+        List<Company> allAvailable = java.util.Collections.emptyList();
 
         if (query != null && !query.trim().isEmpty()) {
             String q = query.trim().toLowerCase();
-            allAvailable = allAvailable.stream()
-                    .filter(c -> c.getName().toLowerCase().contains(q) || c.getPhone().contains(q))
+            
+            Set<Long> excludedCompanyIds = new java.util.HashSet<>();
+            if (org.getType() == OrganizationType.OFFICE || org.getType() == OrganizationType.STORE) {
+                List<Company> joinedCompanies = (org.getType() == OrganizationType.STORE)
+                        ? organizationService.getCompaniesByStore(org.getId())
+                        : organizationService.getCompaniesByOffice(org.getId());
+                List<OrganizationRelation> pendingCompanyRequests = organizationRelationRepository
+                        .findByChildOrganizationAndStatus(org, RelationStatus.PENDING);
+                
+                excludedCompanyIds.addAll(joinedCompanies.stream().map(Company::getId).collect(Collectors.toSet()));
+                excludedCompanyIds.addAll(pendingCompanyRequests.stream()
+                        .map(r -> r.getParentOrganization().getId()).toList());
+            } else {
+                excludedCompanyIds.add(org.getId());
+            }
+
+            allAvailable = organizationService.getAllCompanies().stream()
+                    .filter(c -> !excludedCompanyIds.contains(c.getId()))
+                    .filter(c -> c.getName().toLowerCase().contains(q) || 
+                                 String.valueOf(c.getId()).equals(q) || 
+                                 (c.getPhone() != null && c.getPhone().contains(q)))
                     .toList();
+                    
             model.addAttribute("query", query);
         }
 
@@ -178,54 +180,51 @@ public class NetworkController {
         }
         model.addAttribute("organization", org);
 
-        List<Office> allAvailable;
-        if (org.getType() == OrganizationType.OFFICE) {
-            List<Office> linkedOffices = organizationService.getLinkedOffices(org.getId());
-            List<OrganizationRelation> incomingOfficeRequests = organizationService
-                    .getIncomingOfficeRequests(org.getId());
-            List<OrganizationRelation> outgoingOfficeRequests = organizationService
-                    .getOutgoingOfficeRequests(org.getId());
-
-            Set<Long> excludedOfficeIds = linkedOffices.stream().map(Office::getId).collect(Collectors.toSet());
-            excludedOfficeIds.add(org.getId());
-            excludedOfficeIds.addAll(incomingOfficeRequests.stream()
-                    .map(r -> r.getParentOrganization().getId()).toList());
-            excludedOfficeIds.addAll(outgoingOfficeRequests.stream()
-                    .map(r -> r.getChildOrganization().getId()).toList());
-            allAvailable = organizationService.getAllOffices().stream()
-                    .filter(o -> !excludedOfficeIds.contains(o.getId()))
-                    .toList();
-        } else if (org.getType() == OrganizationType.STORE) {
-            List<Office> joinedOffices = organizationService.getOfficesByStore(org.getId());
-            List<OrganizationRelation> pendingOfficeRequests = organizationRelationRepository
-                    .findByChildOrganizationAndStatus(org, RelationStatus.PENDING);
-
-            Set<Long> excludedOfficeIds = joinedOffices.stream().map(Office::getId).collect(Collectors.toSet());
-            excludedOfficeIds.addAll(pendingOfficeRequests.stream()
-                    .map(r -> r.getParentOrganization().getId()).toList());
-
-            allAvailable = organizationService.getAllOffices().stream()
-                    .filter(o -> !excludedOfficeIds.contains(o.getId()))
-                    .toList();
-        } else {
-            List<OrganizationRelation> relations = organizationRelationRepository
-                    .findByParentOrganizationAndStatus(org, RelationStatus.ACCEPTED);
-            Set<Long> excludedOfficeIds = relations.stream()
-                    .map(r -> r.getChildOrganization().getId()).collect(Collectors.toSet());
-            List<OrganizationRelation> linkRequests = organizationRelationRepository
-                    .findByParentOrganizationAndStatus(org, RelationStatus.PENDING);
-            excludedOfficeIds.addAll(linkRequests.stream()
-                    .map(r -> r.getChildOrganization().getId()).toList());
-            allAvailable = organizationService.getAllOffices().stream()
-                    .filter(o -> !excludedOfficeIds.contains(o.getId()))
-                    .toList();
-        }
+        List<Office> allAvailable = java.util.Collections.emptyList();
 
         if (query != null && !query.trim().isEmpty()) {
             String q = query.trim().toLowerCase();
-            allAvailable = allAvailable.stream()
-                    .filter(o -> o.getName().toLowerCase().contains(q) || o.getPhone().contains(q))
+            
+            Set<Long> excludedOfficeIds = new java.util.HashSet<>();
+            if (org.getType() == OrganizationType.OFFICE) {
+                List<Office> linkedOffices = organizationService.getLinkedOffices(org.getId());
+                List<OrganizationRelation> incomingOfficeRequests = organizationService
+                        .getIncomingOfficeRequests(org.getId());
+                List<OrganizationRelation> outgoingOfficeRequests = organizationService
+                        .getOutgoingOfficeRequests(org.getId());
+
+                excludedOfficeIds.addAll(linkedOffices.stream().map(Office::getId).collect(Collectors.toSet()));
+                excludedOfficeIds.add(org.getId());
+                excludedOfficeIds.addAll(incomingOfficeRequests.stream()
+                        .map(r -> r.getParentOrganization().getId()).toList());
+                excludedOfficeIds.addAll(outgoingOfficeRequests.stream()
+                        .map(r -> r.getChildOrganization().getId()).toList());
+            } else if (org.getType() == OrganizationType.STORE) {
+                List<Office> joinedOffices = organizationService.getOfficesByStore(org.getId());
+                List<OrganizationRelation> pendingOfficeRequests = organizationRelationRepository
+                        .findByChildOrganizationAndStatus(org, RelationStatus.PENDING);
+
+                excludedOfficeIds.addAll(joinedOffices.stream().map(Office::getId).collect(Collectors.toSet()));
+                excludedOfficeIds.addAll(pendingOfficeRequests.stream()
+                        .map(r -> r.getParentOrganization().getId()).toList());
+            } else {
+                List<OrganizationRelation> relations = organizationRelationRepository
+                        .findByParentOrganizationAndStatus(org, RelationStatus.ACCEPTED);
+                excludedOfficeIds.addAll(relations.stream()
+                        .map(r -> r.getChildOrganization().getId()).collect(Collectors.toSet()));
+                List<OrganizationRelation> linkRequests = organizationRelationRepository
+                        .findByParentOrganizationAndStatus(org, RelationStatus.PENDING);
+                excludedOfficeIds.addAll(linkRequests.stream()
+                        .map(r -> r.getChildOrganization().getId()).toList());
+            }
+
+            allAvailable = organizationService.getAllOffices().stream()
+                    .filter(o -> !excludedOfficeIds.contains(o.getId()))
+                    .filter(o -> o.getName().toLowerCase().contains(q) || 
+                                 String.valueOf(o.getId()).equals(q) || 
+                                 (o.getPhone() != null && o.getPhone().contains(q)))
                     .toList();
+                    
             model.addAttribute("query", query);
         }
 

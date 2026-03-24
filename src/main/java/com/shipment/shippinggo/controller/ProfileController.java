@@ -87,12 +87,6 @@ public class ProfileController {
             if (longitude != null)
                 org.setLongitude(longitude);
 
-            org.setAbout(about);
-            if (latitude != null)
-                org.setLatitude(latitude);
-            if (longitude != null)
-                org.setLongitude(longitude);
-
             // New Settings
             if (governorate != null)
                 org.setGovernorate(governorate);

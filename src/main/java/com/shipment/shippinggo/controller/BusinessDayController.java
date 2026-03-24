@@ -10,6 +10,7 @@ import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.enums.Role;
 import com.shipment.shippinggo.service.BusinessDayService;
 import com.shipment.shippinggo.service.ExcelExportService;
+import com.shipment.shippinggo.service.OrderLabelService;
 import com.shipment.shippinggo.service.OrderService;
 import com.shipment.shippinggo.service.OrganizationService;
 import com.shipment.shippinggo.repository.VirtualOfficeRepository;
@@ -35,17 +36,20 @@ public class BusinessDayController {
     private final OrderService orderService;
     private final ExcelExportService excelExportService;
     private final VirtualOfficeRepository virtualOfficeRepository;
+    private final OrderLabelService orderLabelService;
 
     public BusinessDayController(BusinessDayService businessDayService,
             OrganizationService organizationService,
             OrderService orderService,
             ExcelExportService excelExportService,
-            VirtualOfficeRepository virtualOfficeRepository) {
+            VirtualOfficeRepository virtualOfficeRepository,
+            OrderLabelService orderLabelService) {
         this.businessDayService = businessDayService;
         this.organizationService = organizationService;
         this.orderService = orderService;
         this.excelExportService = excelExportService;
         this.virtualOfficeRepository = virtualOfficeRepository;
+        this.orderLabelService = orderLabelService;
     }
 
     @GetMapping
@@ -254,27 +258,16 @@ public class BusinessDayController {
     /**
      * عرض حسابات يوم عمل محدد
      */
-    /**
-     * عرض حسابات يوم عمل محدد
-     */
     @GetMapping("/{id}/accounts")
     public String viewBusinessDayAccounts(@PathVariable Long id,
             @CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
 
         var businessDay = businessDayService.getById(id);
-        if (businessDay == null) {
+        if (businessDay == null || !businessDay.getOrganization().getId().equals(org.getId())) {
             return "redirect:/business-days";
         }
 
-        // === Security Check: التحقق من أن يوم العمل يتبع لمنظمة المستخدم ===
-        if (!businessDay.getOrganization().getId().equals(org.getId())) {
-            return "redirect:/business-days";
-        }
-
-        model.addAttribute("businessDay", businessDay);
-        model.addAttribute("organization", org);
-
-        return "business-days/accounts";
+        return "redirect:/accounts/day/" + id;
     }
 
     @PostMapping("/{id}/update-name")
@@ -338,6 +331,37 @@ public class BusinessDayController {
                             .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(resource);
         } catch (java.io.IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/{id}/bulk-print-labels")
+    public ResponseEntity<byte[]> bulkPrintLabels(@PathVariable Long id,
+            @RequestParam List<Long> orderIds,
+            @CurrentOrganization Organization org) {
+
+        var businessDay = businessDayService.getById(id);
+        if (businessDay == null || !businessDay.getOrganization().getId().equals(org.getId())) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            List<Order> orders = orderIds.stream()
+                    .map(orderService::getById)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toList());
+            byte[] pdfBytes = orderLabelService.generateBulkLabels(orders);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("filename", "bulk_labels_bd_" + id + ".pdf");
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+        } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
     }

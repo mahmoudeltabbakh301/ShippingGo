@@ -36,10 +36,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
 
-        // Skip filter if not starting with Bearer
+        // Skip filter if no Bearer token present — allow session-based auth to proceed
+        // (e.g., internal AJAX calls from the web dashboard)
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
+        }
+
+        // Force authentication via JWT when Bearer token is present for API requests
+        // (Prevent session auth from being used alongside JWT)
+        if (request.getRequestURI().startsWith("/api/")) {
+            SecurityContextHolder.clearContext();
         }
 
         jwt = authHeader.substring(7);

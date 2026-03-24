@@ -64,11 +64,13 @@
             </div>
 
             <div class="card">
-                <div th:if="${allOffices == null or allOffices.isEmpty()}" class="table-empty">
+                <div th:if="${query == null or query.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🔍</div>
+                    <div class="table-empty-text">قم بالبحث عن مكتب لعرض النتائج</div>
+                </div>
+                <div th:if="${query != null and !query.isEmpty() and (allOffices == null or allOffices.isEmpty())}" class="table-empty">
                     <div class="table-empty-icon">🏬</div>
-                    <div class="table-empty-text"
-                        th:text="${query != null ? #messages.msg('network.offices.empty_search') : #messages.msg('network.offices.empty')}">
-                        لا توجد مكاتب متاحة للانضمام</div>
+                    <div class="table-empty-text" th:text="#{network.offices.empty_search}">لا توجد مكاتب مطابقة للبحث</div>
                 </div>
                 <div class="table-container" th:if="${allOffices != null and !allOffices.isEmpty()}">
                     <table class="table">

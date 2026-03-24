@@ -5,11 +5,16 @@ import com.shipment.shippinggo.entity.CourierDayLog;
 import com.shipment.shippinggo.entity.Order;
 import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.User;
+import com.shipment.shippinggo.entity.AppNotification;
+import com.shipment.shippinggo.entity.ShipmentRequest;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.enums.Role;
 import com.shipment.shippinggo.service.CourierDayLogService;
 import com.shipment.shippinggo.service.OrderService;
 import com.shipment.shippinggo.service.OrganizationService;
+import com.shipment.shippinggo.repository.AppNotificationRepository;
+import com.shipment.shippinggo.repository.ShipmentRequestRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,12 +37,18 @@ public class ApiDashboardController {
     private final OrganizationService organizationService;
     private final OrderService orderService;
     private final CourierDayLogService courierDayLogService;
+    private final ShipmentRequestRepository shipmentRequestRepository;
+    private final AppNotificationRepository notificationRepository;
 
     public ApiDashboardController(OrganizationService organizationService, OrderService orderService,
-            CourierDayLogService courierDayLogService) {
+            CourierDayLogService courierDayLogService,
+            ShipmentRequestRepository shipmentRequestRepository,
+            AppNotificationRepository notificationRepository) {
         this.organizationService = organizationService;
         this.orderService = orderService;
         this.courierDayLogService = courierDayLogService;
+        this.shipmentRequestRepository = shipmentRequestRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @GetMapping
@@ -93,20 +104,23 @@ public class ApiDashboardController {
             data.put("returnedCount", returnedCount);
             data.put("collectedMoney", collectedMoney);
 
-            // Update day log for record keeping with the exact values displayed on dashboard
+            // Update day log for record keeping with the exact values displayed on
+            // dashboard
             courierDayLogService.updateDayLogStats(
-                user, 
-                totalOrders, 
-                deliveredCount, 
-                returnedCount, 
-                (int) todayOrders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count(),
-                inTransitCount,
-                java.math.BigDecimal.valueOf(collectedMoney)
-            );
+                    user,
+                    totalOrders,
+                    deliveredCount,
+                    returnedCount,
+                    (int) todayOrders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count(),
+                    inTransitCount,
+                    java.math.BigDecimal.valueOf(collectedMoney));
 
         } else if (user.getRole() == Role.MEMBER) {
             List<Order> memberOrders = orderService.getOrdersByRecipientPhone(user.getPhone());
             data.put("orders", memberOrders);
+            data.put("requests", shipmentRequestRepository.findByRequester(user));
+            data.put("notifications",
+                    notificationRepository.findByUserOrderByCreatedAtDesc(user, PageRequest.of(0, 5)).getContent());
         } else {
             // Admin / Manager / Org Role Logic
             Organization org = organizationService.getOrganizationByUser(user);

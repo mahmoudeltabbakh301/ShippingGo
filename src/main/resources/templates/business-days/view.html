@@ -266,6 +266,14 @@
                                 <button type="submit" class="btn btn-warning btn-sm"
                                     th:text="#{business_days.view.bulk_assign_custody}">📦 إسناد لعهدة المخزن</button>
                             </form>
+
+                            <!-- Bulk Print Labels (10x15) -->
+                            <form id="bulkPrintForm" th:action="@{/business-days/{id}/bulk-print-labels(id=${businessDay.id})}" method="get"
+                                style="display: flex; gap: var(--space-2); align-items: center;" target="_blank">
+                                <input type="hidden" name="orderIds" id="orderIdsForPrint" value="">
+                                <button type="submit" class="btn btn-dark btn-sm"
+                                    title="طباعة للمقاس الحراري Xprinter 10x15">🖨️ طباعة مجمعة (10x15)</button>
+                            </form>
                         </div>
                     </div>
 
@@ -365,6 +373,7 @@
                             var orderIdsForOffice = document.getElementById('orderIdsForOffice');
                             var orderIdsForCourier = document.getElementById('orderIdsForCourier');
                             var orderIdsForCustody = document.getElementById('orderIdsForCustody');
+                            var orderIdsForPrint = document.getElementById('orderIdsForPrint');
 
                             function getCheckboxes() {
                                 return document.querySelectorAll('.orderCheckbox');
@@ -382,6 +391,7 @@
                                 if (orderIdsForOffice) orderIdsForOffice.value = idsStr;
                                 if (orderIdsForCourier) orderIdsForCourier.value = idsStr;
                                 if (orderIdsForCustody) orderIdsForCustody.value = idsStr;
+                                if (orderIdsForPrint) orderIdsForPrint.value = idsStr;
 
                                 if (bulkActionsBar) {
                                     if (checked.length > 0) {
@@ -455,6 +465,16 @@
                                         if (!confirm('هل أنت متأكد من إسناد الطلبات المحددة لعهدة المخزن؟')) {
                                             e.preventDefault();
                                         }
+                                    }
+                                });
+                            }
+
+                            var printForm = document.getElementById('bulkPrintForm');
+                            if (printForm) {
+                                printForm.addEventListener('submit', function (e) {
+                                    if (!orderIdsForPrint || !orderIdsForPrint.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً للطباعة');
                                     }
                                 });
                             }

@@ -35,8 +35,8 @@ public class ApiCourierTrackingController {
             return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
         }
 
-        // Only ADMIN, MANAGER, and SUPER_ADMIN can view courier locations
-        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER && user.getRole() != Role.SUPER_ADMIN) {
+        // Only ADMIN, MANAGER, SUPER_ADMIN, and DATA_ENTRY can view courier locations
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER && user.getRole() != Role.SUPER_ADMIN && user.getRole() != Role.DATA_ENTRY) {
             return ResponseEntity.status(403).body(Map.of("success", false, "message", "Access denied"));
         }
 

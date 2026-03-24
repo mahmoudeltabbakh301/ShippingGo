@@ -146,10 +146,7 @@ public class SecurityConfig {
                                                                                 "{\"success\":false,\"message\":\"Unauthorized\"}");
                                                         } else {
                                                                 // الحل هنا
-                                                                String redirectUrl = request.getScheme() + "://" +
-                                                                                request.getServerName() + ":" +
-                                                                                request.getServerPort() + "/login";
-                                                                response.sendRedirect(redirectUrl);
+                                                                response.sendRedirect("/login");
                                                         }
                                                 })
                                                 // Return JSON 403 for forbidden API requests instead of redirecting to
@@ -179,11 +176,11 @@ public class SecurityConfig {
                 // production
                 String allowedOriginsEnv = System.getenv("ALLOWED_ORIGINS");
                 if (allowedOriginsEnv != null && !allowedOriginsEnv.isEmpty()) {
-                        configuration.setAllowedOrigins(java.util.Arrays.asList(allowedOriginsEnv.split(",")));
+                        configuration.setAllowedOriginPatterns(java.util.Arrays.asList(allowedOriginsEnv.split(",")));
                 } else {
                         // Default to localhost for local dev if env not set
                         // Include 10.0.2.2 for Android emulator access
-                        configuration.setAllowedOrigins(
+                        configuration.setAllowedOriginPatterns(
                                         java.util.List.of("http://localhost:3000", "http://localhost:8080",
                                                         "http://10.0.2.2:8080", "http://192.168.1.6:8080",
                                                         "https://*.ngrok-free.dev"));

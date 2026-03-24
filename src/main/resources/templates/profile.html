@@ -27,6 +27,8 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <!-- Leaflet.js Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         .profile-grid {
@@ -234,6 +236,28 @@
                                 </select>
                             </div>
 
+                            <!-- Map Location Picker -->
+                            <div class="form-group" style="margin-top: 1.5rem;">
+                                <label class="form-label">📍 موقع المقر على الخريطة</label>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+                                    اضغط على الخريطة لتحديد موقع المقر، أو استخدم الزر لتحديد موقعك تلقائياً
+                                </p>
+                                <div style="margin-bottom: 0.75rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                                    <button type="button" id="autoLocateBtn" class="btn btn-outline" onclick="autoDetectLocation()" style="display: inline-flex; align-items: center; gap: 6px;">
+                                        <span id="locateBtnIcon">📡</span>
+                                        <span id="locateBtnText">تحديد الموقع تلقائياً</span>
+                                    </button>
+                                    <span id="locateStatus" style="font-size: 0.85rem; color: var(--text-secondary); display: none;"></span>
+                                </div>
+                                <div id="orgMap" style="height: 350px; border-radius: var(--border-radius-md); border: 2px solid var(--border-color); z-index: 0;"></div>
+                                <input type="hidden" name="latitude" id="latInput" th:value="${organization.latitude}">
+                                <input type="hidden" name="longitude" id="lngInput" th:value="${organization.longitude}">
+                                <div id="mapCoords" style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                                    <span th:if="${organization.latitude != null}" th:text="'📌 الإحداثيات: ' + ${organization.latitude} + ', ' + ${organization.longitude}"></span>
+                                    <span th:unless="${organization.latitude != null}">لم يتم تحديد الموقع بعد</span>
+                                </div>
+                            </div>
+
                             <h4 class="section-title" style="margin-top: 1.5rem; font-size: 1rem;"
                                 th:text="#{profile.section_shipping_settings}">إعدادات استلام
                                 الشحنات من الأعضاء</h4>
@@ -270,10 +294,117 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('open');
         }
+
+        // Initialize map for organization location picker
+        (function() {
+            var mapEl = document.getElementById('orgMap');
+            if (!mapEl) return;
+
+            var latInput = document.getElementById('latInput');
+            var lngInput = document.getElementById('lngInput');
+            var coordsDiv = document.getElementById('mapCoords');
+
+            var savedLat = latInput.value ? parseFloat(latInput.value) : null;
+            var savedLng = lngInput.value ? parseFloat(lngInput.value) : null;
+
+            var defaultLat = savedLat || 30.0444;
+            var defaultLng = savedLng || 31.2357;
+            var defaultZoom = savedLat ? 15 : 6;
+
+            var map = L.map('orgMap').setView([defaultLat, defaultLng], defaultZoom);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+
+            var marker = null;
+
+            if (savedLat && savedLng) {
+                marker = L.marker([savedLat, savedLng]).addTo(map)
+                    .bindPopup('📍 موقع المقر الحالي').openPopup();
+            }
+
+            function setMapLocation(lat, lng) {
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
+                marker.bindPopup('📍 الموقع المحدد: ' + lat.toFixed(6) + ', ' + lng.toFixed(6)).openPopup();
+                latInput.value = lat;
+                lngInput.value = lng;
+                coordsDiv.innerHTML = '📌 الإحداثيات: ' + lat.toFixed(6) + ', ' + lng.toFixed(6);
+            }
+
+            map.on('click', function(e) {
+                setMapLocation(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Auto-detect location function
+            window.autoDetectLocation = function() {
+                var btn = document.getElementById('autoLocateBtn');
+                var btnIcon = document.getElementById('locateBtnIcon');
+                var btnText = document.getElementById('locateBtnText');
+                var status = document.getElementById('locateStatus');
+
+                if (!navigator.geolocation) {
+                    status.textContent = '❌ المتصفح لا يدعم تحديد الموقع';
+                    status.style.color = 'var(--danger-color, #e74c3c)';
+                    status.style.display = 'inline';
+                    return;
+                }
+
+                btn.disabled = true;
+                btnIcon.textContent = '⏳';
+                btnText.textContent = 'جاري تحديد الموقع...';
+                status.style.display = 'none';
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        var lat = position.coords.latitude;
+                        var lng = position.coords.longitude;
+
+                        setMapLocation(lat, lng);
+                        map.setView([lat, lng], 16);
+
+                        btn.disabled = false;
+                        btnIcon.textContent = '✅';
+                        btnText.textContent = 'تم تحديد الموقع';
+                        status.textContent = '📍 تم تحديد موقعك بدقة ' + position.coords.accuracy.toFixed(0) + ' متر';
+                        status.style.color = 'var(--success-color, #27ae60)';
+                        status.style.display = 'inline';
+
+                        setTimeout(function() {
+                            btnIcon.textContent = '📡';
+                            btnText.textContent = 'تحديد الموقع تلقائياً';
+                        }, 3000);
+                    },
+                    function(error) {
+                        btn.disabled = false;
+                        btnIcon.textContent = '📡';
+                        btnText.textContent = 'تحديد الموقع تلقائياً';
+
+                        var msg = '❌ ';
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED: msg += 'تم رفض صلاحية الموقع. يرجى السماح من إعدادات المتصفح.'; break;
+                            case error.POSITION_UNAVAILABLE: msg += 'الموقع غير متاح حالياً.'; break;
+                            case error.TIMEOUT: msg += 'انتهت مهلة تحديد الموقع. حاول مرة أخرى.'; break;
+                            default: msg += 'حدث خطأ غير متوقع.'; break;
+                        }
+                        status.textContent = msg;
+                        status.style.color = 'var(--danger-color, #e74c3c)';
+                        status.style.display = 'inline';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                );
+            };
+        })();
     </script>
 </body>
 
