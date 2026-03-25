@@ -161,7 +161,7 @@ public class BusinessDayController {
             @RequestParam(required = false) Long incomingFromId,
             @RequestParam(required = false) Long outgoingToId,
             @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) Governorate governorate,
+            @RequestParam(required = false) String governorate,
             @CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
 
         var businessDay = businessDayService.getById(id);
@@ -174,9 +174,19 @@ public class BusinessDayController {
             return "redirect:/business-days";
         }
 
+        Governorate govEnum = null;
+        Boolean noGov = false;
+        if (governorate != null && !governorate.isEmpty()) {
+            if ("NONE".equals(governorate)) {
+                noGov = true;
+            } else {
+                try { govEnum = Governorate.valueOf(governorate); } catch(Exception e) {}
+            }
+        }
+
         // جلب الأوردرات بالفلاتر كاملة من الداتابيز (تجنب N+1 والـ Stream Filtering)
         List<Order> orders = orderService.getOrdersByBusinessDayWithFullFilters(id, org.getId(), search, code, courierId, 
-                incomingFromId, outgoingToId, status, governorate);
+                incomingFromId, outgoingToId, status, govEnum, noGov);
 
         // حساب سياق سلسلة الإسناد (للعرض فقط الآن وليس للفلترة)
         var chainContext = orderService.getOrderChainContext(orders, org.getId());
@@ -304,7 +314,7 @@ public class BusinessDayController {
             @RequestParam(required = false) Long incomingFromId,
             @RequestParam(required = false) Long outgoingToId,
             @RequestParam(required = false) OrderStatus status,
-            @RequestParam(required = false) Governorate governorate,
+            @RequestParam(required = false) String governorate,
             @CurrentOrganization Organization org,
             @AuthenticationPrincipal User user) {
 
@@ -313,10 +323,20 @@ public class BusinessDayController {
             return ResponseEntity.notFound().build();
         }
 
+        Governorate govEnum = null;
+        Boolean noGov = false;
+        if (governorate != null && !governorate.isEmpty()) {
+            if ("NONE".equals(governorate)) {
+                noGov = true;
+            } else {
+                try { govEnum = Governorate.valueOf(governorate); } catch(Exception e) {}
+            }
+        }
+
         // استخدام نفس الميثود المستخدمة في عرض الصفحة لضمان تطابق النتائج
         List<Order> orders = orderService.getOrdersByBusinessDayWithFullFilters(
                 id, org.getId(), search, code, courierId,
-                incomingFromId, outgoingToId, status, governorate);
+                incomingFromId, outgoingToId, status, govEnum, noGov);
 
         try {
             java.io.ByteArrayInputStream in = excelExportService.exportOrdersToExcel(orders);

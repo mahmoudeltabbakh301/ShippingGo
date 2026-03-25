@@ -41,7 +41,7 @@ public class WarehouseService {
 
         // جلب أوردرات يوم العمل بالفلاتر كاملة (تجنب N+1 والفلترة اليدوية للمنظمات)
         List<Order> allOrders = orderService.getOrdersByBusinessDayWithFullFilters(
-                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null);
+                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false);
 
         java.util.Map<Long, java.util.Map<String, Boolean>> returnCtx = orderService.getOrderReturnContext(allOrders,
                 orgId);
@@ -78,7 +78,7 @@ public class WarehouseService {
         Long orgId = bd.getOrganization().getId();
 
         List<Order> allOrders = orderService.getOrdersByBusinessDayWithFullFilters(
-                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null);
+                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false);
 
         java.util.Map<Long, java.util.Map<String, Boolean>> returnCtx = orderService.getOrderReturnContext(allOrders,
                 orgId);

@@ -210,7 +210,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "   (o.assignedToOrganization.id = :officeId) OR " +
                         "   (o.ownerOrganization.id = :officeId AND o.assignedToOrganization.id = :orgId)" +
                         ") AND " +
-                        "(:governorate IS NULL OR o.governorate = :governorate) AND " +
+                        "(" +
+                        "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+                        "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+                        ") AND " +
                         "(o.ownerOrganization.id = :orgId OR o.assignedToOrganization.id = :orgId OR o.creatorOrganization.id = :orgId)")
         List<Order> findOrdersWithFilters(
                         @Param("orgId") Long orgId,
@@ -218,7 +221,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("courierId") Long courierId,
                         @Param("officeId") Long officeId,
                         @Param("status") OrderStatus status,
-                        @Param("governorate") Governorate governorate);
+                        @Param("governorate") Governorate governorate,
+                        @Param("noGovernorate") Boolean noGovernorate);
 
         // For accounts - orders assigned to organization
         long countByAssignedToOrganizationId(Long organizationId);
@@ -372,7 +376,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "   (:officeId = -1 AND o.assignedToOrganization IS NULL) OR " +
                         "   (o.assignedToOrganization.id = :officeId)" +
                         ") AND " +
-                        "(:governorate IS NULL OR o.governorate = :governorate)")
+                        "(" +
+                        "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+                        "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+                        ")")
         List<Order> findOrdersByBusinessDayWithFilters(
                         @Param("businessDayId") Long businessDayId,
                         @Param("search") String search,
@@ -380,7 +387,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("courierId") Long courierId,
                         @Param("officeId") Long officeId,
                         @Param("status") OrderStatus status,
-                        @Param("governorate") Governorate governorate);
+                        @Param("governorate") Governorate governorate,
+                        @Param("noGovernorate") Boolean noGovernorate);
 
         @Query("SELECT DISTINCT o FROM Order o " +
                         "LEFT JOIN FETCH o.ownerOrganization " +
@@ -394,7 +402,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "(:code IS NULL OR o.code LIKE CONCAT('%', :code, '%')) AND " +
                         "(:courierId IS NULL OR (o.assignedToCourier.id = :courierId)) AND " +
                         "(:status IS NULL OR o.status = :status) AND " +
-                        "(:governorate IS NULL OR o.governorate = :governorate) AND " +
+                        "(" +
+                        "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+                        "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+                        ") AND " +
                         "(:incomingFromId IS NULL OR EXISTS (" +
                         "   SELECT 1 FROM OrderAssignment oa2 WHERE oa2.order = o AND oa2.assigneeOrganization.id = :orgId AND oa2.assignerOrganization.id = :incomingFromId" +
                         ")) AND " +
@@ -408,6 +419,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("courierId") Long courierId,
                         @Param("status") OrderStatus status,
                         @Param("governorate") com.shipment.shippinggo.enums.Governorate governorate,
+                        @Param("noGovernorate") Boolean noGovernorate,
                         @Param("incomingFromId") Long incomingFromId,
                         @Param("outgoingToId") Long outgoingToId);
 
@@ -892,8 +904,11 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                "   LOWER(o.recipientAddress) LIKE LOWER(CONCAT('%', :search, '%'))" +
                ")) " +
                "AND (:code IS NULL OR LOWER(o.code) LIKE LOWER(CONCAT('%', :code, '%'))) " +
-               "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId) " +
-                "AND (:governorate IS NULL OR o.governorate = :governorate) " +
+                "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId) " +
+                "AND (" +
+                "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+                "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+                ") " +
                 "AND (:status IS NULL OR o.status = :status) " +
                 "AND (:incomingFromId IS NULL OR EXISTS (" +
                "   SELECT 1 FROM OrderAssignment oa2 WHERE oa2.order = o AND oa2.assigneeOrganization.id = :orgId AND oa2.assignerOrganization.id = :incomingFromId" +
@@ -909,6 +924,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 @Param("courierId") Long courierId,
                 @Param("status") OrderStatus status,
                 @Param("governorate") Governorate governorate,
+                @Param("noGovernorate") Boolean noGovernorate,
                 @Param("incomingFromId") Long incomingFromId,
                 @Param("outgoingToId") Long outgoingToId);
                 

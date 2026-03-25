@@ -100,11 +100,12 @@
                 <div class="card">
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
-                            style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary-500), var(--primary-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                            th:style="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;' : 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;'}">
                             💵</div>
                         <div>
-                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">الفرق الصافي</p>
-                            <h4 style="margin: 0; color: var(--primary-400);"
+                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">الفرق الصافي (وارد - صادر)</p>
+                            <h4 style="margin: 0;"
+                                th:styleappend="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'color: var(--success-400);' : 'color: var(--danger-400);'}"
                                 th:text="${commissionDifference != null ? #numbers.formatDecimal(commissionDifference, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
                                 0.00 ج.م</h4>
                         </div>

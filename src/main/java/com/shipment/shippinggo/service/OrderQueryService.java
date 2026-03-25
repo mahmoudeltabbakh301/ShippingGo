@@ -94,7 +94,7 @@ public class OrderQueryService {
         if (code != null && code.trim().isEmpty())
             code = null;
 
-        return orderRepository.findOrdersWithFilters(organizationId, code, courierId, officeId, status, governorate)
+        return orderRepository.findOrdersWithFilters(organizationId, code, courierId, officeId, status, governorate, false)
                 .stream()
                 .distinct()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
@@ -118,7 +118,7 @@ public class OrderQueryService {
             code = null;
 
         List<Order> orders = orderRepository.findOrdersByBusinessDayWithFilters(businessDayId, search, code,
-                courierId, officeId, status, governorate);
+                courierId, officeId, status, governorate, false);
 
         return orders.stream()
                 .distinct()
@@ -127,9 +127,9 @@ public class OrderQueryService {
     }
 
     public List<Order> getOrdersByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
-            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate) {
+            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
         return orderRepository.findOrdersByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId, status,
-                governorate, incomingFromId, outgoingToId);
+                governorate, noGovernorate, incomingFromId, outgoingToId);
     }
 
     public List<Order> getCustodyOrdersWithFilters(Long orgId, String search, String code, Long courierId,
@@ -140,7 +140,7 @@ public class OrderQueryService {
             code = null;
 
         List<Order> orders = orderRepository.findCustodyOrdersWithFilters(orgId, search, code,
-                courierId, status, governorate, incomingFromId, outgoingToId);
+                courierId, status, governorate, false, incomingFromId, outgoingToId);
 
         return orders.stream()
                 .distinct()
@@ -245,6 +245,10 @@ public class OrderQueryService {
                 .stream()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
                 .toList();
+    }
+
+    public List<OrderAssignment> getOrderAssignmentsByAssigneeAndDate(Long organizationId, LocalDate date) {
+        return orderAssignmentRepository.findAssignmentsWithOrdersByAssigneeAndDate(organizationId, date);
     }
 
     public List<Order> getPendingAssignments(Long organizationId) {

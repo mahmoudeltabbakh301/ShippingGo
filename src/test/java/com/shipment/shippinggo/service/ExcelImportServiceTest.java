@@ -31,7 +31,7 @@ class ExcelImportServiceTest {
     }
 
     @Test
-    void importOrders_InvalidFile_ThrowsException() {
+    void importOrders_InvalidFile_ReturnsErrors() {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "test.txt", "text/plain", "not excel".getBytes());
 
@@ -40,8 +40,8 @@ class ExcelImportServiceTest {
         Organization org = new Company();
         User user = new User();
 
-        assertThrows(Exception.class,
-                () -> excelImportService.importOrders(file, bd, user, org, null));
+        ExcelImportService.ImportResult result = excelImportService.importOrders(file, bd, user, org, null);
+        assertFalse(result.getErrors().isEmpty());
     }
 
     @Test
@@ -106,8 +106,8 @@ class ExcelImportServiceTest {
 
         Order createdOrder = new Order();
         createdOrder.setId(1L);
-        when(orderService.createOrder(any(OrderDto.class), any(User.class), any(Organization.class)))
-                .thenReturn(createdOrder);
+        when(orderService.createOrdersBulk(anyList(), any(User.class), any(Organization.class), any(BusinessDay.class)))
+                .thenReturn(java.util.Collections.singletonList(createdOrder));
 
         ExcelImportService.ImportResult result = excelImportService.importOrders(file, bd, user, org, null);
 

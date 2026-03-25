@@ -324,6 +324,14 @@ public class OrderController {
             model.addAttribute("returnStatus", orderService.getReturnStatus(id));
         }
 
+        // إضافة سلسلة الإسناد وصلاحيات إلغاء الإسناد
+        model.addAttribute("assignmentChain", orderService.getAssignmentChain(id));
+        model.addAttribute("canUnassignOrg", orderService.canUnassignOrganization(id, user));
+        model.addAttribute("canUnassignCourier", order.getAssignedToCourier() != null
+                && order.getStatus() != OrderStatus.DELIVERED
+                && order.getStatus() != OrderStatus.PARTIAL_DELIVERY
+                && order.getStatus() != OrderStatus.REFUSED);
+
         return "orders/view";
     }
 

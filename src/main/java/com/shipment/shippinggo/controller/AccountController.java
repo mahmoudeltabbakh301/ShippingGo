@@ -93,16 +93,27 @@ public class AccountController {
         model.addAttribute("totalCommission", totalCommission);
 
         // العمولات الصادرة والواردة
-        BigDecimal totalOutgoingCommission = accountSummaries.stream()
+        // الصادرة = عمولات المنظمات الصادرة + عمولات المناديب
+        BigDecimal outgoingOrgCommission = accountSummaries.stream()
                 .filter(s -> "OUTGOING".equals(s.getDirection()))
                 .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal courierCommission = accountSummaries.stream()
+                .filter(s -> "courier".equals(s.getType()))
+                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalOutgoingCommission = outgoingOrgCommission.add(courierCommission);
         model.addAttribute("totalOutgoingCommission", totalOutgoingCommission);
 
-        long countOutgoingTransactions = accountSummaries.stream()
+        long countOutgoingOrgTransactions = accountSummaries.stream()
                 .filter(s -> "OUTGOING".equals(s.getDirection()))
                 .mapToLong(AccountSummaryDTO::getTotalOrders)
                 .sum();
+        long countCourierTransactions = accountSummaries.stream()
+                .filter(s -> "courier".equals(s.getType()))
+                .mapToLong(AccountSummaryDTO::getTotalOrders)
+                .sum();
+        long countOutgoingTransactions = countOutgoingOrgTransactions + countCourierTransactions;
         model.addAttribute("countOutgoingTransactions", countOutgoingTransactions);
 
         BigDecimal totalIncomingCommission = accountSummaries.stream()
@@ -117,7 +128,8 @@ public class AccountController {
                 .sum();
         model.addAttribute("countIncomingTransactions", countIncomingTransactions);
 
-        BigDecimal commissionDifference = totalIncomingCommission.subtract(totalOutgoingCommission).abs();
+        // الفرق الصافي = الوارد - الصادر (موجب يعني لصالحنا، سالب يعني علينا)
+        BigDecimal commissionDifference = totalIncomingCommission.subtract(totalOutgoingCommission);
         model.addAttribute("commissionDifference", commissionDifference);
 
         // عدد المعاملات/الأوردرات لهذا اليوم

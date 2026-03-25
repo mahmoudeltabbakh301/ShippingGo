@@ -182,14 +182,15 @@
                         <div class="form-group" style="margin-bottom: 0;">
                             <select name="governorate" class="form-control" style="width: 130px;">
                                 <option value="">كل المحافظات</option>
-                                <option th:each="gov : ${governorates}" th:value="${gov}" th:text="${gov.arabicName}"
-                                    th:selected="${governorate == gov}"></option>
+                                <option value="NONE" th:selected="${governorate == 'NONE'}">بدون محافظه</option>
+                                <option th:each="gov : ${governorates}" th:value="${gov.name()}" th:text="${gov.arabicName}"
+                                    th:selected="${governorate == gov.name()}"></option>
                             </select>
                         </div>
 
                         <button type="submit" class="btn btn-secondary btn-sm"
                             th:text="#{business_days.view.btn_search}">بحث</button>
-                        <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null}"
+                        <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null || governorate != null}"
                             th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm">✕</a>
                     </form>
                 </div>

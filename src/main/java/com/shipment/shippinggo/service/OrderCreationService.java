@@ -98,6 +98,43 @@ public class OrderCreationService {
         return orderRepository.save(order);
     }
 
+    // إدخال طلبات متعددة دفعة واحدة (Batch Insert) لتحسين الأداء
+    @Transactional
+    public java.util.List<Order> createOrdersBulk(java.util.List<OrderDto> dtos, User createdBy, Organization ownerOrganization, BusinessDay businessDay) {
+        java.util.List<Order> orders = new java.util.ArrayList<>();
+        
+        for (OrderDto dto : dtos) {
+            String orderCode = dto.getCode();
+            if (orderCode == null || orderCode.trim().isEmpty()) {
+                orderCode = qrCodeService.generateUniqueCode(ownerOrganization.getId());
+            }
+
+            Order order = Order.builder()
+                    .businessDay(businessDay)
+                    .code(orderCode)
+                    .sequenceNumber(dto.getSequenceNumber())
+                    .companyName(dto.getCompanyName())
+                    .recipientName(dto.getRecipientName())
+                    .recipientPhone(dto.getRecipientPhone())
+                    .recipientAddress(dto.getRecipientAddress())
+                    .quantity(dto.getQuantity())
+                    .amount(dto.getAmount())
+                    .shippingPrice(dto.getShippingPrice())
+                    .orderPrice(dto.getOrderPrice())
+                    .notes(dto.getNotes())
+                    .governorate(dto.getGovernorate())
+                    .status(OrderStatus.WAITING)
+                    .createdBy(createdBy)
+                    .ownerOrganization(ownerOrganization)
+                    .creatorOrganization(ownerOrganization)
+                    .build();
+
+            orders.add(order);
+        }
+
+        return orderRepository.saveAll(orders);
+    }
+
     // تعديل بيانات الطلب مع الاحتفاظ بسجل التغييرات (Logs) والتحقق من الصلاحيات
     @Transactional
     public Order updateOrderDetails(Long orderId, OrderDto dto, User updatedBy) {

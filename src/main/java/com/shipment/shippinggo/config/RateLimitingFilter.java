@@ -16,7 +16,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
 
-    private final int MAX_REQUESTS_PER_MINUTE = 100;
+    private final int MAX_REQUESTS_PER_MINUTE = 2000;
     private final Cache<String, Integer> requestCounts = Caffeine.newBuilder()
             .expireAfterWrite(1, TimeUnit.MINUTES)
             .maximumSize(10000)

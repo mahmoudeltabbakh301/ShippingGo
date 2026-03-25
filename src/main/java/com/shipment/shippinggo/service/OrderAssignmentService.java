@@ -59,7 +59,8 @@ public class OrderAssignmentService {
         this.notificationService = notificationService;
     }
 
-    // إسناد طلب محدد إلى مكتب مستلم (منظمة وجهة)، مع التأكد من وجود علاقة عمل بينهما
+    // إسناد طلب محدد إلى مكتب مستلم (منظمة وجهة)، مع التأكد من وجود علاقة عمل
+    // بينهما
     @Transactional
     public Order assignToOrganization(Long orderId, Long targetOrgId, User assignedBy) {
         Organization targetOrg = organizationRepository.findById(targetOrgId)
@@ -168,8 +169,8 @@ public class OrderAssignmentService {
         orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
                 assignmentNote);
 
-        notificationService.sendNotificationToOrganization(targetOrg, "طلب جديد مسند", 
-                "تم إسناد طلب جديد رقم " + order.getCode() + " لمكتبكم.", 
+        notificationService.sendNotificationToOrganization(targetOrg, "طلب جديد مسند",
+                "تم إسناد طلب جديد رقم " + order.getCode() + " لمكتبكم.",
                 java.util.Map.of("orderCode", order.getCode(), "type", "ORG_ASSIGNMENT"), "ORG_ASSIGNMENT");
 
         return orderRepository.save(order);
@@ -284,14 +285,16 @@ public class OrderAssignmentService {
 
         if (!orders.isEmpty()) {
             orderRepository.saveAll(orders);
-            
-            notificationService.sendNotificationToOrganization(targetOrg, "طلبات جديدة مسندة", 
-                "تم إسناد " + orders.size() + " طلب جديد لمكتبكم.", 
-                java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_ORG_ASSIGNMENT"), "BULK_ORG_ASSIGNMENT");
+
+            notificationService.sendNotificationToOrganization(targetOrg, "طلبات جديدة مسندة",
+                    "تم إسناد " + orders.size() + " طلب جديد لمكتبكم.",
+                    java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_ORG_ASSIGNMENT"),
+                    "BULK_ORG_ASSIGNMENT");
         }
     }
 
-    // التحقق من صحة وقابلية الإسناد بناءً على العلاقة بين المنظمة المُرسِلة والمُستقبِلة
+    // التحقق من صحة وقابلية الإسناد بناءً على العلاقة بين المنظمة المُرسِلة
+    // والمُستقبِلة
     private boolean checkAssignmentRelation(Organization parentOrg, Organization childOrg) {
         if (parentOrg == null || childOrg == null)
             return false;
@@ -639,9 +642,10 @@ public class OrderAssignmentService {
         if (!orders.isEmpty()) {
             orderRepository.saveAll(orders);
 
-            notificationService.sendNotificationToUser(courier, "طلبات جديدة مسندة", 
-                "تم إسناد " + orders.size() + " طلب جديد إليك للتوصيل.", 
-                java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_COURIER_ASSIGNMENT"), "BULK_COURIER_ASSIGNMENT");
+            notificationService.sendNotificationToUser(courier, "طلبات جديدة مسندة",
+                    "تم إسناد " + orders.size() + " طلب جديد إليك للتوصيل.",
+                    java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_COURIER_ASSIGNMENT"),
+                    "BULK_COURIER_ASSIGNMENT");
         }
     }
 
@@ -710,16 +714,12 @@ public class OrderAssignmentService {
 
         Organization ownerOrg = order.getOwnerOrganization();
         Organization removerOrg = resolveUserOrganization(removedBy);
-        boolean isOwner = removerOrg != null && removerOrg.getId().equals(ownerOrg.getId());
-        boolean isAssigner = lastAssignmentOpt.isPresent() && removerOrg != null
-                && removerOrg.getId().equals(lastAssignmentOpt.get().getAssignerOrganization().getId());
+        boolean isOwner = isUserMemberOfOrganization(removedBy, ownerOrg);
+        boolean isAssigner = lastAssignmentOpt.isPresent() && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssignerOrganization());
+        boolean isAssignee = lastAssignmentOpt.isPresent() && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssigneeOrganization());
 
-        if (!isOwner && !isAssigner) {
-            isOwner = isUserMemberOfOrganization(removedBy, ownerOrg);
-        }
-
-        if (!isOwner && !isAssigner) {
-            throw new UnauthorizedAccessException("غير مصرح: فقط المؤسسة المالكة أو المسندة يمكنها إلغاء إسناد الطلب.");
+        if (!isOwner && !isAssigner && !isAssignee) {
+            throw new UnauthorizedAccessException("غير مصرح: فقط المؤسسة المالكة أو المسندة أو المسند إليها يمكنها إلغاء إسناد الطلب.");
         }
 
         OrderStatus previousStatus = order.getStatus();
@@ -763,6 +763,51 @@ public class OrderAssignmentService {
                 unassignNote);
 
         return orderRepository.save(order);
+    }
+
+    /**
+     * التحقق مما إذا كان يمكن للمستخدم إلغاء الإسناد الحالي للطلب.
+     * يستخدم في واجهة المستخدم (UI) لإظهار/إخفاء زر "إلغاء الإسناد".
+     */
+    public boolean canUnassignOrganization(Long orderId, User user) {
+        Order order = orderRepository.findById(orderId).orElse(null);
+        if (order == null || order.getAssignedToOrganization() == null) return false;
+
+        // لا يمكن إلغاء الإسناد في حالات نهائية
+        if (order.getStatus() == OrderStatus.DELIVERED ||
+                order.getStatus() == OrderStatus.PARTIAL_DELIVERY ||
+                order.getStatus() == OrderStatus.REFUSED) {
+            return false;
+        }
+
+        java.util.Optional<OrderAssignment> lastAssignmentOpt = orderAssignmentRepository
+                .findTopByOrderIdOrderByLevelDesc(orderId);
+
+        // لا يمكن إلغاء إسناد تم قبوله
+        if (lastAssignmentOpt.isPresent() && lastAssignmentOpt.get().isAccepted()) {
+            return false;
+        }
+
+        Organization ownerOrg = order.getOwnerOrganization();
+        boolean isOwner = isUserMemberOfOrganization(user, ownerOrg);
+        
+        boolean isAssigner = false;
+        boolean isAssignee = false;
+
+        // المنظمة المسندة (assigner) أو المسند إليها (assignee) للإسناد الأخير يمكنها الإلغاء
+        if (lastAssignmentOpt.isPresent()) {
+            isAssigner = isUserMemberOfOrganization(user, lastAssignmentOpt.get().getAssignerOrganization());
+            isAssignee = isUserMemberOfOrganization(user, lastAssignmentOpt.get().getAssigneeOrganization());
+        }
+
+        return isOwner || isAssigner || isAssignee;
+    }
+
+    /**
+     * جلب سلسلة الإسناد كاملة لأوردر معين.
+     */
+    public List<OrderAssignment> getAssignmentChain(Long orderId) {
+        return orderAssignmentRepository.findByOrderIdOrderByLevelAsc(orderId);
     }
 
     // قبول المستلم (المكتب) للطلب المُسند إليه

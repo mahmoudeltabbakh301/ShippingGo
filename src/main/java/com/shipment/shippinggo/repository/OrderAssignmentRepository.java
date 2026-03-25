@@ -39,6 +39,11 @@ public interface OrderAssignmentRepository extends JpaRepository<OrderAssignment
         // كل الأوردرات المسندة لمنظمة بتاريخ محدد
         List<OrderAssignment> findByAssigneeOrganizationIdAndAssignmentDate(Long organizationId, LocalDate date);
 
+        @Query("SELECT oa FROM OrderAssignment oa JOIN FETCH oa.order " +
+               "WHERE oa.assigneeOrganization.id = :orgId AND oa.assignmentDate = :date " +
+               "ORDER BY oa.assignedAt DESC")
+        List<OrderAssignment> findAssignmentsWithOrdersByAssigneeAndDate(@Param("orgId") Long orgId, @Param("date") LocalDate date);
+
         // كل الأوردرات التي أسندتها منظمة (كـ assigner)
         List<OrderAssignment> findByAssignerOrganizationId(Long organizationId);
 

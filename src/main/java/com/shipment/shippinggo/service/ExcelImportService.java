@@ -34,17 +34,19 @@ public class ExcelImportService {
         private List<Order> importedOrders = new ArrayList<>();
     }
 
-    // استيراد الطلبات من ملف إكسيل (Excel) وحفظها، مع إمكانية إسنادها فورياً למكتب معين
+    // استيراد الطلبات من ملف إكسيل (Excel) وحفظها دفعة واحدة للسرعة، مع إمكانية إسنادها فوراً لمكتب معين
     public ImportResult importOrders(MultipartFile file, BusinessDay businessDay, User createdBy,
             Organization organization, Long assignedToOrganizationId) {
         ImportResult result = new ImportResult();
 
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+        try (Workbook workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
 
             // Skip header row
             boolean isFirstRow = true;
             int rowNum = 0;
+            
+            List<OrderDto> validDtos = new ArrayList<>();
 
             for (Row row : sheet) {
                 rowNum++;
@@ -57,27 +59,31 @@ public class ExcelImportService {
                     OrderDto dto = parseRow(row, businessDay.getId());
                     // Check if row has any useful data
                     if (hasData(dto)) {
-                        Order order = orderService.createOrder(dto, createdBy, organization);
-
-                        // Assign immediately if requested
-                        if (assignedToOrganizationId != null) {
-                            try {
-                                order = orderService.assignToOrganization(order.getId(), assignedToOrganizationId,
-                                        createdBy);
-                            } catch (Exception e) {
-                                // Keep order but flag assignable failure
-                                result.getErrors().add("Row " + rowNum + " (Assigned Failed): " + e.getMessage());
-                            }
-                        }
-
-                        result.getImportedOrders().add(order);
-                        result.setSuccessCount(result.getSuccessCount() + 1);
+                        validDtos.add(dto);
                     }
                 } catch (Exception e) {
                     result.setErrorCount(result.getErrorCount() + 1);
                     result.getErrors().add("Row " + rowNum + ": " + e.getMessage());
                 }
             }
+            
+            if (!validDtos.isEmpty()) {
+                // Batch Insert Orders
+                List<Order> savedOrders = orderService.createOrdersBulk(validDtos, createdBy, organization, businessDay);
+                result.getImportedOrders().addAll(savedOrders);
+                result.setSuccessCount(savedOrders.size());
+
+                // Bulk Assignment if needed
+                if (assignedToOrganizationId != null) {
+                    try {
+                        List<Long> orderIds = savedOrders.stream().map(Order::getId).collect(java.util.stream.Collectors.toList());
+                        orderService.bulkAssignToOrganization(orderIds, assignedToOrganizationId, createdBy);
+                    } catch (Exception e) {
+                        result.getErrors().add("Bulk Assignment Failed: " + e.getMessage());
+                    }
+                }
+            }
+            
         } catch (IOException e) {
             result.getErrors().add("Error reading file: " + e.getMessage());
         }

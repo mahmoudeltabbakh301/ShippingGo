@@ -46,6 +46,12 @@ public class OrderService {
         return orderCreationService.createOrder(dto, createdBy, ownerOrganization);
     }
 
+    @LogSensitiveOperation(action = "CREATE_BULK_ORDERS", entityName = "Order")
+    public List<Order> createOrdersBulk(List<OrderDto> dtos, User createdBy, Organization ownerOrganization,
+            BusinessDay businessDay) {
+        return orderCreationService.createOrdersBulk(dtos, createdBy, ownerOrganization, businessDay);
+    }
+
     @LogSensitiveOperation(action = "UPDATE_ORDER", entityName = "Order", logArguments = true)
     public Order updateOrderDetails(Long orderId, OrderDto dto, User updatedBy) {
         return orderCreationService.updateOrderDetails(orderId, dto, updatedBy);
@@ -171,14 +177,14 @@ public class OrderService {
     }
 
     public List<Order> getOrdersByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
-            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate) {
+            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
         return orderQueryService.getOrdersByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId,
-                incomingFromId, outgoingToId, status, governorate);
+                incomingFromId, outgoingToId, status, governorate, noGovernorate);
     }
 
     public List<Order> getCustodyOrdersWithFilters(Long orgId, String search, String code, Long courierId,
             Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate) {
-        return orderQueryService.getCustodyOrdersWithFilters(orgId, search, code, courierId, 
+        return orderQueryService.getCustodyOrdersWithFilters(orgId, search, code, courierId,
                 incomingFromId, outgoingToId, status, governorate);
     }
 
@@ -238,6 +244,10 @@ public class OrderService {
         return orderQueryService.getOrdersAssignedToOrganizationByDate(organizationId, date);
     }
 
+    public List<OrderAssignment> getOrderAssignmentsByAssigneeAndDate(Long organizationId, LocalDate date) {
+        return orderQueryService.getOrderAssignmentsByAssigneeAndDate(organizationId, date);
+    }
+
     public List<Order> getPendingAssignments(Long organizationId) {
         return orderQueryService.getPendingAssignments(organizationId);
     }
@@ -252,5 +262,13 @@ public class OrderService {
 
     public Map<String, Object> getReturnStatus(Long orderId) {
         return orderStatusService.getReturnStatus(orderId);
+    }
+
+    public List<OrderAssignment> getAssignmentChain(Long orderId) {
+        return orderAssignmentService.getAssignmentChain(orderId);
+    }
+
+    public boolean canUnassignOrganization(Long orderId, User user) {
+        return orderAssignmentService.canUnassignOrganization(orderId, user);
     }
 }
