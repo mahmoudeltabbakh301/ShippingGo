@@ -8,7 +8,7 @@
 /.idea/
 /*.iml
 .vscode/
-
+*.apk
 
 # OS files
 .DS_Store
