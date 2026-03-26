@@ -60,7 +60,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="password" th:text="#{auth.password.label}">كلمة المرور</label>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                            <label class="form-label" for="password" th:text="#{auth.password.label}" style="margin-bottom: 0;">كلمة المرور</label>
+                            <a th:href="@{/forgot-password}" style="font-size: 0.85rem;" th:text="#{auth.forgot_password.link}">نسيت كلمة المرور؟</a>
+                        </div>
                         <input type="password" id="password" name="password" class="form-control"
                             th:placeholder="#{auth.password.placeholder}" required>
                     </div>

@@ -55,7 +55,7 @@ public class SecurityConfig {
                                                 .frameOptions(frame -> frame.sameOrigin()) // Prevent Clickjacking
                                                 .contentSecurityPolicy(csp -> csp
                                                                 .policyDirectives(
-                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self';")))
+                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://shipping-go.com;")))
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // Disable CSRF for APIs
 
@@ -73,7 +73,7 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 // Auth pages & Health checks
                                                 .requestMatchers("/", "/login", "/register", "/register/**", "/verify",
-                                                                "/actuator/**")
+                                                                "/forgot-password", "/reset-password", "/actuator/**")
                                                 .permitAll()
                                                 // Member Invitations (Accessible to all authenticated users)
                                                 .requestMatchers("/members/invitations",
@@ -131,9 +131,16 @@ public class SecurityConfig {
                                                         response.sendRedirect("/dashboard");
                                                 })
                                                 .permitAll())
+                                .rememberMe(remember -> remember
+                                                .userDetailsService(userDetailsService)
+                                                .tokenValiditySeconds(365 * 24 * 60 * 60) // 365 days
+                                                .key("shippinggo-remember-me-key")
+                                                .alwaysRemember(true) // Always enable remember-me without checkbox
+                                                .rememberMeParameter("remember-me"))
                                 .logout(logout -> logout
                                                 .logoutUrl("/logout")
                                                 .logoutSuccessUrl("/login?logout=true")
+                                                .deleteCookies("JSESSIONID", "remember-me")
                                                 .permitAll())
                                 .exceptionHandling(ex -> ex
                                                 // Return JSON 401 for unauthenticated API requests instead of
@@ -183,7 +190,8 @@ public class SecurityConfig {
                         configuration.setAllowedOriginPatterns(
                                         java.util.List.of("http://localhost:3000", "http://localhost:8080",
                                                         "http://10.0.2.2:8080", "http://192.168.1.6:8080",
-                                                        "https://*.ngrok-free.dev"));
+                                                        "https://*.ngrok-free.dev",
+                                                        "https://shipping-go.com", "https://www.shipping-go.com"));
                 }
 
                 configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

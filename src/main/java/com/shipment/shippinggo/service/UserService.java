@@ -229,4 +229,72 @@ public class UserService {
         }
     }
 
+    // --- Password Reset Logic ---
+    private final java.util.Map<String, PasswordResetToken> passwordResetTokens = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static class PasswordResetToken {
+        public String username;
+        public String email;
+        public String token;
+        public long expiryTime;
+
+        public PasswordResetToken(String username, String email, String token) {
+            this.username = username;
+            this.email = email;
+            this.token = token;
+            this.expiryTime = System.currentTimeMillis() + (30 * 60 * 1000); // 30 minutes
+        }
+    }
+
+    @Transactional
+    @LogSensitiveOperation(action = "INITIATE_PASSWORD_RESET", entityName = "User")
+    public boolean initiatePasswordReset(String username, String email) {
+        User user = userRepository.findByUsername(username).orElse(null);
+        // Check if user exists and email matches perfectly
+        if (user != null && user.getEmail().equalsIgnoreCase(email.trim())) {
+            // Generate 6-digit code
+            String verificationCode = String.valueOf(100000 + new java.util.Random().nextInt(900000));
+            
+            // Store it mapped by username
+            passwordResetTokens.put(username, new PasswordResetToken(username, email, verificationCode));
+            
+            try {
+                emailService.sendPasswordResetEmail(email, verificationCode);
+                return true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException("حدث خطأ أثناء إرسال الكود للبريد الإلكتروني");
+            }
+        }
+        return false; // User not found or email mismatch
+    }
+
+    @Transactional
+    @LogSensitiveOperation(action = "RESET_PASSWORD", entityName = "User")
+    public boolean verifyAndResetPassword(String username, String token, String newPassword) {
+        PasswordResetToken resetData = passwordResetTokens.get(username);
+        
+        if (resetData != null) {
+            // Check expiry
+            if (System.currentTimeMillis() > resetData.expiryTime) {
+                passwordResetTokens.remove(username);
+                throw new RuntimeException("انتهت صلاحية الكود. يرجى طلب كود جديد.");
+            }
+            
+            // Check token match
+            if (resetData.token.equals(token.trim())) {
+                User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("المستخدم غير موجود"));
+                
+                user.setPassword(passwordEncoder.encode(newPassword));
+                userRepository.save(user);
+                
+                // Clear token
+                passwordResetTokens.remove(username);
+                return true;
+            }
+        }
+        return false;
+    }
+
 }

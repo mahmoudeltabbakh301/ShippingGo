@@ -107,6 +107,74 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        if (isAuthenticated()) {
+            return "redirect:/dashboard";
+        }
+        return "auth/forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String processForgotPassword(
+            @org.springframework.web.bind.annotation.RequestParam("username") String username,
+            @org.springframework.web.bind.annotation.RequestParam("email") String email,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            boolean success = userService.initiatePasswordReset(username, email);
+            if (success) {
+                redirectAttributes.addAttribute("username", username);
+                redirectAttributes.addFlashAttribute("success", "تم إرسال كود استعادة كلمة المرور إلى بريدك الإلكتروني.");
+                return "redirect:/reset-password";
+            } else {
+                redirectAttributes.addFlashAttribute("error", "اسم المستخدم أو البريد الإلكتروني غير صحيح.");
+                return "redirect:/forgot-password";
+            }
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "حدث خطأ أثناء معالجة الطلب، حاول مرة أخرى.");
+            return "redirect:/forgot-password";
+        }
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordForm(
+            @org.springframework.web.bind.annotation.RequestParam(value = "username", required = false) String username,
+            Model model) {
+        if (isAuthenticated()) {
+            return "redirect:/dashboard";
+        }
+        if (username == null || username.trim().isEmpty()) {
+            return "redirect:/forgot-password";
+        }
+        model.addAttribute("username", username);
+        return "auth/reset-password";
+    }
+
+    @PostMapping("/reset-password")
+    public String processResetPassword(
+            @org.springframework.web.bind.annotation.RequestParam("username") String username,
+            @org.springframework.web.bind.annotation.RequestParam("code") String code,
+            @org.springframework.web.bind.annotation.RequestParam("newPassword") String newPassword,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            boolean success = userService.verifyAndResetPassword(username, code, newPassword);
+            if (success) {
+                redirectAttributes.addFlashAttribute("success", "تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.");
+                return "redirect:/login";
+            } else {
+                redirectAttributes.addAttribute("username", username);
+                redirectAttributes.addFlashAttribute("error", "الكود غير صحيح أو منتهي الصلاحية.");
+                return "redirect:/reset-password";
+            }
+        } catch (RuntimeException e) {
+            redirectAttributes.addAttribute("username", username);
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/reset-password";
+        }
+    }
+
     @GetMapping("/access-denied")
     public String accessDenied() {
         return "error/access-denied";
