@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{user.ship_form.page_title} + ' - ' + #{app.title}">نموذج طلب شحن - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+
+    <style>
+        .ship-form-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .org-summary {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .org-summary h3 {
+            margin: 0;
+            font-size: 1.125rem;
+            color: var(--text-primary);
+        }
+
+        .section-header {
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header" style="text-align: center;">
+                <h1 class="page-title">📝 <span th:text="#{user.ship_form.title}">تفاصيل الشحنة</span></h1>
+                <p class="text-secondary" th:text="#{user.ship_form.subtitle}">قم بتعبئة بيانات الشحنة بدقة لإرسال الطلب
+                </p>
+            </div>
+
+            <div class="ship-form-card">
+                <div class="org-summary">
+                    <div>
+                        <div style="font-size: 0.875rem; color: var(--text-secondary);"
+                            th:text="#{user.ship_form.send_to}">إرسال الطلب إلى:</div>
+                        <h3 th:text="${organization.name}">Organization Name</h3>
+                    </div>
+                    <a th:href="@{/user/ship}" class="btn btn-outline btn-sm"
+                        th:text="#{user.ship_form.btn_change}">تغيير</a>
+                </div>
+
+                <form th:action="@{/user/ship/request}" method="post">
+                    <input type="hidden" name="organizationId" th:value="${organization.id}">
+
+                    <!-- Sender Info -->
+                    <div class="section-header" th:text="#{user.ship_form.section_sender}">بيانات المرسل (أنت)</div>
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{user.ship_form.label_name}">الاسم</label>
+                            <input type="text" name="senderName" class="form-control" th:value="${user.fullName}"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{user.ship_form.label_phone}">رقم الهاتف</label>
+                            <input type="text" name="senderPhone" class="form-control" th:value="${user.phone}"
+                                required>
+                        </div>
+                    </div>
+
+                    <!-- Recipient Info -->
+                    <div class="section-header" style="margin-top: 1.5rem;"
+                        th:text="#{user.ship_form.section_recipient}">بيانات المستلم</div>
+                    <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{user.ship_form.label_recipient_name}">اسم
+                                المستلم</label>
+                            <input type="text" name="recipientName" class="form-control" required
+                                th:placeholder="#{user.ship_form.placeholder_recipient_name}">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{user.ship_form.label_recipient_phone}">رقم هاتف
+                                المستلم</label>
+                            <input type="text" name="recipientPhone" class="form-control" required
+                                th:placeholder="#{user.ship_form.placeholder_recipient_phone}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{user.ship_form.label_recipient_address}">عنوان المستلم
+                            بالتفصيل</label>
+                        <textarea name="recipientAddress" class="form-control" rows="3" required
+                            th:placeholder="#{user.ship_form.placeholder_recipient_address}"></textarea>
+                    </div>
+
+                    <!-- Shipment Info -->
+                    <div class="section-header" style="margin-top: 1.5rem;"
+                        th:text="#{user.ship_form.section_shipment}">تفاصيل الشحنة</div>
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{user.ship_form.label_content}">محتوى الشحنة</label>
+                        <textarea name="contentDescription" class="form-control" rows="2"
+                            th:placeholder="#{user.ship_form.placeholder_content}"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" th:text="#{user.ship_form.label_amount}">مبلغ التحصيل (إن وجد)</label>
+                        <input type="number" step="0.01" name="estimatedAmount" class="form-control" placeholder="0.00">
+                        <div class="form-hint" th:text="#{user.ship_form.hint_amount}">اتركه فارغاً إذا كانت الشحنة
+                            مدفوعة مسبقاً</div>
+                    </div>
+
+                    <div class="form-actions" style="margin-top: 2rem;">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;"
+                            th:text="#{user.ship_form.btn_submit}">إرسال الطلب 🚀</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        }
+    </script>
+</body>
+
+</html>

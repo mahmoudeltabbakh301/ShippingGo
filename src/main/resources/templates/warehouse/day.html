@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{warehouse.day.title} + ' - ' + #{app.title}">المخزن الأساسي - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🏭 [[${businessDay.name ?: #temporals.format(businessDay.date,
+                        'yyyy/MM/dd')}]] - <span th:text="#{warehouse.day.title}">المخزن الأساسي</span></h1>
+                    <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
+                        <span th:if="${businessDay.active}" class="badge badge-delivered"
+                            th:text="#{business_days.badge.active}">نشط</span>
+                        <span th:unless="${businessDay.active}" class="badge badge-refused"
+                            th:text="#{business_days.badge.inactive}">غير نشط</span>
+                        &nbsp;•&nbsp; [[${organization.name}]]
+                    </p>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a th:href="@{/warehouse/{id}/external(id=${businessDay.id})}" class="btn btn-secondary"
+                        th:text="#{warehouse.btn.view_external}">📤 المخزن الخارجي</a>
+                    <a th:href="@{/warehouse}" class="btn btn-secondary" th:text="#{warehouse.btn.all_days}">📅 كل
+                        الأيام</a>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon waiting">📦</div>
+                    <div class="stat-value" th:text="${totalOrderCount}">0</div>
+                    <div class="stat-label" th:text="#{warehouse.stat.in_warehouse}">في المخزن</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-value" th:text="${waitingCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_waiting}">في الانتظار</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-value" th:text="${cancelledCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_cancelled}">ملغي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-value" th:text="${refusedCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_refused}">مرفوض</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit">⏱️</div>
+                    <div class="stat-value" th:text="${deferredCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_deferred}">مؤجل</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit">⏱️</div>
+                    <div class="stat-value" th:text="${awaitingReceiptCount}">0</div>
+                    <div class="stat-label" th:text="#{warehouse.stat.awaiting_receipt}">في انتظار التأكيد</div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header"
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+                    <h3 class="card-title" th:text="#{warehouse.day.subtitle}">📋 أوردرات المخزن</h3>
+                    <form th:action="@{/warehouse/{id}(id=${businessDay.id})}" method="get"
+                        style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+                        <input type="text" name="search" class="form-control" th:value="${search}"
+                            th:placeholder="#{business_days.view.search_placeholder}" style="width: 200px;">
+                        <input type="text" name="code" class="form-control" th:value="${code}"
+                            th:placeholder="#{business_days.view.code_placeholder}" style="width: 100px;">
+
+                        <select name="incomingFromId" class="form-control" style="width: 130px;">
+                            <option value="">⬅️ كل الوارد</option>
+                            <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
+                                th:selected="${incomingFromId == lo.id}"></option>
+                        </select>
+
+                        <select name="outgoingToId" class="form-control" style="width: 130px;">
+                            <option value="">➡️ كل الصادر</option>
+                            <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
+                                th:selected="${outgoingToId == lo.id}"></option>
+                        </select>
+
+                        <select name="courierId" class="form-control" style="width: 130px;">
+                            <option value="" th:text="#{business_days.view.filter_all_couriers}">كل المناديب</option>
+                            <option value="-1" th:selected="${courierId == -1}"
+                                th:text="#{business_days.view.filter_unassigned_courier}">غير مسند لمندوب</option>
+                            <option th:each="courier : ${couriers}" th:value="${courier.id}"
+                                th:text="${courier.fullName}" th:selected="${courierId == courier.id}"></option>
+                        </select>
+
+                        <select name="status" class="form-control" style="width: 130px;">
+                            <option value="" th:text="#{business_days.view.filter_all_statuses}">كل الحالات</option>
+                            <option th:each="s : ${statuses}" th:value="${s}"
+                                th:text="${#locale.language == 'en' ? s : s.arabicName}" th:selected="${status == s}">
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-secondary btn-sm"
+                            th:text="#{business_days.view.btn_search}">بحث</button>
+                        <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null}"
+                            th:href="@{/warehouse/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm">✕</a>
+                    </form>
+                </div>
+
+                <div th:if="${orders.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🏭</div>
+                    <div class="table-empty-text" th:text="#{warehouse.day.empty}">لا توجد أوردرات في المخزن</div>
+                </div>
+
+                <div th:if="${!orders.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th th:text="#{business_days.view.col_customer}">العميل</th>
+                                <th th:text="#{business_days.view.col_address}">العنوان</th>
+                                <th th:text="#{business_days.view.col_phone}">رقم الهاتف</th>
+                                <th th:text="#{business_days.view.col_quantity}">عدد القطع</th>
+                                <th th:text="#{business_days.view.col_amount}">المبلغ</th>
+                                <th th:text="#{business_days.view.col_status}">الحالة</th>
+                                <th th:text="#{business_days.view.col_other_party}">الطرف الآخر</th>
+                                <th th:text="#{business_days.view.col_courier}">المندوب</th>
+                                <th th:text="#{business_days.col.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders}">
+                                <td th:text="${order.recipientName}">الاسم</td>
+                                <td th:text="${order.recipientAddress}">العنوان</td>
+                                <td th:text="${order.recipientPhone}">رقم الهاتف</td>
+                                <td th:text="${order.quantity} ?: '-'">الكمية</td>
+                                <td
+                                    th:text="${order.status.name() == 'PARTIAL_DELIVERY' && order.partialDeliveryAmount != null ? order.partialDeliveryAmount : order.amount} ?: '-'">
+                                    المبلغ</td>
+                                <td>
+                                    <span class="badge"
+                                        th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                                          (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
+                                                          (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                                          (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                                        th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
+                                </td>
+                                <td style="direction: ltr; text-align: right;">
+                                    <!-- استخدام سلسلة الإسناد لعرض الطرف الآخر -->
+                                    <th:block th:with="ctx=${orderChainContext.get(order.id)}">
+                                        <!-- المالك: يظهر المنظمة التي أسند لها -->
+                                        <span th:if="${order.ownerOrganization.id == organization.id}">
+                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
+                                                th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
+                                                title="تم الإسناد إلى"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
+                                                th:text="'➡️ ' + ${order.assignedToOrganization.name}"
+                                                title="تم الإسناد إلى"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
+                                        </span>
+
+                                        <!-- منظمة وسيطة أو نهائية (ليست المالك): يظهر من أسند ومن أسند إليه -->
+                                        <span th:if="${order.ownerOrganization.id != organization.id}">
+                                            <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
+                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
+                                                th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
+                                                title="تم الإسناد إلى"></span>
+                                            <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
+                                                th:text="'⬅️ ' + ${order.ownerOrganization.name}"
+                                                title="وارد من"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
+                                                th:text="${order.ownerOrganization.name}"></span>
+                                        </span>
+                                    </th:block>
+                                </td>
+                                <td
+                                    th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
+                                    -</td>
+                                <td>
+                                    <a th:href="@{/orders/{id}(id=${order.id}, businessDayId=${businessDay.id})}"
+                                        class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}">👁
+                                        عرض</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

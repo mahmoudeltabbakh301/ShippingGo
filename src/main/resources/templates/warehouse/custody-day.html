@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{warehouse.custody.day.title} + ' - ' + #{app.title}">تفاصيل يوم العهدة - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📦 <span th:text="#{warehouse.custody.day.title}">تفاصيل العهدة</span></h1>
+                    <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
+                        &nbsp;•&nbsp; [[${organization.name}]]
+                    </p>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon waiting">📦</div>
+                    <div class="stat-value" th:text="${totalOrderCount}">0</div>
+                    <div class="stat-label" th:text="#{warehouse.custody.stat.in_custody}">في العهدة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-value" th:text="${waitingCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_waiting}">في الانتظار</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-value" th:text="${cancelledCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_cancelled}">ملغي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-value" th:text="${refusedCount}">0</div>
+                    <div class="stat-label" th:text="#{business_days.view.stat_refused}">مرفوض</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit">⏱️</div>
+                    <div class="stat-value" th:text="${awaitingReceiptCount}">0</div>
+                    <div class="stat-label" th:text="#{warehouse.stat.awaiting_receipt}">في انتظار التأكيد</div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="card">
+                <div class="card-header"
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+                    <h3 class="card-title" th:text="#{warehouse.custody.day.subtitle}">📋 أوردرات العهدة</h3>
+                    <form th:action="@{/warehouse/custody}" method="get"
+                        style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+                        <input type="text" name="search" class="form-control" th:value="${search}"
+                            th:placeholder="#{business_days.view.search_placeholder}" style="width: 200px;">
+                        <input type="text" name="code" class="form-control" th:value="${code}"
+                            th:placeholder="#{business_days.view.code_placeholder}" style="width: 100px;">
+
+                        <select name="incomingFromId" class="form-control" style="width: 130px;">
+                            <option value="">⬅️ كل الوارد</option>
+                            <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
+                                th:selected="${incomingFromId == lo.id}"></option>
+                        </select>
+
+                        <select name="outgoingToId" class="form-control" style="width: 130px;">
+                            <option value="">➡️ كل الصادر</option>
+                            <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
+                                th:selected="${outgoingToId == lo.id}"></option>
+                        </select>
+
+                        <select name="courierId" class="form-control" style="width: 130px;">
+                            <option value="" th:text="#{business_days.view.filter_all_couriers}">كل المناديب</option>
+                            <option value="-1" th:selected="${courierId == -1}"
+                                th:text="#{business_days.view.filter_unassigned_courier}">غير مسند لمندوب</option>
+                            <option th:each="courier : ${couriers}" th:value="${courier.id}"
+                                th:text="${courier.fullName}" th:selected="${courierId == courier.id}"></option>
+                        </select>
+
+                        <select name="status" class="form-control" style="width: 130px;">
+                            <option value="" th:text="#{business_days.view.filter_all_statuses}">كل الحالات</option>
+                            <option th:each="s : ${statuses}" th:value="${s}"
+                                th:text="${#locale.language == 'en' ? s : s.arabicName}" th:selected="${status == s}">
+                            </option>
+                        </select>
+
+                        <button type="submit" class="btn btn-secondary btn-sm"
+                            th:text="#{business_days.view.btn_search}">بحث</button>
+                        <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null}"
+                            th:href="@{/warehouse/custody}" class="btn btn-danger btn-sm">✕</a>
+                    </form>
+                </div>
+
+                <!-- Bulk Actions Bar -->
+                <div id="bulkActionsBar" class="card-header bg-light"
+                    style="display: none; padding: var(--space-2) var(--space-4); border-bottom: 1px solid var(--dark-border);">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+                        <div style="font-weight: 500;">
+                            <span id="selectedCount">0</span> <span
+                                th:text="#{business_days.view.orders_selected}">طلبات محددة</span>
+                        </div>
+                        <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+                            <!-- Bulk remove from custody -->
+                            <form id="bulkRemoveCustodyForm" th:action="@{/orders/bulk-remove-custody}" method="post"
+                                sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                                style="display: flex; gap: var(--space-2); align-items: center;">
+                                <input type="hidden" name="orderIds" id="orderIdsForRemoveCustody" value="">
+                                <button type="submit" class="btn btn-secondary btn-sm"
+                                    th:text="#{orders.btn.remove_custody_bulk}">📤 إزالة من العهدة</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div th:if="${orders.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">📦</div>
+                    <div class="table-empty-text" th:text="#{warehouse.custody.day.empty}">لا توجد أوردرات في العهدة
+                    </div>
+                </div>
+
+                <div th:if="${!orders.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th sec:authorize="hasAnyRole('ADMIN', 'MANAGER')" style="width: 40px;">
+                                    <input type="checkbox" id="selectAllOrders" style="cursor: pointer;">
+                                </th>
+                                <th th:text="#{business_days.view.col_customer}">العميل</th>
+                                <th th:text="#{business_days.view.col_address}">العنوان</th>
+                                <th th:text="#{business_days.view.col_phone}">رقم الهاتف</th>
+                                <th th:text="#{business_days.view.col_quantity}">عدد القطع</th>
+                                <th th:text="#{business_days.view.col_amount}">المبلغ</th>
+                                <th th:text="#{business_days.view.col_status}">الحالة</th>
+                                <th th:text="#{business_days.view.col_other_party}">الطرف الآخر</th>
+                                <th th:text="#{business_days.view.col_courier}">المندوب</th>
+                                <th th:text="#{business_days.col.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders}">
+                                <td sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                                    <input type="checkbox" class="orderCheckbox" th:value="${order.id}"
+                                        style="cursor: pointer;">
+                                </td>
+                                <td th:text="${order.recipientName}">الاسم</td>
+                                <td th:text="${order.recipientAddress}">العنوان</td>
+                                <td th:text="${order.recipientPhone}">رقم الهاتف</td>
+                                <td th:text="${order.quantity} ?: '-'">الكمية</td>
+                                <td
+                                    th:text="${order.status.name() == 'PARTIAL_DELIVERY' && order.partialDeliveryAmount != null ? order.partialDeliveryAmount : order.amount} ?: '-'">
+                                    المبلغ</td>
+                                <td>
+                                    <span class="badge"
+                                        th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                                          (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
+                                                          (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                                          (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                                        th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
+                                </td>
+                                <td style="direction: ltr; text-align: right;">
+                                    <!-- استخدام سلسلة الإسناد لعرض الطرف الآخر -->
+                                    <th:block th:with="ctx=${orderChainContext.get(order.id)}">
+                                        <!-- المالك: يظهر المنظمة التي أسند لها -->
+                                        <span th:if="${order.ownerOrganization.id == organization.id}">
+                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
+                                                th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
+                                                title="تم الإسناد إلى"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
+                                                th:text="'➡️ ' + ${order.assignedToOrganization.name}"
+                                                title="تم الإسناد إلى"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
+                                        </span>
+
+                                        <!-- منظمة وسيطة أو نهائية (ليست المالك): يظهر من أسند ومن أسند إليه -->
+                                        <span th:if="${order.ownerOrganization.id != organization.id}">
+                                            <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
+                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
+                                                th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
+                                                title="تم الإسناد إلى"></span>
+                                            <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
+                                                th:text="'⬅️ ' + ${order.ownerOrganization.name}"
+                                                title="وارد من"></span>
+                                            <span
+                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
+                                                th:text="${order.ownerOrganization.name}"></span>
+                                        </span>
+                                    </th:block>
+                                </td>
+                                <td
+                                    th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
+                                    -</td>
+                                <td>
+                                    <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-sm btn-secondary"
+                                        th:text="#{business_days.btn.view}">👁
+                                        عرض</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <script th:inline="javascript">
+                document.addEventListener('DOMContentLoaded', function () {
+                    var selectAll = document.getElementById('selectAllOrders');
+                    var checkboxes = document.querySelectorAll('.orderCheckbox');
+                    var bulkActionsBar = document.getElementById('bulkActionsBar');
+                    var selectedCountSpan = document.getElementById('selectedCount');
+
+                    var orderIdsForRemoveCustody = document.getElementById('orderIdsForRemoveCustody');
+
+                    function updateBulkActions() {
+                        var selectedIds = Array.from(document.querySelectorAll('.orderCheckbox:checked')).map(cb => cb.value);
+                        if (selectedIds.length > 0) {
+                            bulkActionsBar.style.display = 'block';
+                            selectedCountSpan.textContent = selectedIds.length;
+                            if (orderIdsForRemoveCustody) orderIdsForRemoveCustody.value = selectedIds.join(',');
+                        } else {
+                            bulkActionsBar.style.display = 'none';
+                            if (orderIdsForRemoveCustody) orderIdsForRemoveCustody.value = '';
+                        }
+                    }
+
+                    if (selectAll) {
+                        selectAll.addEventListener('change', function () {
+                            checkboxes.forEach(function (cb) {
+                                cb.checked = selectAll.checked;
+                            });
+                            updateBulkActions();
+                        });
+                    }
+
+                    var orderTable = document.querySelector('.table-container table');
+                    if (orderTable) {
+                        orderTable.addEventListener('click', function (e) {
+                            if (e.target && e.target.classList.contains('orderCheckbox')) {
+                                updateBulkActions();
+                            }
+                        });
+                    }
+
+                    var custodyForm = document.getElementById('bulkRemoveCustodyForm');
+                    if (custodyForm) {
+                        custodyForm.addEventListener('submit', function (e) {
+                            if (!orderIdsForRemoveCustody || !orderIdsForRemoveCustody.value) {
+                                e.preventDefault();
+                                alert('يرجى تحديد طلبات أولاً');
+                            } else {
+                                if (!confirm('هل أنت متأكد من إزالة الطلبات المحددة من عهدة المخزن؟')) {
+                                    e.preventDefault();
+                                }
+                            }
+                        });
+                    }
+                });
+            </script>
+
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

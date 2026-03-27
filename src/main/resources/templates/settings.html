@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{settings.page_title} + ' - ' + #{app.title}">الإعدادات - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .settings-item {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: box-shadow 0.2s;
+        }
+
+        .settings-item:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .settings-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settings-item-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Modern Theme Toggle Switch */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .theme-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+            margin: 0;
+        }
+
+        .theme-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e1;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        /* Adjust for RTL/LTR */
+        [dir="rtl"] .slider:before {
+            left: auto;
+            right: 3px;
+        }
+
+        input:checked+.slider {
+            background-color: #3b82f6;
+            /* or var(--primary) */
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(24px);
+        }
+
+        [dir="rtl"] input:checked+.slider:before {
+            transform: translateX(-24px);
+        }
+
+        .d-none {
+            display: none !important;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span>
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">⚙️ <span th:text="#{settings.title}">الإعدادات</span></h1>
+            </div>
+
+            <div class="settings-container">
+                <!-- 1. Profile -->
+                <div class="settings-item">
+                    <div class="settings-item-header">
+                        <div class="settings-item-title">
+                            <span>👤</span>
+                            <span th:text="#{settings.section_profile}">الملف الشخصي</span>
+                        </div>
+                        <a th:href="@{/profile}" class="btn btn-outline"
+                            style="padding: 0.4rem 1rem; font-size: 0.9rem; text-decoration: none;"
+                            th:text="#{settings.btn_view_profile}">عرض الملف الشخصي</a>
+                    </div>
+                </div>
+
+                <!-- 2. Personal Settings Link -->
+                <div class="settings-item">
+                    <div class="settings-item-header">
+                        <div class="settings-item-title">
+                            <span>⚙️</span>
+                            <span th:text="#{settings.section_personal}">الملف الشخصي</span>
+                        </div>
+                        <a th:href="@{/settings/personal}" class="btn btn-outline"
+                            style="padding: 0.4rem 1rem; font-size: 0.9rem; text-decoration: none;"
+                            th:text="#{settings.btn_view_personal}">عرض الإعدادات الشخصية</a>
+                    </div>
+                </div>
+
+                <!-- 3. Appearance (Modern Toggle) -->
+                <div class="settings-item">
+                    <div class="settings-item-header">
+                        <div class="settings-item-title">
+                            <span>🎨</span>
+                            <span th:text="#{settings.label_theme}">الوضع</span>
+                        </div>
+                        <div class="theme-switch-wrapper">
+                            <span style="font-size: 0.9rem; font-weight: 500;"
+                                th:text="#{settings.theme_light}">فاتح</span>
+                            <label class="theme-switch">
+                                <input type="checkbox" id="modern-theme-toggle" onchange="handleThemeToggle(this)">
+                                <span class="slider"></span>
+                            </label>
+                            <span style="font-size: 0.9rem; font-weight: 500;"
+                                th:text="#{settings.theme_dark}">داكن</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Language -->
+                <div class="settings-item">
+                    <div class="settings-item-header">
+                        <div class="settings-item-title">
+                            <span>🌐</span>
+                            <span th:text="#{settings.label_language}">اللغة</span>
+                        </div>
+                        <div
+                            style="display: flex; gap: 0.5rem; background: var(--bg-secondary, #f1f5f9); padding: 0.25rem; border-radius: var(--border-radius-md);">
+                            <a th:href="@{?lang=ar}" class="btn btn-sm"
+                                th:style="${#locale.language == 'ar'} ? 'background: white; color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'background: transparent; color: var(--text-secondary);'"
+                                style="padding: 0.25rem 1rem; border: none; text-decoration: none; font-weight: 600;">العربية</a>
+                            <a th:href="@{?lang=en}" class="btn btn-sm"
+                                th:style="${#locale.language == 'en'} ? 'background: white; color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1);' : 'background: transparent; color: var(--text-secondary);'"
+                                style="padding: 0.25rem 1rem; border: none; text-decoration: none; font-weight: 600;">English</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Logout -->
+                <div class="settings-item cursor-pointer"
+                    style="border-color: var(--danger); background-color: rgba(220, 38, 38, 0.05); align-items: center; justify-content: center; padding: 1rem;"
+                    onclick="document.getElementById('logout-form').submit();">
+                    <form id="logout-form" th:action="@{/logout}" method="post"
+                        style="margin: 0; width: 100%; text-align: center;">
+                        <button type="submit"
+                            style="background: none; border: none; color: var(--danger); font-weight: 700; font-size: 1.125rem; cursor: pointer; padding: 0.5rem; width: 100%;"
+                            th:text="#{settings.btn_logout}">تسجيل الخروج</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script>
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('open');
+        }
+
+        // Apply visual state to buttons on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const themeToggle = document.getElementById('modern-theme-toggle');
+            if (themeToggle) {
+                themeToggle.checked = currentTheme === 'dark';
+            }
+        });
+
+        function handleThemeToggle(checkbox) {
+            const theme = checkbox.checked ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            window.dispatchEvent(new Event('themechange'));
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{warehouse.list.title} + ' - ' + #{app.title}">أيام المخزن - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 class="page-title">🏭 <span th:text="#{warehouse.list.title}">أيام المخزن</span></h1>
+                <a th:href="@{/warehouse/custody}" class="btn btn-secondary">📦 عرض العهدة</a>
+            </div>
+
+            <!-- Warehouse Days Table -->
+            <div class="card">
+                <div th:if="${businessDays.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🏭</div>
+                    <div class="table-empty-text" th:text="#{warehouse.list.empty}">لا توجد أيام مخزن بعد</div>
+                </div>
+
+                <div th:if="${!businessDays.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th th:text="#{business_days.col.name}">الاسم</th>
+                                <th th:text="#{business_days.col.date}">التاريخ</th>
+                                <th th:text="#{business_days.col.status}">الحالة</th>
+                                <th th:text="#{business_days.col.created_by}">منشئ بواسطة</th>
+                                <th th:text="#{business_days.col.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="bd : ${businessDays}">
+                                <td th:text="${bd.name}">الاسم</td>
+                                <td th:text="${#temporals.format(bd.date, 'yyyy/MM/dd')}">التاريخ</td>
+                                <td>
+                                    <span th:if="${bd.active}" class="badge badge-delivered"
+                                        th:text="#{business_days.badge.active}">نشط</span>
+                                    <span th:unless="${bd.active}" class="badge badge-refused"
+                                        th:text="#{business_days.badge.inactive}">غير نشط</span>
+                                </td>
+                                <td th:text="${bd.createdBy != null ? bd.createdBy.fullName : '-'}">المنشئ</td>
+                                <td>
+                                    <a th:href="@{/warehouse/{id}(id=${bd.id})}" class="btn btn-sm btn-primary"
+                                        th:text="#{warehouse.btn.view_warehouse}">🏭 المخزن</a>
+                                    <a th:href="@{/warehouse/{id}/external(id=${bd.id})}"
+                                        class="btn btn-sm btn-secondary" th:text="#{warehouse.btn.view_external}">📤
+                                        الخارجي</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

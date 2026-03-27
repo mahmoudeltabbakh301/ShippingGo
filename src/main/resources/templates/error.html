@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خطأ - ShippingGo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+
+    <style>
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 2rem;
+            color: var(--danger-600, #dc2626);
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            font-size: 1.2rem;
+            color: var(--text-secondary, #4b5563);
+            margin-bottom: 30px;
+            max-width: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="error-container">
+                <div class="error-icon">⚠️</div>
+                <h1 class="error-title">حدث خطأ</h1>
+                <p class="error-message" th:text="${message} ?: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.'">
+                    وصف الخطأ
+                </p>
+                <a href="javascript:history.back()" class="btn btn-secondary">عودة للسابق</a>
+                <a th:href="@{/dashboard}" class="btn btn-primary" style="margin-right: 10px;">الرئيسية</a>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+
+</html>

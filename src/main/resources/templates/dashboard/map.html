@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{dashboard.map.title} + ' - ' + #{app.title}">تتبع المناديب - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/map.css}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content" style="padding: 16px; overflow: hidden;">
+            <div class="page-header" style="margin-bottom: 12px;">
+                <h1 class="page-title">🗺 <span th:text="#{dashboard.map.title}">الخريطة الحية للمناديب</span></h1>
+            </div>
+
+            <div class="map-container">
+                <!-- Courier Sidebar Panel -->
+                <div class="courier-panel" id="courierPanel">
+                    <div class="courier-panel-header">
+                        <h3>
+                            👥 <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
+                            <span class="courier-count-badge" id="courierCount">0</span>
+                        </h3>
+                    </div>
+                    <div class="courier-search">
+                        <input type="text" id="courierSearch"
+                            th:placeholder="#{dashboard.map.search_placeholder}" placeholder="بحث عن مندوب..." />
+                    </div>
+                    <div class="courier-list" id="courierList">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Map Area -->
+                <div class="map-area">
+                    <div id="map"></div>
+
+                    <!-- Auto-refresh indicator -->
+                    <div class="map-refresh-indicator" id="refreshIndicator">
+                        <span class="refresh-dot"></span>
+                        <span th:text="#{dashboard.map.live_tracking}">تتبع مباشر</span>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div class="map-stats-bar" id="statsBar">
+                        <div class="stat-item">
+                            <span class="stat-dot total"></span>
+                            <span th:text="#{dashboard.map.total}">الكل</span>
+                            <span class="stat-value" id="statTotal">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-dot online"></span>
+                            <span th:text="#{dashboard.map.online}">متصل</span>
+                            <span class="stat-value" id="statOnline">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-dot offline"></span>
+                            <span th:text="#{dashboard.map.offline}">غير متصل</span>
+                            <span class="stat-value" id="statOffline">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Panel Toggle -->
+                    <button class="panel-toggle-btn" id="panelToggle" onclick="togglePanel()">
+                        👥 <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        (function () {
+            'use strict';
+
+            // --- Configuration ---
+            var REFRESH_INTERVAL = 15000; // 15 seconds
+            var ONLINE_THRESHOLD_MINUTES = 5;
+
+            // --- i18n ---
+            var lang = /*[[${#locale.language}]]*/ 'en';
+            var isRTL = lang === 'ar';
+            var labelLastUpdate = /*[[#{dashboard.map.last_update('')}]]*/ 'Last Update: ';
+            var labelOnline = /*[[#{dashboard.map.online}]]*/ 'Online';
+            var labelOffline = /*[[#{dashboard.map.offline}]]*/ 'Offline';
+            var labelNoLocation = /*[[#{dashboard.map.no_location}]]*/ 'No location available';
+            var labelNoCouriers = /*[[#{dashboard.map.no_couriers}]]*/ 'No couriers found';
+
+            // --- Map Setup ---
+            var map = L.map('map', {
+                zoomControl: true,
+                attributionControl: true
+            }).setView([30.0444, 31.2357], 10); // Default to Cairo
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+            }).addTo(map);
+
+            // --- State ---
+            var markers = {};     // courierID -> marker
+            var courierData = []; // latest courier data
+            var selectedCourierId = null;
+            var searchTerm = '';
+
+            // Data is loaded entirely from the API endpoint
+
+            // --- Custom Marker Icon ---
+            function createMarkerIcon(name, isOnline) {
+                var initial = name ? name.charAt(0) : '?';
+                var statusClass = isOnline ? 'online' : 'offline';
+                return L.divIcon({
+                    className: 'courier-marker',
+                    html: '<div class="marker-pin ' + statusClass + '"><span>' + initial + '</span></div>',
+                    iconSize: [36, 44],
+                    iconAnchor: [18, 44],
+                    popupAnchor: [0, -44]
+                });
+            }
+
+            // --- Popup Content ---
+            function createPopupContent(courier) {
+                var dateStr = courier.lastLocationUpdateTime
+                    ? new Date(courier.lastLocationUpdateTime).toLocaleString(isRTL ? 'ar-EG' : 'en-US')
+                    : labelNoLocation;
+                var statusClass = courier.online ? 'online' : 'offline';
+                var statusLabel = courier.online ? labelOnline : labelOffline;
+
+                return '<div class="courier-popup" style="text-align: ' + (isRTL ? 'right' : 'left') + '; direction: ' + (isRTL ? 'rtl' : 'ltr') + ';">'
+                    + '<div class="popup-name">👤 ' + escapeHtml(courier.fullName) + '</div>'
+                    + '<div class="popup-detail">📞 ' + escapeHtml(courier.phone || '') + '</div>'
+                    + '<div class="popup-detail">⏱ ' + labelLastUpdate.replace('{0}', dateStr) + '</div>'
+                    + '<div class="popup-status ' + statusClass + '">'
+                    + '<span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:currentColor;"></span> '
+                    + statusLabel + '</div>'
+                    + '</div>';
+            }
+
+            // --- Update Markers on Map ---
+            function updateMarkers(couriers) {
+                var activeCourierIds = {};
+                var bounds = [];
+
+                couriers.forEach(function (courier) {
+                    activeCourierIds[courier.id] = true;
+
+                    if (courier.lastLatitude && courier.lastLongitude) {
+                        var latlng = [courier.lastLatitude, courier.lastLongitude];
+                        bounds.push(latlng);
+
+                        if (markers[courier.id]) {
+                            // Update existing marker position
+                            markers[courier.id].setLatLng(latlng);
+                            markers[courier.id].setIcon(createMarkerIcon(courier.fullName, courier.online));
+                            markers[courier.id].setPopupContent(createPopupContent(courier));
+                        } else {
+                            // Create new marker
+                            var marker = L.marker(latlng, {
+                                icon: createMarkerIcon(courier.fullName, courier.online)
+                            }).addTo(map);
+                            marker.bindPopup(createPopupContent(courier));
+                            markers[courier.id] = marker;
+
+                            marker.on('click', function () {
+                                selectCourier(courier.id);
+                            });
+                        }
+                    }
+                });
+
+                // Remove markers for couriers no longer in list
+                Object.keys(markers).forEach(function (id) {
+                    if (!activeCourierIds[id]) {
+                        map.removeLayer(markers[id]);
+                        delete markers[id];
+                    }
+                });
+
+                return bounds;
+            }
+
+            // --- Update Courier Panel ---
+            function updateCourierPanel(couriers) {
+                var listEl = document.getElementById('courierList');
+                var countEl = document.getElementById('courierCount');
+                var filtered = couriers;
+
+                if (searchTerm) {
+                    filtered = couriers.filter(function (c) {
+                        return c.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+                            || (c.phone && c.phone.includes(searchTerm));
+                    });
+                }
+
+                // Sort: online first, then by name
+                filtered.sort(function (a, b) {
+                    if (a.online !== b.online) return a.online ? -1 : 1;
+                    return a.fullName.localeCompare(b.fullName);
+                });
+
+                countEl.textContent = couriers.length;
+
+                var onlineCount = couriers.filter(function (c) { return c.online; }).length;
+                var offlineCount = couriers.length - onlineCount;
+
+                document.getElementById('statTotal').textContent = couriers.length;
+                document.getElementById('statOnline').textContent = onlineCount;
+                document.getElementById('statOffline').textContent = offlineCount;
+
+                if (filtered.length === 0) {
+                    listEl.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text-secondary);font-size:13px;">'
+                        + labelNoCouriers + '</div>';
+                    return;
+                }
+
+                var html = '';
+                filtered.forEach(function (courier) {
+                    var hasLocation = courier.lastLatitude && courier.lastLongitude;
+                    var statusClass = courier.online ? 'online' : 'offline';
+                    var statusLabel = courier.online ? labelOnline : labelOffline;
+                    var initial = courier.fullName ? courier.fullName.charAt(0) : '?';
+                    var activeClass = selectedCourierId === courier.id ? ' active' : '';
+                    var noLocClass = !hasLocation ? ' no-location' : '';
+
+                    var dateStr = '';
+                    if (courier.lastLocationUpdateTime) {
+                        var d = new Date(courier.lastLocationUpdateTime);
+                        dateStr = d.toLocaleTimeString(isRTL ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        dateStr = labelNoLocation;
+                    }
+
+                    html += '<div class="courier-card' + activeClass + noLocClass + '" onclick="window.selectCourier(' + courier.id + ')" data-id="' + courier.id + '">'
+                        + '<div class="courier-avatar ' + statusClass + '">' + escapeHtml(initial)
+                        + '<span class="courier-status-dot ' + statusClass + '"></span></div>'
+                        + '<div class="courier-info">'
+                        + '<div class="courier-name">' + escapeHtml(courier.fullName) + '</div>'
+                        + '<div class="courier-meta">⏱ ' + dateStr + '</div>'
+                        + '</div>'
+                        + '<span class="courier-status-text ' + statusClass + '">' + statusLabel + '</span>'
+                        + '</div>';
+                });
+
+                listEl.innerHTML = html;
+            }
+
+            // --- Select / Focus on Courier ---
+            window.selectCourier = function (id) {
+                selectedCourierId = id;
+                if (markers[id]) {
+                    map.setView(markers[id].getLatLng(), 15, { animate: true });
+                    markers[id].openPopup();
+                }
+                // Update UI for active state
+                document.querySelectorAll('.courier-card').forEach(function (card) {
+                    card.classList.toggle('active', parseInt(card.dataset.id) === id);
+                });
+            };
+
+            // --- Search Handler ---
+            document.getElementById('courierSearch').addEventListener('input', function (e) {
+                searchTerm = e.target.value;
+                updateCourierPanel(courierData);
+            });
+
+
+
+            // --- Fetch with auto-zoom on first load ---
+            var isFirstLoad = true;
+            function fetchLocations() {
+                fetch('/api/couriers/locations', {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin'
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (response) {
+                    if (response.success && response.data) {
+                        courierData = response.data;
+                        var bounds = updateMarkers(courierData);
+                        updateCourierPanel(courierData);
+
+                        // Zoom to fit markers on first load
+                        if (isFirstLoad && bounds.length > 0) {
+                            map.fitBounds(bounds, { padding: [40, 40] });
+                            isFirstLoad = false;
+                        }
+                    }
+                })
+                .catch(function (err) {
+                    console.warn('Failed to fetch courier locations:', err);
+                });
+            }
+
+            // --- Mobile Panel Toggle ---
+            window.togglePanel = function () {
+                document.getElementById('courierPanel').classList.toggle('collapsed');
+                setTimeout(function () { map.invalidateSize(); }, 350);
+            };
+
+            // --- Utility ---
+            function escapeHtml(text) {
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // --- Start ---
+            document.addEventListener('DOMContentLoaded', function () {
+                // Load data immediately from API
+                fetchLocations();
+
+                // Auto-refresh every 15 seconds
+                setInterval(fetchLocations, REFRESH_INTERVAL);
+            });
+        })();
+        /*]]>*/
+    </script>
+</body>
+
+</html>

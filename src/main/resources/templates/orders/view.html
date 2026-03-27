@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{orders.view.title} + ' ' + (${order.code} ?: ${order.id}) + ' - ' + #{app.title}">تفاصيل الطلب -
+        ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .order-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .order-container .card {
+            margin-bottom: var(--space-4);
+        }
+
+        .order-container .form-group {
+            margin-bottom: var(--space-3);
+        }
+
+        .order-container textarea.form-control {
+            min-height: 60px;
+        }
+
+        .order-container .card-header {
+            margin-bottom: var(--space-4);
+            padding-bottom: var(--space-3);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+        }
+
+        .actions-grid .card {
+            margin-bottom: 0;
+        }
+
+        .detail-item {
+            margin-bottom: var(--space-1);
+        }
+
+        .detail-item .detail-label-text {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+
+        .detail-item .detail-value-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <div class="order-container">
+                <div class="page-header">
+                    <h1 class="page-title"
+                        style="display: flex; align-items: center; gap: var(--space-2); font-size: 1.5rem;">
+                        <span th:text="#{orders.view.title}">👁 تفاصيل الطلب:</span>
+                        <span id="orderCodeValue">[[${order.code ?: order.id}]]</span>
+                        <button type="button" class="btn btn-sm btn-secondary"
+                            onclick="copyToClipboard('orderCodeValue', this)" title="نسخ الكود"
+                            style="padding: 3px 6px; font-size: 0.75em;">📋</button>
+                    </h1>
+                    <a th:if="${businessDayId != null}" th:href="@{/business-days/{id}(id=${businessDayId})}"
+                        class="btn btn-secondary btn-sm" th:text="#{orders.new.btn_back_to_day}">⬅ رجوع لليوم</a>
+                    <a th:if="${businessDayId == null && currentUserOrganization != null && order.ownerOrganization != null && currentUserOrganization.id == order.ownerOrganization.id && order.businessDay != null}"
+                        th:href="@{/business-days/{id}(id=${order.businessDay.id})}" class="btn btn-secondary btn-sm"
+                        th:text="#{orders.new.btn_back_to_day}">⬅ رجوع لليوم</a>
+                    <a th:if="${businessDayId == null && (currentUserOrganization == null || order.ownerOrganization == null || currentUserOrganization.id != order.ownerOrganization.id)}"
+                        th:href="@{/orders}" class="btn btn-secondary btn-sm" th:text="#{orders.view.btn_back}">⬅
+                        رجوع</a>
+                </div>
+
+                <!-- ===== Order Details Card ===== -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title" th:text="#{orders.view.info_title}" style="font-size: 1.1rem;">📦 معلومات
+                            الشحنة</h3>
+                        <span class="badge"
+                            th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                              (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
+                                              (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                              (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                            th:text="${#locale.language == 'en' ? order.status.englishName : order.status.arabicName}">الحالة</span>
+                    </div>
+
+                    <!-- ===== Edit Form (Admin, Manager, Data Entry) ===== -->
+                    <form th:action="@{/orders/{id}/update-info(id=${order.id})}" method="post"
+                        sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
+                        <input type="hidden" name="businessDayId" th:value="${businessDayId ?: order.businessDay?.id}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.sn}">الرقم المسلسل</label>
+                                <p style="font-weight: 600; font-size: 1rem; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.sequenceNumber}"></p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.code}">الكود</label>
+                                <input type="text" name="code" class="form-control" th:value="${order.code}"
+                                    th:placeholder="#{orders.view.code_placeholder}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.recipient_name}">المرسل إليه *</label>
+                                <input type="text" name="recipientName" class="form-control"
+                                    th:value="${order.recipientName}" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.recipient_phone}">رقم الهاتف</label>
+                                <input type="text" name="recipientPhone" class="form-control"
+                                    th:value="${order.recipientPhone}"
+                                    th:placeholder="#{orders.view.recipient_phone_placeholder}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">المحافظة</label>
+                                <select name="governorate" class="form-control">
+                                    <option value="">غير محدد</option>
+                                    <option th:each="gov : ${governorates}" th:value="${gov}"
+                                        th:text="${gov.arabicName}" th:selected="${order.governorate == gov}"></option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.company}">الشركة</label>
+                                <input type="text" name="companyName" class="form-control"
+                                    th:value="${order.companyName}" th:placeholder="#{orders.view.company_placeholder}">
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" th:text="#{orders.view.recipient_address}">العنوان</label>
+                                <input type="text" name="recipientAddress" class="form-control"
+                                    th:value="${order.recipientAddress}"
+                                    th:placeholder="#{orders.view.recipient_address_placeholder}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.shipping_price}">سعر الشحن</label>
+                                <input type="number" step="0.01" id="editShippingPrice" name="shippingPrice"
+                                    class="form-control" th:value="${order.shippingPrice}"
+                                    oninput="calculateEditTotalAmount(event)">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.order_price}">سعر الاوردر</label>
+                                <input type="number" step="0.01" id="editOrderPrice" name="orderPrice"
+                                    class="form-control" th:value="${order.orderPrice}"
+                                    oninput="calculateEditTotalAmount(event)">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">الكمية</label>
+                                <input type="number" name="quantity" class="form-control" th:value="${order.quantity}"
+                                    min="1">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.amount_egp}">المبلغ (ج.م)</label>
+                                <input type="number" step="0.01" name="amount" class="form-control"
+                                    th:value="${order.amount}" readonly>
+                            </div>
+
+                            <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                                <label class="form-label" style="color: var(--accent-1);">سعر الاستلام الجزئي</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.partialDeliveryAmount}"></p>
+                            </div>
+
+                            <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                                <label class="form-label" style="color: var(--accent-1);">القطع المسلمة</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.deliveredPieces}"></p>
+                            </div>
+
+                            <div class="form-group"
+                                th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
+                                <label class="form-label" style="color: var(--accent-1);">المبلغ المحصل الفعلي</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.collectedAmount}"></p>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.rejection_payment}">مبلغ الرفض
+                                    (ج.م)</label>
+                                <input type="number" step="0.01" name="rejectionPayment" class="form-control"
+                                    th:value="${order.rejectionPayment}"
+                                    th:placeholder="#{orders.view.rejection_payment_placeholder}">
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" th:text="#{orders.view.notes}">ملاحظات</label>
+                                <textarea name="notes" class="form-control" rows="2" th:text="${order.notes}"
+                                    th:placeholder="#{orders.view.notes_placeholder}"></textarea>
+                            </div>
+
+                            <div style="grid-column: span 2;">
+                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}">💾
+                                    حفظ التعديلات</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- ===== FOLLOW_UP / ACCOUNTANT: limited edit form ===== -->
+                    <form th:action="@{/orders/{id}/update-info(id=${order.id})}" method="post"
+                        sec:authorize="hasAnyRole('FOLLOW_UP', 'ACCOUNTANT')">
+                        <input type="hidden" name="businessDayId" th:value="${businessDayId ?: order.businessDay?.id}">
+                        <!-- Hidden fields to preserve original values -->
+                        <input type="hidden" name="recipientName" th:value="${order.recipientName}">
+                        <input type="hidden" name="recipientPhone" th:value="${order.recipientPhone}">
+                        <input type="hidden" name="recipientAddress" th:value="${order.recipientAddress}">
+                        <input type="hidden" name="companyName" th:value="${order.companyName}">
+                        <input type="hidden" name="code" th:value="${order.code}">
+                        <input type="hidden" name="shippingPrice" th:value="${order.shippingPrice}">
+                        <input type="hidden" name="orderPrice" th:value="${order.orderPrice}">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.sn}">الرقم المسلسل</p>
+                                <p class="detail-value-text" th:text="${order.sequenceNumber}"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.recipient_name}">المرسل إليه</p>
+                                <p class="detail-value-text" th:text="${order.recipientName}"></p>
+                            </div>
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.recipient_phone}">رقم الهاتف</p>
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <p id="phoneFollowUp" class="detail-value-text" style="margin: 0;"
+                                        th:text="${order.recipientPhone} ?: '-'"></p>
+                                    <button th:if="${order.recipientPhone != null}" type="button"
+                                        class="btn btn-sm btn-secondary"
+                                        onclick="copyToClipboard('phoneFollowUp', this)" title="نسخ الهاتف"
+                                        style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.company}">الشركة</p>
+                                <p class="detail-value-text" th:text="${order.companyName} ?: '-'"></p>
+                            </div>
+                            <div class="detail-item" style="grid-column: span 2;">
+                                <p class="detail-label-text" th:text="#{orders.view.recipient_address}">العنوان</p>
+                                <p class="detail-value-text" th:text="${order.recipientAddress} ?: '-'"></p>
+                            </div>
+                            <hr
+                                style="grid-column: span 2; border: 0; border-top: 1px solid var(--dark-border); margin: var(--space-1) 0;">
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.amount_egp}">المبلغ (ج.م)</label>
+                                <input type="number" step="0.01" name="amount" class="form-control"
+                                    th:value="${order.amount}">
+                            </div>
+
+                            <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                                <label class="form-label" style="color: var(--accent-1);">سعر الاستلام الجزئي</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.partialDeliveryAmount}"></p>
+                            </div>
+
+                            <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                                <label class="form-label" style="color: var(--accent-1);">القطع المسلمة</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.deliveredPieces}"></p>
+                            </div>
+
+                            <div class="form-group"
+                                th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
+                                <label class="form-label" style="color: var(--accent-1);">المبلغ المحصل الفعلي</label>
+                                <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
+                                    th:text="${order.collectedAmount}"></p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.rejection_payment}">مبلغ الرفض
+                                    (ج.م)</label>
+                                <input type="number" step="0.01" name="rejectionPayment" class="form-control"
+                                    th:value="${order.rejectionPayment}"
+                                    th:placeholder="#{orders.view.rejection_payment_placeholder}">
+                            </div>
+                            <!-- Assigned Office/Company (Read Only) -->
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.assigned_to}">مُسند إلى:</p>
+                                <div>
+                                    <span th:if="${order.assignedToOrganization != null}">
+                                        <a th:href="@{/org/profile/{id}(id=${order.assignedToOrganization.id})}"
+                                            th:text="${order.assignedToOrganization.name}" target="_blank"
+                                            style="color: var(--primary-600); text-decoration: underline;">الاسم</a>
+                                    </span>
+                                    <span th:unless="${order.assignedToOrganization != null}" class="text-muted"
+                                        th:text="#{orders.view.not_assigned}">غير مسند</span>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <p class="detail-label-text" th:text="#{orders.view.created_at}">تاريخ الإنشاء</p>
+                                <p class="detail-value-text"
+                                    th:text="${#temporals.format(order.createdAt, 'yyyy/MM/dd HH:mm')}"></p>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" th:text="#{orders.view.notes}">ملاحظات</label>
+                                <textarea name="notes" class="form-control" rows="2" th:text="${order.notes}"
+                                    th:placeholder="#{orders.view.notes_placeholder}"></textarea>
+                            </div>
+                            <div style="grid-column: span 2;">
+                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}">💾
+                                    حفظ التعديلات</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- ===== Read-only view for others ===== -->
+                    <div sec:authorize="!hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY', 'FOLLOW_UP')"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.sn}"> الرقم المسلسل</p>
+                            <p class="detail-value-text" th:text="${order.sequenceNumber}"></p>
+                        </div>
+
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.recipient_name}">المرسل إليه</p>
+                            <p class="detail-value-text" th:text="${order.recipientName}"></p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.recipient_phone}">رقم الهاتف</p>
+                            <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                <p id="phoneReadOnly" class="detail-value-text" style="margin: 0;"
+                                    th:text="${order.recipientPhone} ?: '-'"></p>
+                                <button th:if="${order.recipientPhone != null}" type="button"
+                                    class="btn btn-sm btn-secondary" onclick="copyToClipboard('phoneReadOnly', this)"
+                                    title="نسخ الهاتف"
+                                    style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.company}">الشركة</p>
+                            <p class="detail-value-text" th:text="${order.companyName} ?: '-'"></p>
+                        </div>
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <p class="detail-label-text" th:text="#{orders.view.recipient_address}">العنوان</p>
+                            <p class="detail-value-text" th:text="${order.recipientAddress} ?: '-'"></p>
+                        </div>
+                        <hr
+                            style="grid-column: span 2; border: 0; border-top: 1px solid var(--dark-border); margin: var(--space-1) 0;">
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.shipping_price}">سعر الشحن</p>
+                            <p class="detail-value-text">[[${order.shippingPrice ?: 0}]]</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.order_price}">سعر الطلب</p>
+                            <p class="detail-value-text">[[${order.orderPrice ?: 0}]]</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.amount_egp}">المبلغ الاجمالي</p>
+                            <p style="font-weight: 700; color: var(--accent-1); font-size: 1.15rem;">
+                                [[${order.amount ?: 0}]]
+                            </p>
+                        </div>
+                        <div class="detail-item" th:if="${order.quantity != null}">
+                            <p class="detail-label-text">الكمية</p>
+                            <p class="detail-value-text">[[${order.quantity}]]</p>
+                        </div>
+
+                        <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                            <p class="detail-label-text" style="color: var(--accent-1);">القطع المسلمة</p>
+                            <p class="detail-value-text">[[${order.deliveredPieces}]]</p>
+                        </div>
+                        <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
+                            <p class="detail-label-text" style="color: var(--accent-1);">سعر الاستلام الجزئي</p>
+                            <p class="detail-value-text">[[${order.partialDeliveryAmount}]]</p>
+                        </div>
+
+                        <div class="detail-item"
+                            th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
+                            <p class="detail-label-text" style="color: var(--accent-1);">المبلغ المحصل الفعلي</p>
+                            <p class="detail-value-text">[[${order.collectedAmount}]]</p>
+                        </div>
+                        <div class="detail-item"
+                            th:if="${order.rejectionPayment != null && order.rejectionPayment > 0}">
+                            <p class="detail-label-text" th:text="#{orders.view.rejection_payment}">مدفوع للرفض</p>
+                            <p style="font-weight: 600; color: var(--danger-400);">[[${order.rejectionPayment}]]</p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.current_courier}">المندوب الحالي</p>
+                            <p class="detail-value-text" th:if="${order.assignedToCourier != null}"
+                                th:text="${order.assignedToCourier.fullName}"></p>
+                            <p class="detail-value-text" th:if="${order.assignedToCourier == null}"
+                                th:text="#{orders.view.unassigned}"></p>
+                        </div>
+                        <div class="detail-item">
+                            <p class="detail-label-text" th:text="#{orders.view.created_at}">تاريخ الإنشاء</p>
+                            <p class="detail-value-text"
+                                th:text="${#temporals.format(order.createdAt, 'yyyy/MM/dd HH:mm')}"></p>
+                        </div>
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <p class="detail-label-text" th:text="#{orders.view.notes}">ملاحظات</p>
+                            <p class="detail-value-text" th:text="${order.notes} ?: #{orders.view.no_notes}"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Actions Grid ===== -->
+                <div class="actions-grid">
+
+                    <!-- QR Code & Status Update -->
+                    <div class="card">
+                        <div class="card-header" style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                            <h4 class="card-title" style="margin: 0; font-size: 1rem;"
+                                th:text="#{orders.view.summary_title}">ملخص الطلب</h4>
+                            <a th:href="@{/orders/{id}/label(id=${order.id})}" target="_blank"
+                                class="btn btn-sm btn-secondary" style="padding: 3px 8px; font-size: 0.8em;">
+                                <span th:text="#{orders.btn.print_label}">🖨 طباعة</span>
+                            </a>
+                        </div>
+                        <div style="text-align: center; margin-bottom: var(--space-3);">
+                            <img th:src="@{/api/orders/{code}/qr-image(code=${order.code})}" alt="QR Code"
+                                style="max-width: 100px;">
+                            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-1);"
+                                th:text="${order.code}"></p>
+                        </div>
+                        <form th:action="@{/orders/{id}/update-status(id=${order.id})}" method="post"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP', 'COURIER')">
+                            <input type="hidden" name="businessDayId"
+                                th:value="${businessDayId ?: order.businessDay?.id}">
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.new_status}">الحالة الجديدة</label>
+                                <select name="status" id="statusSelect" class="form-control" required
+                                    onchange="togglePartialDelivery()">
+                                    <option th:each="st : ${statuses}" th:value="${st}"
+                                        th:text="${#locale.language == 'en' ? st.englishName : st.arabicName}"
+                                        th:selected="${st == order.status}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="partialDeliveryGroup" style="display: none;">
+                                <label class="form-label" style="color: var(--accent-1);">القطع المسلمة</label>
+                                <input type="number" name="deliveredPieces" class="form-control" min="1"
+                                    th:value="${order.deliveredPieces}">
+                                <label class="form-label"
+                                    style="color: var(--accent-1); margin-top: var(--space-2);">سعر الاستلام
+                                    الجزئي</label>
+                                <input type="number" name="partialDeliveryAmount" class="form-control" step="0.01"
+                                    min="0" th:value="${order.partialDeliveryAmount}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.collected_amount}">المبلغ المحصل
+                                    (اختياري)</label>
+                                <input type="number" step="0.01" name="amount" class="form-control"
+                                    th:value="${order.amount}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{orders.view.status_notes}">سبب/ملاحظات
+                                    التغيير</label>
+                                <textarea name="notes" class="form-control" rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary" style="width: 100%;"
+                                th:text="#{orders.btn.update_status}">تحديث الحالة</button>
+                        </form>
+                    </div>
+
+                    <!-- Combined Assignment Card -->
+                    <div style="display: flex; flex-direction: column; gap: var(--space-4);">
+
+                        <!-- Assign to Office (Admin and Manager) -->
+                        <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                            <div class="card-header"
+                                style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                                <h4 th:if="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                    class="card-title" th:text="#{orders.view.assign_organization_title}"
+                                    style="margin: 0; font-size: 1rem;">🏢 إسناد لمؤسسة</h4>
+                                <h4 th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                    class="card-title" th:text="#{orders.view.assign_office_title}"
+                                    style="margin: 0; font-size: 1rem;">🏢 إسناد لمكتب</h4>
+                            </div>
+                            <form th:action="@{/orders/{id}/assign-organization(id=${order.id})}" method="post">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <div class="form-group">
+                                    <select name="organizationId" class="form-control" required>
+                                        <option value=""
+                                            th:if="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                            th:text="#{orders.view.assign_organization_select}">اختر مؤسسة...</option>
+                                        <option value=""
+                                            th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                            th:text="#{orders.view.assign_office_select}">اختر مكتباً...</option>
+
+                                        <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                                            <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"
+                                                th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == c.id}">
+                                            </option>
+                                        </optgroup>
+
+                                        <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                                            <option th:each="o : ${offices}" th:value="${o.id}" th:text="${o.name}"
+                                                th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == o.id}">
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="المكاتب الافتراضية"
+                                            th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
+                                            <option th:each="vo : ${virtualOffices}" th:value="${vo.id}"
+                                                th:text="${vo.name}"
+                                                th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == vo.id}">
+                                            </option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <button
+                                    th:if="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                    type="submit" class="btn btn-secondary" style="width: 100%;"
+                                    th:text="#{orders.btn.assign_organization}">إسناد للمؤسسة</button>
+                                <button
+                                    th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
+                                    type="submit" class="btn btn-secondary" style="width: 100%;"
+                                    th:text="#{orders.btn.assign_office}">إسناد للمكتب</button>
+                            </form>
+
+                            <!-- Assignment Chain Display -->
+                            <div th:if="${assignmentChain != null && !assignmentChain.isEmpty()}"
+                                style="margin-top: var(--space-4); margin-bottom: var(--space-2);">
+                                <h5
+                                    style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);">
+                                    سلسلة إسناد الطلب
+                                </h5>
+                                <div style="display: flex; flex-direction: column; gap: var(--space-2);">
+                                    <div th:each="assignment : ${assignmentChain}"
+                                        style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-2); background-color: var(--background-body); border-radius: var(--radius-sm); border: 1px solid var(--border-color); font-size: 0.85rem;">
+
+                                        <div style="flex: 1;">
+                                            <span th:text="${assignment.assignerOrganization.name}"
+                                                style="color: var(--text-secondary);"></span>
+                                            <span style="color: var(--text-tertiary);"> ← </span>
+                                            <a th:href="@{/org/profile/{id}(id=${assignment.assigneeOrganization.id})}"
+                                                th:text="${assignment.assigneeOrganization.name}"
+                                                style="color: var(--primary-600); font-weight: 600;"
+                                                target="_blank"></a>
+                                            <span th:if="${assignment.accepted}"
+                                                style="color: var(--success-600); font-size: 0.75rem; margin-inline-start: var(--space-1);">✓
+                                                مقبول</span>
+                                            <span th:unless="${assignment.accepted}"
+                                                style="color: var(--warning-600); font-size: 0.75rem; margin-inline-start: var(--space-1);">⏳
+                                                بانتظار القبول</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Unassign office button - visible based on backend permission -->
+                            <form
+                                th:if="${canUnassignOrg && order.status.name() != 'DELIVERED' && order.status.name() != 'CANCELLED' && order.status.name() != 'REFUSED'}"
+                                th:action="@{/orders/{id}/unassign-organization(id=${order.id})}" method="post"
+                                style="margin-top: var(--space-3);"
+                                th:onsubmit="|return confirm('#{orders.view.unassign_office_confirm}');|">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.9rem;"
+                                    title="إلغاء الإسناد الأخير المعلق">
+                                    ❌ إلغاء طلب الإسناد
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Assign Courier (Admin, Manager and Data Entry) -->
+                        <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                            th:if="${currentUserOrganization == null || currentUserOrganization.type.name() != 'STORE'}">
+                            <div class="card-header"
+                                style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                                <h4 class="card-title" th:text="#{orders.view.assign_courier_title}"
+                                    style="margin: 0; font-size: 1rem;">🚚 تعيين مندوب</h4>
+                            </div>
+                            <form th:action="@{/orders/{id}/assign-courier(id=${order.id})}" method="post">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <div class="form-group">
+                                    <select name="courierId" class="form-control" required>
+                                        <option value="" th:text="#{orders.view.assign_courier_select}">اختر مندوباً...
+                                        </option>
+                                        <th:block th:if="${couriers != null}">
+                                            <option th:each="c : ${couriers}" th:value="${c.id}"
+                                                th:text="${c.fullName}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary" style="width: 100%;"
+                                    th:text="#{orders.btn.assign_courier}">تأكيد التعيين</button>
+                            </form>
+                            <!-- Unassign courier button -->
+                            <form
+                                th:if="${order.assignedToCourier != null && order.status.name() != 'DELIVERED' && order.status.name() != 'CANCELLED' && order.status.name() != 'REFUSED' && (order.assignedToOrganization == null || (currentUserOrganization != null && currentUserOrganization.id == order.assignedToOrganization.id))}"
+                                th:action="@{/orders/{id}/unassign-courier(id=${order.id})}" method="post"
+                                style="margin-top: var(--space-2);"
+                                th:onsubmit="|return confirm('#{orders.view.unassign_courier_confirm}');|">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.85rem;"
+                                    th:text="#{orders.btn.unassign_courier}">❌ إلغاء الإسناد للمندوب</button>
+                            </form>
+                        </div>
+
+                        <!-- Custody Cards -->
+                        <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                            th:if="${!order.businessDay.isCustody}">
+                            <div class="card-header"
+                                style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                                <h4 class="card-title" th:text="#{orders.view.assign_custody_title}"
+                                    style="margin: 0; font-size: 1rem;">📦 إسناد لعهدة المخزن</h4>
+                            </div>
+                            <form th:action="@{/orders/{id}/assign-custody(id=${order.id})}" method="post"
+                                th:onsubmit="|return confirm('#{orders.view.assign_custody_confirm}');|">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <button type="submit" class="btn btn-warning" style="width: 100%; color: #000;"
+                                    th:text="#{orders.btn.assign_custody}">نقل لعهدة المخزن</button>
+                            </form>
+                        </div>
+
+                        <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                            th:if="${order.businessDay.isCustody}">
+                            <div class="card-header"
+                                style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                                <h4 class="card-title" th:text="#{orders.view.remove_custody_title}"
+                                    style="margin: 0; font-size: 1rem;">📤 إزالة من عهدة المخزن</h4>
+                            </div>
+                            <form th:action="@{/orders/{id}/remove-custody(id=${order.id})}" method="post"
+                                th:onsubmit="|return confirm('#{orders.view.remove_custody_confirm}');|">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <button type="submit" class="btn btn-secondary" style="width: 100%;"
+                                    th:text="#{orders.btn.remove_custody}">إزالة من العهدة</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Order (Admin and Manager) -->
+                <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    style="border: 1px solid var(--danger-border);">
+                    <div class="card-header"
+                        style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); background-color: var(--danger-50); margin: calc(-1 * var(--space-6)); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-6); border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
+                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;"
+                            th:text="#{orders.view.delete_title}">
+                            🗑 حذف الطلب</h4>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: var(--space-4);">
+                        <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0; flex: 1;"
+                            th:text="#{orders.view.delete_warning}">
+                            تحذير: الحذف نهائي وسيمسح الطلب وكافة سجلات التغيير الخاصة به.
+                        </p>
+                        <form th:action="@{/orders/{id}/delete(id=${order.id})}" method="post"
+                            th:onsubmit="|return confirm('#{orders.view.delete_confirm}');|">
+                            <button type="submit" class="btn btn-danger btn-sm"
+                                th:text="#{orders.btn.delete_permanently}">حذف نهائياً</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Return Receipt Tracking (REFUSED/CANCELLED orders only) -->
+                <div class="card"
+                    th:if="${(order.status.name() == 'REFUSED' || order.status.name() == 'CANCELLED') && returnStatus != null}"
+                    style="border: 2px solid var(--danger-400);">
+                    <div class="card-header"
+                        style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); background-color: var(--danger-50); margin: calc(-1 * var(--space-6)); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-6); border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
+                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;">📦 تتبع
+                            إرجاع المرتجع</h4>
+                    </div>
+
+                    <!-- Completed -->
+                    <div th:if="${returnStatus.get('returnedToOwner')}"
+                        style="text-align: center; padding: var(--space-3);">
+                        <div style="font-size: 1.5rem;">✅</div>
+                        <p
+                            style="font-weight: 700; color: var(--success-600); margin-top: var(--space-2); font-size: 0.9rem;">
+                            تم إرجاع الطلب بالكامل للمالك الأصلي
+                        </p>
+                    </div>
+
+                    <!-- Chain Progress -->
+                    <div th:unless="${returnStatus.get('returnedToOwner')}">
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-2); font-size: 0.8rem;">
+                            مراحل استلام المرتجع (من الأسفل للأعلى):
+                        </p>
+
+                        <div th:if="${returnStatus.get('chainLevels') != null}"
+                            style="display: flex; flex-direction: column-reverse; gap: var(--space-2); margin-bottom: var(--space-3);">
+                            <div th:each="lvl : ${returnStatus.get('chainLevels')}"
+                                style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm); font-size: 0.85rem;"
+                                th:styleappend="${lvl.get('returnConfirmed') ? 'background: var(--success-50); border: 1px solid var(--success-200);' : 'background: var(--dark-surface); border: 1px solid var(--dark-border);'}">
+                                <span th:if="${lvl.get('returnConfirmed')}">✅</span>
+                                <span th:unless="${lvl.get('returnConfirmed')}">⏳</span>
+                                <div>
+                                    <span style="font-weight: 600;" th:text="${lvl.get('assigneeName')}"></span>
+                                    <span style="color: var(--text-tertiary); font-size: 0.75rem;"
+                                        th:text="${lvl.get('returnConfirmed') ? '(تم التأكيد)' : '(بانتظار التأكيد)'}"></span>
+                                </div>
+                            </div>
+                            <!-- Owner (final destination) -->
+                            <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm);"
+                                th:styleappend="${returnStatus.get('returnedToOwner') ? 'background: var(--success-50); border: 1px solid var(--success-200);' : 'background: var(--dark-surface); border: 1px solid var(--dark-border);'}">
+                                <span>🏠</span>
+                                <span style="font-weight: 600; font-size: 0.85rem;"
+                                    th:text="${order.ownerOrganization.name} + ' (المالك)'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Confirm Return Button -->
+                        <form th:action="@{/orders/{id}/confirm-return(id=${order.id})}" method="post"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                            th:onsubmit="|return confirm('هل تريد تأكيد استلام المرتجع؟');|">
+                            <input type="hidden" name="businessDayId"
+                                th:value="${businessDayId ?: order.businessDay?.id}">
+                            <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                📦 تأكيد استلام المرتجع
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History -->
+                <div class="card">
+                    <div class="card-header" style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                        <h4 class="card-title" th:text="#{orders.view.history_title}"
+                            style="margin: 0; font-size: 1rem;">📜 سجل التغييرات</h4>
+                    </div>
+                    <div class="table-container" style="border: none;">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th th:text="#{orders.history.time}">الوقت</th>
+                                    <th th:text="#{orders.history.prev_status}">الحالة السابقة</th>
+                                    <th th:text="#{orders.history.new_status}">الحالة الجديدة</th>
+                                    <th th:text="#{orders.history.by}">بواسطة</th>
+                                    <th th:text="#{orders.history.notes}">ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="h : ${history}">
+                                    <td th:text="${#temporals.format(h.changedAt, 'yyyy/MM/dd HH:mm')}"></td>
+                                    <td
+                                        th:text="${h.previousStatus != null ? (#locale.language == 'en' ? h.previousStatus.englishName : h.previousStatus.arabicName) : '-'}">
+                                    </td>
+                                    <td
+                                        th:text="${#locale.language == 'en' ? h.newStatus.englishName : h.newStatus.arabicName}">
+                                    </td>
+                                    <td th:text="${h.changedBy.fullName}"></td>
+                                    <td th:text="${h.notes ?: '-'}"></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(history)}">
+                                    <td colspan="5" style="text-align: center;" th:text="#{orders.history.empty}">لا
+                                        يوجد
+                                        سجل تغييرات بعد</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div><!-- /order-container -->
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+    <script th:inline="javascript">
+        function copyToClipboard(elementId, buttonElement) {
+            const textToCopy = document.getElementById(elementId).innerText.trim();
+            const originalText = buttonElement.innerHTML;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                buttonElement.innerHTML = '✅ تم';
+                buttonElement.classList.replace('btn-secondary', 'btn-primary');
+
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalText;
+                    buttonElement.classList.replace('btn-primary', 'btn-secondary');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                buttonElement.innerHTML = '❌';
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function calculateEditTotalAmount(event) {
+            const form = event.target.closest('form');
+            if (form) {
+                var shippingPrice = parseFloat(form.querySelector('input[name="shippingPrice"]').value) || 0;
+                var orderPrice = parseFloat(form.querySelector('input[name="orderPrice"]').value) || 0;
+                form.querySelector('input[name="amount"]').value = (shippingPrice + orderPrice).toFixed(2);
+            }
+        }
+
+        function togglePartialDelivery() {
+            const statusSelect = document.getElementById('statusSelect');
+            const partialDeliveryGroup = document.getElementById('partialDeliveryGroup');
+            if (statusSelect && partialDeliveryGroup) {
+                if (statusSelect.value === 'PARTIAL_DELIVERY') {
+                    partialDeliveryGroup.style.display = 'block';
+                } else {
+                    partialDeliveryGroup.style.display = 'none';
+                }
+            }
+        }
+        document.addEventListener('DOMContentLoaded', togglePartialDelivery);
+    </script>
+
+</body>
+
+</html>

@@ -1,34 +1,22 @@
-# Ignore everything by default
-*
-
-# Allow directories traversal
-!*/
-
-# Root files
-!/README.md
-!/docker-compose.yml
-!/.gitignore
-
-# Exception package
-!/src/main/java/com/shipment/shippinggo/exception/
-!/src/main/java/com/shipment/shippinggo/exception/*.java
-
-# Config package
-!/src/main/java/com/shipment/shippinggo/config/
-!/src/main/java/com/shipment/shippinggo/config/*.java
-
-# Specific controllers
-!/src/main/java/com/shipment/shippinggo/controller/OrderController.java
-!/src/main/java/com/shipment/shippinggo/controller/api/
-!/src/main/java/com/shipment/shippinggo/controller/api/ApiOrderController.java
-
-# Specific service
-!/src/main/java/com/shipment/shippinggo/service/OrderCreationService.java
-
-# Ignore sensitive stuff
-/.idea/
-/.vscode/
+# Build folder
 /target/
-/uploads/
-/shippinggo_desktop/
-/shippinggo_mobile/
+
+# Logs
+*.log
+
+# IDE files
+/.idea/
+/*.iml
+.vscode/
+*.apk
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Large or generated folders
+HELP.md
+uploads/
+shippinggo_desktop/
+shippinggo_mobile/
+nginx/

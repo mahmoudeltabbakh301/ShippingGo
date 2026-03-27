@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{super_admin.dashboard.title} + ' - ' + #{app.title}">لوحة المدير العام - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .stat-card-icon {
+            font-size: 2rem;
+            margin-bottom: var(--space-2);
+        }
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+        .stat-card-label {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        .stat-card-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: var(--space-1);
+        }
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .quick-link-card {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .quick-link-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .quick-link-icon {
+            font-size: 2.5rem;
+        }
+        .quick-link-title {
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: var(--space-1);
+        }
+        .quick-link-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🛡️ <span th:text="#{super_admin.dashboard.title}">لوحة تحكم المدير العام</span></h1>
+                    <p class="page-subtitle" th:text="#{super_admin.dashboard.subtitle}">إدارة شاملة لجميع المنظمات والمستخدمين على المنصة</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-icon">🏢</div>
+                    <div class="stat-card-value" th:text="${stats.totalOrganizations}">0</div>
+                    <div class="stat-card-label" th:text="#{super_admin.stats.total_orgs}">إجمالي المنظمات</div>
+                    <div class="stat-card-sub">
+                        <span th:text="${stats.activeOrganizations}">0</span>
+                        <span th:text="#{super_admin.stats.active}">مفعّلة</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">👥</div>
+                    <div class="stat-card-value" th:text="${stats.totalUsers}">0</div>
+                    <div class="stat-card-label" th:text="#{super_admin.stats.total_users}">إجمالي المستخدمين</div>
+                    <div class="stat-card-sub">
+                        <span th:text="${stats.enabledUsers}">0</span>
+                        <span th:text="#{super_admin.stats.enabled}">مفعّل</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">📦</div>
+                    <div class="stat-card-value" th:text="${stats.totalOrders}">0</div>
+                    <div class="stat-card-label" th:text="#{super_admin.stats.total_orders}">إجمالي الطلبات</div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="quick-links">
+                <a th:href="@{/super-admin/organizations}" class="quick-link-card">
+                    <div class="quick-link-icon">🏢</div>
+                    <div>
+                        <div class="quick-link-title" th:text="#{super_admin.nav.organizations}">إدارة المنظمات</div>
+                        <div class="quick-link-desc" th:text="#{super_admin.dashboard.orgs_desc}">عرض وإدارة جميع المنظمات على المنصة</div>
+                    </div>
+                </a>
+                <a th:href="@{/super-admin/users}" class="quick-link-card">
+                    <div class="quick-link-icon">👥</div>
+                    <div>
+                        <div class="quick-link-title" th:text="#{super_admin.nav.users}">إدارة المستخدمين</div>
+                        <div class="quick-link-desc" th:text="#{super_admin.dashboard.users_desc}">عرض وإدارة جميع المستخدمين على المنصة</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Latest Organizations -->
+            <div class="card">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; font-size: 1.1rem;">📋 <span th:text="#{super_admin.dashboard.latest_orgs}">أحدث المنظمات المسجلة</span></h2>
+                    <a th:href="@{/super-admin/organizations}" class="btn btn-sm btn-outline"
+                       th:text="#{super_admin.btn.view_all}">عرض الكل</a>
+                </div>
+
+                <div th:if="${organizations.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-text" th:text="#{super_admin.orgs.empty}">لا توجد منظمات مسجلة بعد</div>
+                </div>
+
+                <div th:if="${!organizations.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th th:text="#{super_admin.orgs.col_name}">الاسم</th>
+                                <th th:text="#{super_admin.orgs.col_type}">النوع</th>
+                                <th th:text="#{super_admin.orgs.col_admin}">المدير</th>
+                                <th th:text="#{super_admin.orgs.col_status}">الحالة</th>
+                                <th th:text="#{super_admin.orgs.col_created}">التسجيل</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="org, iter : ${organizations}" th:if="${iter.index < 10}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td>
+                                    <a th:href="@{/super-admin/organizations/{id}(id=${org.id})}"
+                                       th:text="${org.name}" style="text-decoration: none; font-weight: 600;">اسم المنظمة</a>
+                                </td>
+                                <td>
+                                    <span class="badge" th:text="${org.type.arabicName}">نوع</span>
+                                </td>
+                                <td th:text="${org.admin != null ? org.admin.fullName : '-'}">المدير</td>
+                                <td>
+                                    <span class="badge badge-delivered" th:if="${org.active}"
+                                          th:text="#{super_admin.status.active}">مفعّلة</span>
+                                    <span class="badge badge-refused" th:unless="${org.active}"
+                                          th:text="#{super_admin.status.inactive}">معطّلة</span>
+                                </td>
+                                <td th:text="${#temporals.format(org.createdAt, 'yyyy/MM/dd')}">التاريخ</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

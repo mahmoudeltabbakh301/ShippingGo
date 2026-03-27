@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{audit_logs.title} + ' - ' + #{app.title}">سجلات النظام - ShippingGo</title>
+    
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    
+    <style>
+        .details-cell {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--space-2);
+            margin-top: var(--space-4);
+            flex-wrap: wrap;
+        }
+        .pagination a, .pagination span {
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .pagination a {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+        .pagination a:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        .pagination .active {
+            background: var(--primary);
+            color: white;
+            border: 1px solid var(--primary);
+        }
+        .pagination .disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .log-stats {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            margin-bottom: var(--space-4);
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><span th:text="${pageHeaderIcon != null ? pageHeaderIcon : '🛡️'}">🛡️</span> <span th:text="${pageTitle}">سجلات النظام</span></h1>
+                    <p class="page-subtitle" th:text="#{audit_logs.subtitle}">متابعة العمليات والإجراءات داخل النظام</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <!-- Stats -->
+                <div class="log-stats" th:if="${totalElements != null && totalElements > 0}">
+                    <span>📊</span>
+                    <span th:text="#{audit_logs.total_count(${totalElements})}">إجمالي السجلات: 0</span>
+                </div>
+
+                <div th:if="${auditLogs.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">📝</div>
+                    <div class="table-empty-text" th:text="#{audit_logs.empty}">لا توجد سجلات بالنظام حتى الآن</div>
+                </div>
+
+                <div th:if="${!auditLogs.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th th:text="#{audit_logs.col_date}">التاريخ</th>
+                                <th th:text="#{audit_logs.col_user}">المستخدم</th>
+                                <th th:text="#{audit_logs.col_action}">الإجراء</th>
+                                <th th:text="#{audit_logs.col_entity}">الكيان</th>
+                                <th th:text="#{audit_logs.col_entity_id}">رقم الكيان</th>
+                                <th th:text="#{audit_logs.col_ip}">عنوان IP</th>
+                                <th th:text="#{audit_logs.col_details}">التفاصيل</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="log : ${auditLogs}">
+                                <td th:text="${#temporals.format(log.timestamp, 'yyyy/MM/dd HH:mm')}">التاريخ</td>
+                                <td th:text="${log.username}">المستخدم</td>
+                                <td>
+                                    <span class="badge" th:classappend="${log.actionName.contains('DELETE') || log.actionName.contains('REJECT') || log.actionName.contains('FAILED') || log.actionName.contains('REMOVE') ? 'badge-refused' : (log.actionName.contains('LOGIN') ? 'badge-pending' : 'badge-delivered')}" th:text="${log.actionName}">
+                                        إجراء
+                                    </span>
+                                </td>
+                                <td th:text="${log.entityName}">الكائن</td>
+                                <td th:text="${log.entityId != null ? log.entityId : '-'}">الرقم</td>
+                                <td th:text="${log.ipAddress}">IP</td>
+                                <td class="details-cell" th:text="${log.details != null && !log.details.isEmpty() ? log.details : '-'}">التفاصيل</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline" th:if="${log.details != null && !log.details.isEmpty()}"
+                                            th:data-details="${log.details}"
+                                            th:data-action="${log.actionName}"
+                                            th:data-time="${#temporals.format(log.timestamp, 'yyyy/MM/dd HH:mm')}"
+                                            onclick="showDetailsModal(this)"
+                                            th:text="#{audit_logs.btn_view_details}">عرض التفاصيل</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${totalPages != null && totalPages > 1}" class="pagination">
+                    <a th:href="@{${currentUri}(page=${currentPage - 1})}" 
+                       th:classappend="${currentPage == 0} ? 'disabled'" 
+                       th:text="#{audit_logs.page_prev}">« السابق</a>
+                    
+                    <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:if="${i != currentPage}" th:href="@{${currentUri}(page=${i})}" th:text="${i + 1}">1</a>
+                        <span th:if="${i == currentPage}" class="active" th:text="${i + 1}">1</span>
+                    </th:block>
+                    
+                    <a th:href="@{${currentUri}(page=${currentPage + 1})}" 
+                       th:classappend="${currentPage == totalPages - 1} ? 'disabled'" 
+                       th:text="#{audit_logs.page_next}">التالي »</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Details Modal -->
+    <div id="detailsModal" class="modal-backdrop" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div class="modal-content" style="background: white; padding: var(--space-6); border-radius: var(--radius-lg); width: 90%; max-width: 500px; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
+                <h3 style="margin: 0;" th:text="#{audit_logs.details_title}">تفاصيل العملية</h3>
+                <button type="button" onclick="closeDetailsModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: var(--space-4);">
+                <div style="margin-bottom: var(--space-2); color: var(--text-muted); font-size: 0.9rem;" id="modalTimestamp"></div>
+                <div style="margin-bottom: var(--space-3);">
+                    <span id="modalActionBadge" class="badge badge-delivered"></span>
+                </div>
+                <div style="background-color: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md); font-family: monospace; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto;" id="modalDetailsText">
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end;">
+                <button type="button" class="btn btn-outline" onclick="closeDetailsModal()" th:text="#{btn.cancel}">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showDetailsModal(btn) {
+            const details = btn.getAttribute('data-details');
+            const action = btn.getAttribute('data-action');
+            const time = btn.getAttribute('data-time');
+            
+            document.getElementById('modalTimestamp').innerText = time;
+            document.getElementById('modalDetailsText').innerText = details;
+            
+            const badge = document.getElementById('modalActionBadge');
+            badge.innerText = action;
+            if(action.includes('DELETE') || action.includes('REJECT') || action.includes('FAILED') || action.includes('REMOVE')) {
+                badge.className = 'badge badge-refused';
+            } else if(action.includes('LOGIN')) {
+                badge.className = 'badge badge-pending';
+            } else {
+                badge.className = 'badge badge-delivered';
+            }
+            
+            document.getElementById('detailsModal').style.display = 'flex';
+        }
+
+        function closeDetailsModal() {
+            document.getElementById('detailsModal').style.display = 'none';
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('detailsModal');
+            if (event.target == modal) {
+                closeDetailsModal();
+            }
+        }
+    </script>
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+</body>
+</html>

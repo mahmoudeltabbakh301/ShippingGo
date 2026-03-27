@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{orders.new.title} + ' - ' + #{app.title}">إنشاء طلب جديد - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+
+    <style>
+        .order-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .order-container .card {
+            margin-bottom: var(--space-4);
+        }
+
+        .order-container .form-group {
+            margin-bottom: var(--space-3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <div class="order-container">
+                <div class="page-header">
+                    <h1 class="page-title">➕ <span th:text="#{orders.new.title}">إنشاء طلب جديد</span></h1>
+                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-secondary btn-sm"
+                        th:text="#{orders.new.btn_back_to_day}">⬅ رجوع لليوم</a>
+                </div>
+
+                <div class="card">
+                    <form th:action="@{/orders/new}" th:object="${orderDto}" method="post">
+                        <input type="hidden" th:value="${businessDay.id}" name="businessDayId">
+
+                        <div style="margin-bottom: var(--space-6);">
+                            <div class="badge badge-pending"
+                                style="font-size: 1rem; padding: var(--space-2) var(--space-4);">
+                                <span th:text="#{orders.new.for_business_day}">📅 لليوم العمل:</span> <span
+                                    th:text="${businessDay.name ?: #temporals.format(businessDay.date, 'yyyy/MM/dd')}"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-grid"
+                            style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3);">
+                            <div class="form-group">
+                                <label class="form-label" for="sequenceNumber" th:text="#{orders.new.sn}">الرقم
+                                    التسلسلي</label>
+                                <input type="text" id="sequenceNumber" th:field="*{sequenceNumber}" class="form-control"
+                                    th:placeholder="#{orders.new.sn_placeholder}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="code" th:text="#{orders.new.company_code}">كود
+                                    الاوردر</label>
+                                <input type="text" id="code" th:field="*{code}" class="form-control"
+                                    th:placeholder="#{orders.new.company_code_placeholder}">
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" for="governorate">المحافظة</label>
+                                <select id="governorate" th:field="*{governorate}" class="form-control">
+                                    <option value="">--- اختر المحافظة ---</option>
+                                    <option th:each="gov : ${governorates}" th:value="${gov}"
+                                        th:text="${gov.arabicName}">
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="companyName" th:text="#{orders.new.company_name}">اسم
+                                    الشركة</label>
+                                <input type="text" id="companyName" th:field="*{companyName}" class="form-control"
+                                    th:placeholder="#{orders.new.company_name_placeholder}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="recipientName" th:text="#{orders.new.recipient_name}">اسم
+                                    العميل *</label>
+                                <input type="text" id="recipientName" th:field="*{recipientName}" class="form-control"
+                                    required>
+                                <div th:if="${#fields.hasErrors('recipientName')}" th:errors="*{recipientName}"
+                                    class="text-danger"></div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="recipientPhone"
+                                    th:text="#{orders.new.recipient_phone}">التيلفون</label>
+                                <input type="text" id="recipientPhone" th:field="*{recipientPhone}"
+                                    class="form-control">
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" for="recipientAddress"
+                                    th:text="#{orders.new.recipient_address}">العنوان الكامل</label>
+                                <textarea id="recipientAddress" th:field="*{recipientAddress}" class="form-control"
+                                    rows="2"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="quantity" th:text="#{orders.new.quantity}">الكمية</label>
+                                <input type="number" id="quantity" th:field="*{quantity}" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="shippingPrice" th:text="#{orders.new.shipping_price}">سعر
+                                    الشحن</label>
+                                <input type="number" step="0.01" id="shippingPrice" th:field="*{shippingPrice}"
+                                    class="form-control" oninput="calculateTotalAmount()">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="orderPrice" th:text="#{orders.new.order_price}">سعر
+                                    الاوردر</label>
+                                <input type="number" step="0.01" id="orderPrice" th:field="*{orderPrice}"
+                                    class="form-control" oninput="calculateTotalAmount()">
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" for="amount" th:text="#{orders.new.amount}">إجمالي
+                                    المبلغ</label>
+                                <input type="number" step="0.01" id="amount" th:field="*{amount}" class="form-control"
+                                    readonly>
+                            </div>
+
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label" for="notes" th:text="#{orders.new.notes}">ملاحظات</label>
+                                <textarea id="notes" th:field="*{notes}" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: var(--space-6); display: flex; justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary" style="min-width: 200px;"
+                                th:text="#{orders.btn.save_order}">حفظ الطلب</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <script>
+        function calculateTotalAmount() {
+            var shippingPrice = parseFloat(document.getElementById('shippingPrice').value) || 0;
+            var orderPrice = parseFloat(document.getElementById('orderPrice').value) || 0;
+            document.getElementById('amount').value = (shippingPrice + orderPrice).toFixed(2);
+        }
+    </script>
+</body>
+
+</html>
