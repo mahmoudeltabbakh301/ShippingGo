@@ -10,11 +10,19 @@ import com.shipment.shippinggo.repository.OrderAssignmentRepository;
 import com.shipment.shippinggo.repository.OrderRepository;
 import com.shipment.shippinggo.service.AccountService;
 import com.shipment.shippinggo.service.OrganizationService;
+import com.shipment.shippinggo.service.ExcelExportService;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,30 +37,39 @@ public class AccountController {
     private final AccountBusinessDayRepository accountBusinessDayRepository;
     private final OrderRepository orderRepository;
     private final OrderAssignmentRepository orderAssignmentRepository;
+    private final ExcelExportService excelExportService;
 
     public AccountController(AccountService accountService,
             OrganizationService organizationService,
             AccountBusinessDayRepository accountBusinessDayRepository,
             OrderRepository orderRepository,
-            OrderAssignmentRepository orderAssignmentRepository) {
+            OrderAssignmentRepository orderAssignmentRepository,
+            ExcelExportService excelExportService) {
         this.accountService = accountService;
         this.organizationService = organizationService;
         this.accountBusinessDayRepository = accountBusinessDayRepository;
         this.orderRepository = orderRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
+        this.excelExportService = excelExportService;
     }
 
     /**
      * الصفحة الرئيسية للحسابات - عرض قائمة أيام العمل
      */
     @GetMapping
-    public String showAccountBusinessDays(@CurrentOrganization Organization org, @AuthenticationPrincipal User user,
+    public String showAccountBusinessDays(
+            @RequestParam(defaultValue = "0") int page,
+            @CurrentOrganization Organization org, @AuthenticationPrincipal User user,
             Model model) {
 
-        // جلب قائمة أيام الحسابات (بدون أيام العهدة)
-        List<AccountBusinessDay> accountDays = accountBusinessDayRepository
-                .findByOrganizationIdAndBusinessDayIsCustodyFalseOrderByBusinessDayDateDesc(org.getId());
-        model.addAttribute("accountDays", accountDays);
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<AccountBusinessDay> accountDaysPage = accountBusinessDayRepository
+                .findByOrganizationIdAndBusinessDayIsCustodyFalseOrderByBusinessDayDateDesc(org.getId(), pageable);
+                
+        model.addAttribute("accountDays", accountDaysPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", accountDaysPage.getTotalPages());
         model.addAttribute("organization", org);
         model.addAttribute("pageTitle", "أيام الحسابات");
 
@@ -187,6 +204,45 @@ public class AccountController {
         return "accounts/organization-detail";
     }
 
+    @GetMapping("/organization/{id}/export")
+    public ResponseEntity<InputStreamResource> exportOrganizationAccount(@CurrentOrganization Organization sourceOrg,
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam(required = false) Long businessDayId,
+            @RequestParam(required = false) String direction) {
+        try {
+            Organization targetOrg = organizationService.getById(id);
+            if (sourceOrg == null || targetOrg == null) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            List<Order> orders;
+            AccountSummaryDTO summary;
+            if (businessDayId != null) {
+                summary = accountService.getOrganizationAccountSummaryByBusinessDay(sourceOrg, targetOrg, businessDayId, direction);
+                orders = accountService.getOrdersAssignedToOrganizationByBusinessDay(sourceOrg, targetOrg, businessDayId, direction);
+            } else {
+                summary = accountService.getOrganizationAccountSummary(sourceOrg, targetOrg, direction, null);
+                orders = accountService.getOrdersAssignedToOrganization(sourceOrg, targetOrg, direction);
+            }
+
+            java.io.ByteArrayInputStream in = excelExportService.exportOrganizationAccountToExcel(orders, sourceOrg, targetOrg, direction, summary);
+            
+            HttpHeaders headers = new HttpHeaders();
+            String fileName = "organization-account-" + targetOrg.getName() + ".xlsx";
+            headers.add("Content-Disposition", "attachment; filename=" + java.net.URLEncoder.encode(fileName, "UTF-8"));
+            
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(new InputStreamResource(in));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     @GetMapping("/courier/{id}")
     public String showCourierAccount(@CurrentOrganization Organization org, @AuthenticationPrincipal User user,
             @PathVariable Long id,
@@ -217,6 +273,44 @@ public class AccountController {
         model.addAttribute("pageTitle", "حساب: " + courier.getFullName());
 
         return "accounts/courier-detail";
+    }
+
+    @GetMapping("/courier/{id}/export")
+    public ResponseEntity<InputStreamResource> exportCourierAccount(@CurrentOrganization Organization org, 
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam(required = false) Long businessDayId) {
+        try {
+            User courier = organizationService.getUserById(id);
+            if (org == null || courier == null) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            List<Order> orders;
+            AccountSummaryDTO summary;
+            if (businessDayId != null) {
+                summary = accountService.getCourierAccountSummaryByBusinessDay(org, courier, businessDayId);
+                orders = accountService.getOrdersAssignedToCourierByBusinessDay(courier, businessDayId);
+            } else {
+                summary = accountService.getCourierAccountSummary(org, courier);
+                orders = accountService.getOrdersAssignedToCourier(courier);
+            }
+
+            java.io.ByteArrayInputStream in = excelExportService.exportCourierAccountToExcel(orders, courier, summary);
+            
+            HttpHeaders headers = new HttpHeaders();
+            String fileName = "courier-account-" + courier.getFullName() + ".xlsx";
+            headers.add("Content-Disposition", "attachment; filename=" + java.net.URLEncoder.encode(fileName, "UTF-8"));
+            
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .body(new InputStreamResource(in));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/transactions")

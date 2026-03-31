@@ -173,11 +173,9 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
 
         var nearbyMap = null;
         var userLat = null;
@@ -268,7 +266,7 @@
                 color: '#fff',
                 weight: 2,
                 fillOpacity: 0.9
-            }).addTo(nearbyMap).bindPopup('📍 موقعك الحالي');
+            }).addTo(nearbyMap).bindPopup('📍 [[#{user.ship.js.map_current_location}]]');
 
             var bounds = L.latLngBounds([[userLat, userLng]]);
 

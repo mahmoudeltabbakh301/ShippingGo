@@ -269,12 +269,117 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Infinite Scroll Loader -->
+                <div id="infiniteScrollLoader" style="display: none; text-align: center; padding: 20px;">
+                    <span class="spinner" style="display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite;"></span>
+                    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+                </div>
             </div>
+
+            <!-- Infinite Scroll Script -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    var tbody = document.querySelector('.table-container tbody');
+                    if (!tbody) return;
+
+                    var loader = document.getElementById('infiniteScrollLoader');
+                    var currentPage = 0;
+                    var size = 100;
+                    var isLoading = false;
+                    var hasMoreRecords = true;
+
+                    var initialRows = tbody.querySelectorAll('tr').length;
+                    if (initialRows < size) {
+                        hasMoreRecords = false;
+                    }
+
+                    function getNextPageUrl() {
+                        currentPage++;
+                        var urlParams = new URLSearchParams(window.location.search);
+                        urlParams.set('page', currentPage);
+                        urlParams.set('size', size);
+
+                        var baseUrl = window.location.pathname + '/orders-fragment';
+                        return baseUrl + '?' + urlParams.toString();
+                    }
+
+                    function loadMoreOrders() {
+                        if (isLoading || !hasMoreRecords) return;
+
+                        isLoading = true;
+                        if (loader) loader.style.display = 'block';
+
+                        fetch(getNextPageUrl())
+                            .then(function (response) {
+                                if (!response.ok) throw new Error('Network error');
+                                return response.text();
+                            })
+                            .then(function (html) {
+                                if (html.trim().length === 0) {
+                                    hasMoreRecords = false;
+                                    if (loader) loader.style.display = 'none';
+                                    return;
+                                }
+
+                                var tempDiv = document.createElement('tbody');
+                                tempDiv.innerHTML = html;
+
+                                var rowCount = tempDiv.querySelectorAll('tr').length;
+
+                                if (rowCount === 0) {
+                                    hasMoreRecords = false;
+                                } else {
+                                    while (tempDiv.firstChild) {
+                                        tbody.appendChild(tempDiv.firstChild);
+                                    }
+                                }
+
+                                if (rowCount < size) {
+                                    hasMoreRecords = false;
+                                }
+                            })
+                            .catch(function (err) {
+                                console.error('Failed to load more orders', err);
+                                currentPage--;
+                                hasMoreRecords = false;
+                            })
+                            .finally(function () {
+                                isLoading = false;
+                                if (loader) loader.style.display = 'none';
+                            });
+                    }
+
+                    var options = {
+                        root: null,
+                        rootMargin: '0px',
+                        threshold: 0.1
+                    };
+
+                    var observer = new IntersectionObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            if (entry.isIntersecting) {
+                                loadMoreOrders();
+                            }
+                        });
+                    }, options);
+
+                    var endMarker = document.createElement('div');
+                    endMarker.style.height = '10px';
+                    endMarker.style.width = '100%';
+                    var tableContainer = document.querySelector('.table-container');
+                    if (tableContainer) {
+                        tableContainer.appendChild(endMarker);
+                        observer.observe(endMarker);
+                    }
+                });
+            </script>
 
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

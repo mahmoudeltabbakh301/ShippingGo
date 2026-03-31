@@ -30,6 +30,7 @@ public class OrderAssignmentService {
     private final BusinessDayService businessDayService;
     private final OrderStatusService orderStatusService;
     private final NotificationService notificationService;
+    private final OrderInquiryRepository orderInquiryRepository;
 
     public OrderAssignmentService(OrderRepository orderRepository,
             OrderAssignmentRepository orderAssignmentRepository,
@@ -43,7 +44,8 @@ public class OrderAssignmentService {
             UserRepository userRepository,
             BusinessDayService businessDayService,
             @org.springframework.context.annotation.Lazy OrderStatusService orderStatusService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            OrderInquiryRepository orderInquiryRepository) {
         this.orderRepository = orderRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.membershipRepository = membershipRepository;
@@ -57,6 +59,7 @@ public class OrderAssignmentService {
         this.businessDayService = businessDayService;
         this.orderStatusService = orderStatusService;
         this.notificationService = notificationService;
+        this.orderInquiryRepository = orderInquiryRepository;
     }
 
     // إسناد طلب محدد إلى مكتب مستلم (منظمة وجهة)، مع التأكد من وجود علاقة عمل
@@ -959,6 +962,10 @@ public class OrderAssignmentService {
         Organization userOrg = resolveUserOrganization(user);
         if (userOrg != null && order.getId() != null) {
             if (orderAssignmentRepository.existsInChain(order.getId(), userOrg.getId())) {
+                return true;
+            }
+            // التحقق من وجود استعلام - المستخدم يمكنه رؤية الأوردر إذا كان لديه استعلام وارد
+            if (orderInquiryRepository.existsByOrderIdAndReceiverOrganizationId(order.getId(), userOrg.getId())) {
                 return true;
             }
         }

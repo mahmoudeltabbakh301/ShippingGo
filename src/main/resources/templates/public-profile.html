@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${targetUser.fullName} + ' - ' + #{app.title}">الملف الشخصي</title>
+    
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .profile-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background-color: var(--bg-secondary);
+            margin: 0 auto 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            overflow: hidden;
+            border: 4px solid white;
+            box-shadow: var(--shadow-md);
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-role {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            background-color: var(--bg-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            text-align: right;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-item span {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header" style="justify-content: center; text-align: center;">
+                <h1 class="page-title">👤 الملف الشخصي - <span th:text="${targetUser.fullName}"></span></h1>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <img th:if="${targetUser.profilePicture}" th:src="@{'/uploads/' + ${targetUser.profilePicture}}" alt="Profile">
+                    <span th:unless="${targetUser.profilePicture}"
+                        th:text="${#strings.substring(targetUser.fullName, 0, 1)}">U</span>
+                </div>
+                
+                <h2 class="profile-name" th:text="${targetUser.fullName}">User Name</h2>
+                <span class="profile-role" th:text="${targetUser.role}">Role</span>
+
+                <div class="info-grid" style="text-align: center;">
+                    <div class="info-item">
+                        <label>رقم الهاتف</label>
+                        <span th:text="${targetUser.phone}">Phone</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label>المحافظة</label>
+                        <span th:if="${targetUser.governorate != null}" 
+                              th:text="${#locale.language == 'ar' ? targetUser.governorate.arabicName : targetUser.governorate.englishName}">-</span>
+                        <span th:unless="${targetUser.governorate != null}">-</span>
+                    </div>
+
+                    <div class="info-item" th:if="${organization != null}">
+                        <label>المنظمة التابع لها</label>
+                        <span th:text="${organization.name}">-</span>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label>تاريخ الانضمام</label>
+                        <span th:text="${#temporals.format(targetUser.createdAt, 'yyyy/MM/dd')}">-</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+</body>
+</html>

@@ -120,11 +120,27 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination -->
+                <div th:if="${totalPages != null && totalPages > 1}"
+                    style="display: flex; justify-content: center; align-items: center; gap: 8px; padding: 16px 0;">
+                    <a th:if="${currentPage > 0}" th:href="@{/accounts(page=${currentPage - 1})}"
+                        class="btn btn-sm btn-secondary" th:text="#{pagination.prev}"> السابق</a>
+                    <span th:each="i : ${#numbers.sequence(0, totalPages > 10 ? 9 : totalPages - 1)}">
+                        <a th:if="${i != currentPage}" th:href="@{/accounts(page=${i})}"
+                            class="btn btn-sm btn-secondary" th:text="${i + 1}"></a>
+                        <span th:if="${i == currentPage}" class="btn btn-sm btn-primary" th:text="${i + 1}"
+                            style="pointer-events: none;"></span>
+                    </span>
+                    <a th:if="${currentPage < totalPages - 1}" th:href="@{/accounts(page=${currentPage + 1})}"
+                        class="btn btn-sm btn-secondary" th:text="#{pagination.next}">التالي</a>
+                </div>
             </div>
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

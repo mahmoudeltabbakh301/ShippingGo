@@ -72,6 +72,7 @@
                 </div>
             </div>
 
+            <th:block sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
             <!-- ===== Overall Progress Bar ===== -->
             <div class="progress-section" th:if="${stats.totalOrders > 0}">
                 <div class="progress-card">
@@ -292,7 +293,10 @@
                 </div>
             </div>
 
-            <!-- ===== Recent Orders Activity ===== -->
+            </th:block>
+
+            <!-- ===== Recent Orders Activity (visible to ADMIN, MANAGER, FOLLOW_UP) ===== -->
+            <th:block sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP')">
             <div class="recent-activity-card">
                 <div class="chart-card-header">
                     <h3 class="chart-card-title">⚡ آخر الأوردرات المحدثة</h3>
@@ -333,11 +337,13 @@
                     <div class="dashboard-empty-text">لا توجد أوردرات اليوم بعد</div>
                 </div>
             </div>
+            </th:block>
 
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
     
     <!-- Chart.js - Lightweight charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>

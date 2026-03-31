@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'الاستعلامات - ' + (${businessDay.name} ?: #{business_days.default_name}) + ' - ' + #{app.title}">
+        الاستعلامات - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🔍 <span th:text="#{inquiries.title}">الاستعلامات</span> - [[${businessDay.name ?: #temporals.format(businessDay.date,
+                        'yyyy/MM/dd')}]]</h1>
+                    <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
+                        <span th:if="${businessDay.active}" class="badge badge-delivered" th:text="#{inquiries.status_active}">نشط</span>
+                        <span th:unless="${businessDay.active}" class="badge badge-refused" th:text="#{inquiries.status_inactive}">غير نشط</span>
+                        &nbsp;•&nbsp; [[${organization.name}]]
+                        &nbsp;•&nbsp;
+                        <span style="color: var(--accent-1); font-weight: 600;"
+                            th:text="${totalInquiryCount} + ' ' + #{inquiries.title}">0 استعلام</span>
+                    </p>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-primary" th:text="'📅 ' + #{inquiries.btn_business_day}">📅 يوم العمل</a>
+                    <a th:href="@{/business-days}" class="btn btn-secondary" th:text="'📅 ' + #{inquiries.btn_all_days}">📅 كل الأيام</a>
+                </div>
+            </div>
+
+            <!-- Inquiry Info Banner -->
+            <div
+                style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
+                        border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-lg); 
+                        padding: var(--space-4); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
+                <span style="font-size: 1.5rem;">ℹ️</span>
+                <div>
+                    <strong style="color: var(--accent-1);" th:text="#{inquiries.mode_title}">وضع الاستعلام (للإطلاع فقط)</strong>
+                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;" th:text="#{inquiries.mode_desc}">
+                        هذه الأوردرات مُرسَلة إليك كاستعلام من المنظمات الأخرى. يمكنك الإطلاع عليها فقط بدون إجراء أي
+                        تعديلات.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon waiting">🔍</div>
+                    <div class="stat-value" th:text="${totalInquiryCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_total_inquiries}">إجمالي الاستعلامات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-value" th:text="${waitingCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_pending}">في الانتظار</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-value" th:text="${inTransitCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_in_transit}">في الطريق</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-value" th:text="${deliveredCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_delivered}">تم التسليم</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-value" th:text="${cancelledCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_canceled}">ملغي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-value" th:text="${refusedCount}">0</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_refused}">مرفوض</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit">💰</div>
+                    <div class="stat-value"
+                        th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 2, 'POINT')} + ' ج.م'">
+                        0 ج.م</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_total_amounts}">إجمالي المبالغ</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-value"
+                        th:text="${#numbers.formatDecimal(deliveredAmount, 0, 'COMMA', 2, 'POINT')} + ' ج.م'">
+                        0 ج.م</div>
+                    <div class="stat-label" th:text="#{inquiries.stat_collected_amounts}">المبالغ المُستلمة</div>
+                </div>
+            </div>
+
+            <!-- Inquiries Table -->
+            <div class="card">
+                <div class="card-header"
+                    style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
+                    <h3 class="card-title">🔍 <span th:text="#{inquiries.orders_title}">أوردرات الاستعلام</span></h3>
+                    <!-- Search/Filter Form -->
+                    <form th:action="@{/business-days/{id}/inquiries(id=${businessDay.id})}" method="get"
+                        style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
+                        <input type="text" name="search" class="form-control" th:value="${search}"
+                            th:placeholder="#{inquiries.search_name_phone_placeholder}" style="width: 200px;">
+                        <input type="text" name="code" class="form-control" th:value="${code}"
+                            th:placeholder="#{inquiries.search_code_placeholder}" style="width: 100px;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <select name="status" class="form-control" style="width: 130px;">
+                                <option value="" th:text="#{inquiries.search_all_status}">كل الحالات</option>
+                                <option th:each="s : ${statuses}" th:value="${s}"
+                                    th:text="${#locale.language == 'en' ? s : s.arabicName}"
+                                    th:selected="${status == s}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <select name="senderOrgId" class="form-control" style="width: 150px;">
+                                <option value="" th:text="#{inquiries.search_company}">الشركه</option>
+                                <option th:each="org : ${senderOrganizations}" th:value="${org.id}"
+                                    th:text="${org.name}" th:selected="${senderOrgId == org.id}"></option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-sm" th:text="#{inquiries.search_btn}">بحث</button>
+                        <a th:if="${search != null || code != null || status != null || senderOrgId != null}"
+                            th:href="@{/business-days/{id}/inquiries(id=${businessDay.id})}"
+                            class="btn btn-danger btn-sm">✕</a>
+                    </form>
+                </div>
+
+                <div th:if="${inquiries.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🔍</div>
+                    <div class="table-empty-text" th:text="#{inquiries.empty_inquiries}">لا توجد استعلامات واردة في هذا اليوم</div>
+                </div>
+
+                <div th:if="${!inquiries.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th th:text="#{inquiries.col_customer}">العميل</th>
+                                <th th:text="#{inquiries.col_address}">العنوان</th>
+                                <th th:text="#{inquiries.col_phone}">رقم الهاتف</th>
+                                <th th:text="#{inquiries.col_amount}">المبلغ</th>
+                                <th th:text="#{inquiries.col_status}">الحالة</th>
+                                <th th:text="#{inquiries.col_owner_office}">المكتب المالك</th>
+                                <th th:text="#{inquiries.col_assigned_to}">جهة الإسناد</th>
+                                <th th:text="#{inquiries.col_courier}">المندوب</th>
+                                <th th:text="#{inquiries.col_code}">الكود</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inquiryTableBody">
+                            <th:block th:replace="~{business-days/fragments/inquiry-rows :: inquiryRows}"></th:block>
+                        </tbody>
+                    </table>
+
+                    <!-- Loading Indicator for Infinite Scroll -->
+                    <div id="infiniteScrollLoader" style="display: none; text-align: center; padding: 20px;">
+                        <span class="spinner" style="display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite;"></span>
+                        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+                    </div>
+
+                    <!-- Infinite Scroll JavaScript -->
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            let currentPage = 0;
+                            let isLoading = false;
+                            let hasMoreRecords = true;
+                            const size = 50;
+
+                            const loader = document.getElementById('infiniteScrollLoader');
+                            const tbody = document.getElementById('inquiryTableBody');
+
+                            if (!tbody) return;
+
+                            // Check if initial row count < page size, then no more to load
+                            const initialRows = tbody.querySelectorAll('tr').length;
+                            if (initialRows < size) {
+                                hasMoreRecords = false;
+                            }
+
+                            function getNextPageUrl() {
+                                currentPage++;
+                                const urlParams = new URLSearchParams(window.location.search);
+                                urlParams.set('page', currentPage);
+                                urlParams.set('size', size);
+
+                                const baseUrl = window.location.pathname + '/fragment';
+                                return baseUrl + '?' + urlParams.toString();
+                            }
+
+                            function loadMoreInquiries() {
+                                if (isLoading || !hasMoreRecords) return;
+
+                                isLoading = true;
+                                loader.style.display = 'block';
+
+                                fetch(getNextPageUrl())
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('Network error');
+                                        return response.text();
+                                    })
+                                    .then(html => {
+                                        if (html.trim().length === 0) {
+                                            hasMoreRecords = false;
+                                            loader.style.display = 'none';
+                                            return;
+                                        }
+
+                                        const tempDiv = document.createElement('tbody');
+                                        tempDiv.innerHTML = html;
+
+                                        const rowCount = tempDiv.querySelectorAll('tr').length;
+
+                                        if (rowCount === 0) {
+                                            hasMoreRecords = false;
+                                        } else {
+                                            while (tempDiv.firstChild) {
+                                                tbody.appendChild(tempDiv.firstChild);
+                                            }
+                                        }
+
+                                        if (rowCount < size) {
+                                            hasMoreRecords = false;
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error('Failed to load more inquiries', err);
+                                        currentPage--;
+                                        hasMoreRecords = false;
+                                    })
+                                    .finally(() => {
+                                        isLoading = false;
+                                        loader.style.display = 'none';
+                                    });
+                            }
+
+                            // Setup Intersection Observer
+                            const observer = new IntersectionObserver((entries) => {
+                                entries.forEach(entry => {
+                                    if (entry.isIntersecting) {
+                                        loadMoreInquiries();
+                                    }
+                                });
+                            }, { root: null, rootMargin: '0px', threshold: 0.1 });
+
+                            var endMarker = document.createElement('div');
+                            endMarker.style.height = '10px';
+                            endMarker.style.width = '100%';
+                            document.querySelector('.table-container').appendChild(endMarker);
+
+                            observer.observe(endMarker);
+                        });
+                    </script>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+</body>
+
+</html>

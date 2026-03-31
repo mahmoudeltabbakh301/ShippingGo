@@ -174,13 +174,13 @@ class WarehouseServiceTest {
     @Test
     void getWarehouseOrders_NullBusinessDay_ReturnsEmpty() {
         when(businessDayRepository.findById(99L)).thenReturn(Optional.empty());
-        assertTrue(warehouseService.getWarehouseOrders(99L, null, null, null, null, null, null, null).isEmpty());
+        assertTrue(warehouseService.getWarehouseOrders(99L, null, null, null, null, null, null, null, org.springframework.data.domain.Pageable.unpaged()).isEmpty());
     }
 
     @Test
     void getExternalWarehouseOrders_NullBusinessDay_ReturnsEmpty() {
         when(businessDayRepository.findById(99L)).thenReturn(Optional.empty());
         assertTrue(
-                warehouseService.getExternalWarehouseOrders(99L, null, null, null, null, null, null, null).isEmpty());
+                warehouseService.getExternalWarehouseOrders(99L, null, null, null, null, null, null, null, org.springframework.data.domain.Pageable.unpaged()).isEmpty());
     }
 }

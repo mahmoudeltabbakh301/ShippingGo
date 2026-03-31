@@ -35,6 +35,7 @@ public class OrderController {
     private final OrderLabelService orderLabelService;
     private final QrCodeService qrCodeService;
     private final VirtualOfficeRepository virtualOfficeRepository;
+    private final OrderInquiryService orderInquiryService;
 
     public OrderController(OrderService orderService,
             BusinessDayService businessDayService,
@@ -43,7 +44,8 @@ public class OrderController {
             ExcelExportService excelExportService,
             OrderLabelService orderLabelService,
             QrCodeService qrCodeService,
-            VirtualOfficeRepository virtualOfficeRepository) {
+            VirtualOfficeRepository virtualOfficeRepository,
+            OrderInquiryService orderInquiryService) {
         this.orderService = orderService;
         this.businessDayService = businessDayService;
         this.organizationService = organizationService;
@@ -52,6 +54,7 @@ public class OrderController {
         this.orderLabelService = orderLabelService;
         this.qrCodeService = qrCodeService;
         this.virtualOfficeRepository = virtualOfficeRepository;
+        this.orderInquiryService = orderInquiryService;
     }
 
     @GetMapping("/orders")
@@ -614,6 +617,78 @@ public class OrderController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
         return "redirect:/business-days/" + businessDayId;
+    }
+
+    /**
+     * إرسال أوردرات كاستعلام لمنظمات محددة
+     */
+    @PostMapping("/send-inquiry")
+    public String sendInquiry(
+            @RequestParam String orderIds,
+            @RequestParam Long organizationId,
+            @RequestParam Long businessDayId,
+            @AuthenticationPrincipal User user,
+            RedirectAttributes redirectAttributes) {
+        try {
+            List<Long> orderIdList = parseIds(orderIds);
+            
+            if (orderIdList.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "يرجى تحديد طلبات أولاً");
+                return "redirect:/business-days/" + businessDayId;
+            }
+            if (organizationId == null) {
+                redirectAttributes.addFlashAttribute("error", "يرجى اختيار منظمة واحدة على الأقل");
+                return "redirect:/business-days/" + businessDayId;
+            }
+
+            int count = orderInquiryService.sendInquiry(orderIdList, java.util.List.of(organizationId), user);
+            redirectAttributes.addFlashAttribute("success",
+                    "تم إرسال " + count + " استعلام بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/business-days/" + businessDayId;
+    }
+
+    /**
+     * إرسال أوردرات كاستعلام لجميع المنظمات المشتركة
+     */
+    @PostMapping("/send-inquiry-all")
+    public String sendInquiryToAll(
+            @RequestParam String orderIds,
+            @RequestParam Long businessDayId,
+            @AuthenticationPrincipal User user,
+            RedirectAttributes redirectAttributes) {
+        try {
+            List<Long> orderIdList = parseIds(orderIds);
+
+            if (orderIdList.isEmpty()) {
+                redirectAttributes.addFlashAttribute("error", "يرجى تحديد طلبات أولاً");
+                return "redirect:/business-days/" + businessDayId;
+            }
+
+            int count = orderInquiryService.sendInquiryToAll(orderIdList, user);
+            redirectAttributes.addFlashAttribute("success",
+                    "تم إرسال " + count + " استعلام لجميع المنظمات بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/business-days/" + businessDayId;
+    }
+
+    /**
+     * تحويل نص IDs مفصول بفاصلة إلى قائمة
+     */
+    private List<Long> parseIds(String idsStr) {
+        List<Long> ids = new java.util.ArrayList<>();
+        if (idsStr == null || idsStr.trim().isEmpty()) return ids;
+        for (String idStr : idsStr.split(",")) {
+            try {
+                ids.add(Long.parseLong(idStr.trim()));
+            } catch (Exception ignored) {
+            }
+        }
+        return ids;
     }
 
     @PostMapping("/{id}/update-status")

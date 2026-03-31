@@ -75,7 +75,7 @@
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
                             ⬇️</div>
                         <div>
-                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">العمولات الواردة
+                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;"><span th:text="#{accounts.day.incoming_commissions}">العمولات الواردة</span>
                                 (<span th:text="${countIncomingTransactions}">0</span>)</p>
                             <h4 style="margin: 0; color: var(--success-400);"
                                 th:text="${totalIncomingCommission != null ? #numbers.formatDecimal(totalIncomingCommission, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
@@ -89,7 +89,7 @@
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
                             ⬆️</div>
                         <div>
-                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">العمولات الصادرة
+                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;"><span th:text="#{accounts.day.outgoing_commissions}">العمولات الصادرة</span>
                                 (<span th:text="${countOutgoingTransactions}">0</span>)</p>
                             <h4 style="margin: 0; color: var(--danger-400);"
                                 th:text="${totalOutgoingCommission != null ? #numbers.formatDecimal(totalOutgoingCommission, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
@@ -103,7 +103,7 @@
                             th:style="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;' : 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;'}">
                             💵</div>
                         <div>
-                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">الفرق الصافي (وارد - صادر)</p>
+                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;" th:text="#{accounts.day.net_difference}">الفرق الصافي (وارد - صادر)</p>
                             <h4 style="margin: 0;"
                                 th:styleappend="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'color: var(--success-400);' : 'color: var(--danger-400);'}"
                                 th:text="${commissionDifference != null ? #numbers.formatDecimal(commissionDifference, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
@@ -134,7 +134,7 @@
                 </div>
 
                 <!-- قسم المكاتب / المنظمات -->
-                <h4 style="margin: 1.5rem 1rem 1rem 1rem; color: var(--text-primary);">🏢 حسابات المكاتب والشركات (<span
+                <h4 style="margin: 1.5rem 1rem 1rem 1rem; color: var(--text-primary);">🏢 <span th:text="#{accounts.day.org_accounts_title}">حسابات المكاتب والشركات</span> (<span
                         th:text="${accountSummaries != null ? accountSummaries.?[type == 'organization'].size() : 0}">0</span>)
                 </h4>
                 <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'organization'].isEmpty()}"
@@ -144,7 +144,7 @@
                             <tr>
                                 <th th:text="#{accounts.day.col_name}">الاسم</th>
                                 <th th:text="#{accounts.day.col_type}">النوع</th>
-                                <th>الاتجاه</th>
+                                <th th:text="#{accounts.day.col_direction}">الاتجاه</th>
                                 <th th:text="#{accounts.day.col_total_orders}">إجمالي الأوردرات</th>
                                 <th th:text="#{accounts.day.col_delivered}">المسلمة</th>
                                 <th th:text="#{accounts.day.col_refused}">المرفوضة</th>
@@ -173,7 +173,7 @@
                                 <td>
                                     <span class="badge"
                                         th:classappend="${account.direction == 'INCOMING' ? 'badge-delivered' : 'badge-refused'}"
-                                        th:text="${account.direction == 'INCOMING' ? 'وارد' : 'صادر'}">الاتجاه</span>
+                                        th:text="${account.direction == 'INCOMING'} ? #{accounts.day.dir_incoming} : #{accounts.day.dir_outgoing}">الاتجاه</span>
                                 </td>
                                 <td th:text="${account.totalOrders}">0</td>
                                 <td>
@@ -223,13 +223,13 @@
 
                 <div th:if="${accountSummaries == null || accountSummaries.?[type == 'organization'].isEmpty()}"
                     class="text-center" style="padding: 2rem;">
-                    <p class="text-muted">لا توجد حسابات للمنظمات في هذا اليوم.</p>
+                    <p class="text-muted" th:text="#{accounts.day.org_accounts_empty}">لا توجد حسابات للمنظمات في هذا اليوم.</p>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">
 
                 <!-- قسم المناديب -->
-                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);">🚚 حسابات المناديب (<span
+                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);">🚚 <span th:text="#{accounts.day.courier_accounts_title}">حسابات المناديب</span> (<span
                         th:text="${accountSummaries != null ? accountSummaries.?[type == 'courier'].size() : 0}">0</span>)
                 </h4>
                 <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'courier'].isEmpty()}"
@@ -321,7 +321,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

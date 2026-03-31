@@ -185,10 +185,12 @@ public class AccountSummaryService {
         }
         for (User courier : couriers) {
             AccountSummaryDTO dto = getCourierAccountSummary(courier, org);
-            dto.setId(courier.getId());
-            dto.setName(courier.getFullName());
-            dto.setType("courier");
-            summaries.add(dto);
+            if (dto.getTotalOrders() > 0) {
+                dto.setId(courier.getId());
+                dto.setName(courier.getFullName());
+                dto.setType("courier");
+                summaries.add(dto);
+            }
         }
         return summaries;
     }
@@ -273,11 +275,13 @@ public class AccountSummaryService {
                 return isHolderMatchingOrg(holder, org);
             }).collect(Collectors.toList());
 
-            AccountSummaryDTO dto = calculateDirectionalSummaryGlobal(courier, null, org, orders);
-            dto.setId(courier.getId());
-            dto.setName(courier.getFullName());
-            dto.setType("courier");
-            summaries.add(dto);
+            if (!orders.isEmpty()) {
+                AccountSummaryDTO dto = calculateDirectionalSummaryGlobal(courier, null, org, orders);
+                dto.setId(courier.getId());
+                dto.setName(courier.getFullName());
+                dto.setType("courier");
+                summaries.add(dto);
+            }
         }
 
         return summaries;

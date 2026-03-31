@@ -154,11 +154,7 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
-    <script>
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
-    </script>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

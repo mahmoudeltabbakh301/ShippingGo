@@ -11,6 +11,9 @@ import com.shipment.shippinggo.service.BusinessDayService;
 import com.shipment.shippinggo.service.OrderService;
 import com.shipment.shippinggo.service.OrganizationService;
 import com.shipment.shippinggo.service.WarehouseService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -45,10 +48,18 @@ public class WarehouseController {
      * قائمة أيام المخزن (نفس أيام العمل)
      */
     @GetMapping
-    public String listWarehouseDays(@CurrentOrganization Organization org, @AuthenticationPrincipal User user,
+    public String listWarehouseDays(
+            @RequestParam(defaultValue = "0") int page,
+            @CurrentOrganization Organization org, @AuthenticationPrincipal User user,
             Model model) {
 
-        model.addAttribute("businessDays", businessDayService.getBusinessDaysForUser(org.getId(), user));
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<BusinessDay> businessDaysPage = businessDayService.getBusinessDaysForUserPageable(org.getId(), user, pageable);
+
+        model.addAttribute("businessDays", businessDaysPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", businessDaysPage.getTotalPages());
         model.addAttribute("organization", org);
         return "warehouse/list";
     }
@@ -76,9 +87,10 @@ public class WarehouseController {
             return "redirect:/warehouse";
         }
 
-        // جلب الأوردرات بالفلاتر كاملة من الداتابيز
+        // جلب الأوردرات بالفلاتر كاملة للصفحة الأولى
+        Pageable pageable = PageRequest.of(0, 100);
         List<Order> orders = warehouseService.getWarehouseOrders(id, search, code, courierId, null, status,
-                incomingFromId, outgoingToId);
+                incomingFromId, outgoingToId, pageable);
 
         model.addAttribute("businessDay", businessDay);
         model.addAttribute("organization", org);
@@ -104,9 +116,13 @@ public class WarehouseController {
                 org.getId());
         model.addAttribute("returnContext", returnCtx);
 
-        // حساب الإحصائيات في دورة واحدة
+        // نحتاج تمرير العدد الكلي للإحصائيات بدلاً من `orders.size()` لأنه الآن 100 فقط
+        // سنحضر الكل مؤقتاً لحساب الإحصائيات (مثل BusinessDay Stats) لكن هذا سيتم تحسينه لاحقاً
+        List<Order> allOrdersForStats = warehouseService.getWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, Pageable.unpaged());
+
         long waitingCount = 0, cancelledCount = 0, refusedCount = 0, deferredCount = 0, awaitingReceiptCount = 0;
-        for (Order o : orders) {
+        for (Order o : allOrdersForStats) {
             if (o.getStatus() == OrderStatus.WAITING)
                 waitingCount++;
             else if (o.getStatus() == OrderStatus.CANCELLED)
@@ -126,7 +142,7 @@ public class WarehouseController {
             }
         }
 
-        model.addAttribute("totalOrderCount", orders.size());
+        model.addAttribute("totalOrderCount", allOrdersForStats.size());
         model.addAttribute("waitingCount", waitingCount);
         model.addAttribute("cancelledCount", cancelledCount);
         model.addAttribute("refusedCount", refusedCount);
@@ -135,6 +151,53 @@ public class WarehouseController {
         model.addAttribute("awaitingReceiptCount", awaitingReceiptCount);
 
         return "warehouse/day";
+    }
+
+    @GetMapping("/{id}/orders-fragment")
+    public String viewWarehouseOrdersFragment(@PathVariable Long id,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) Long courierId,
+            @RequestParam(required = false) Long incomingFromId,
+            @RequestParam(required = false) Long outgoingToId,
+            @RequestParam(required = false) OrderStatus status,
+            @CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        List<Order> orders = warehouseService.getWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, pageable);
+
+        var chainCtx = orderService.getOrderChainContext(orders, org.getId());
+        var returnCtx = orderService.getOrderReturnContext(orders, org.getId());
+
+        model.addAttribute("orders", orders);
+        model.addAttribute("orderChainContext", chainCtx);
+        model.addAttribute("returnContext", returnCtx);
+        model.addAttribute("organization", org);
+        
+        BusinessDay businessDay = businessDayService.getById(id);
+        model.addAttribute("businessDay", businessDay);
+
+        return "warehouse/fragments/order-rows :: orderRows";
+    }
+
+    @GetMapping("/{id}/matching-warehouse-order-ids")
+    @ResponseBody
+    public List<Long> getMatchingWarehouseOrderIds(@PathVariable Long id,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) Long courierId,
+            @RequestParam(required = false) Long incomingFromId,
+            @RequestParam(required = false) Long outgoingToId,
+            @RequestParam(required = false) OrderStatus status,
+            @CurrentOrganization Organization org) {
+
+        List<Order> orders = warehouseService.getWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, Pageable.unpaged());
+
+        return orders.stream().map(Order::getId).collect(java.util.stream.Collectors.toList());
     }
 
     /**
@@ -159,9 +222,10 @@ public class WarehouseController {
             return "redirect:/warehouse";
         }
 
-        // جلب الأوردرات بالفلاتر كاملة من الداتابيز
+        // جلب الأوردرات بالفلاتر كاملة للصفحة الأولى
+        Pageable pageable = PageRequest.of(0, 100);
         List<Order> orders = warehouseService.getExternalWarehouseOrders(id, search, code, courierId, null, status,
-                incomingFromId, outgoingToId);
+                incomingFromId, outgoingToId, pageable);
 
         model.addAttribute("businessDay", businessDay);
         model.addAttribute("organization", org);
@@ -187,13 +251,18 @@ public class WarehouseController {
                 org.getId());
         model.addAttribute("returnContext", returnCtx);
 
-        // حساب الإحصائيات في دورة واحدة
+        // استخراج الإحصائيات لكل الطلبات
+        List<Order> allOrdersForStats = warehouseService.getExternalWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, Pageable.unpaged());
+
         long inTransitCount = 0, deliveredCount = 0, cancelledCount = 0, refusedCount = 0, deferredCount = 0,
                 awaitingReceiptCount = 0;
-        for (Order o : orders) {
+        for (Order o : allOrdersForStats) {
             if (o.getStatus() == OrderStatus.IN_TRANSIT)
                 inTransitCount++;
             else if (o.getStatus() == OrderStatus.DELIVERED)
+                deliveredCount++;
+            else if (o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
                 deliveredCount++;
             else if (o.getStatus() == OrderStatus.CANCELLED)
                 cancelledCount++;
@@ -212,7 +281,7 @@ public class WarehouseController {
             }
         }
 
-        model.addAttribute("totalOrderCount", orders.size());
+        model.addAttribute("totalOrderCount", allOrdersForStats.size());
         model.addAttribute("inTransitCount", inTransitCount);
         model.addAttribute("deliveredCount", deliveredCount);
         model.addAttribute("cancelledCount", cancelledCount);
@@ -222,6 +291,53 @@ public class WarehouseController {
         model.addAttribute("awaitingReceiptCount", awaitingReceiptCount);
 
         return "warehouse/external";
+    }
+
+    @GetMapping("/{id}/external/orders-fragment")
+    public String viewExternalWarehouseOrdersFragment(@PathVariable Long id,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "100") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) Long courierId,
+            @RequestParam(required = false) Long incomingFromId,
+            @RequestParam(required = false) Long outgoingToId,
+            @RequestParam(required = false) OrderStatus status,
+            @CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        List<Order> orders = warehouseService.getExternalWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, pageable);
+
+        var chainCtx = orderService.getOrderChainContext(orders, org.getId());
+        var returnCtx = orderService.getOrderReturnContext(orders, org.getId());
+
+        model.addAttribute("orders", orders);
+        model.addAttribute("orderChainContext", chainCtx);
+        model.addAttribute("returnContext", returnCtx);
+        model.addAttribute("organization", org);
+        
+        BusinessDay businessDay = businessDayService.getById(id);
+        model.addAttribute("businessDay", businessDay);
+
+        return "warehouse/fragments/external-order-rows :: orderRows";
+    }
+
+    @GetMapping("/{id}/external/matching-warehouse-order-ids")
+    @ResponseBody
+    public List<Long> getExternalMatchingWarehouseOrderIds(@PathVariable Long id,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) Long courierId,
+            @RequestParam(required = false) Long incomingFromId,
+            @RequestParam(required = false) Long outgoingToId,
+            @RequestParam(required = false) OrderStatus status,
+            @CurrentOrganization Organization org) {
+
+        List<Order> orders = warehouseService.getExternalWarehouseOrders(id, search, code, courierId, null, status,
+                incomingFromId, outgoingToId, Pageable.unpaged());
+
+        return orders.stream().map(Order::getId).collect(java.util.stream.Collectors.toList());
     }
 
     /**

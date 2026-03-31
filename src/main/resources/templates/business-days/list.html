@@ -97,6 +97,20 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Pagination Controls -->
+                <div th:if="${totalPages > 1}" class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin: 16px 0;">
+                    <a th:if="${currentPage > 0}" th:href="@{/business-days(page=${currentPage - 1})}" class="btn btn-outline btn-sm" th:text="#{btn.prev}">السابق</a>
+                    
+                    <span th:each="pageNum : ${#numbers.sequence(0, totalPages - 1)}">
+                        <a th:href="@{/business-days(page=${pageNum})}" 
+                           class="btn btn-sm" 
+                           th:classappend="${pageNum == currentPage} ? 'btn-primary' : 'btn-outline'"
+                           th:text="${pageNum + 1}">1</a>
+                    </span>
+
+                    <a th:if="${currentPage < totalPages - 1}" th:href="@{/business-days(page=${currentPage + 1})}" class="btn btn-outline btn-sm" th:text="#{btn.next}">التالي</a>
+                </div>
             </div>
         </main>
     </div>
@@ -161,7 +175,8 @@
         }
     </script>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

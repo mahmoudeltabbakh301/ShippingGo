@@ -177,8 +177,20 @@ public class OrderService {
     }
 
     public List<Order> getOrdersByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
-            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
+            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate, org.springframework.data.domain.Pageable pageable) {
         return orderQueryService.getOrdersByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId,
+                incomingFromId, outgoingToId, status, governorate, noGovernorate, pageable);
+    }
+
+    public com.shipment.shippinggo.dto.BusinessDayStatsQueryResult getBusinessDayStatsWithFullFilters(Long businessDayId, Long orgId, String search, String code,
+            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
+        return orderQueryService.getBusinessDayStatsWithFullFilters(businessDayId, orgId, search, code, courierId,
+                incomingFromId, outgoingToId, status, governorate, noGovernorate);
+    }
+
+    public List<Long> getWaitingOrderIdsByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
+            Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
+        return orderQueryService.getWaitingOrderIdsByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId,
                 incomingFromId, outgoingToId, status, governorate, noGovernorate);
     }
 

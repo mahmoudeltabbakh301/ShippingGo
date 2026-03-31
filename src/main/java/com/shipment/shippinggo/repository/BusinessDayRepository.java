@@ -23,6 +23,10 @@ public interface BusinessDayRepository extends JpaRepository<BusinessDay, Long> 
 
     List<BusinessDay> findByOrganizationIdAndActiveTrueAndIsCustodyFalseOrderByDateDesc(Long organizationId);
 
+    org.springframework.data.domain.Page<BusinessDay> findByOrganizationIdAndIsCustodyFalseOrderByDateDesc(Long organizationId, org.springframework.data.domain.Pageable pageable);
+
+    org.springframework.data.domain.Page<BusinessDay> findByOrganizationIdAndActiveTrueAndIsCustodyFalseOrderByDateDesc(Long organizationId, org.springframework.data.domain.Pageable pageable);
+
     // Custody specific
     Optional<BusinessDay> findByOrganizationIdAndDateAndIsCustodyTrue(Long organizationId, LocalDate date);
 

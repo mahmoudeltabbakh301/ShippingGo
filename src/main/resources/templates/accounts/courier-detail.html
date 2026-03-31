@@ -37,7 +37,11 @@
                 <h1 class="page-title">
                     🚚 <span th:text="${courier.fullName}">اسم المندوب</span>
                 </h1>
-                <div class="page-actions">
+                <div class="page-actions" style="display: flex; gap: var(--space-2);">
+                    <a th:href="@{/accounts/courier/{id}/export(id=${courier.id}, businessDayId=${businessDayId})}" 
+                        class="btn btn-primary" style="background-color: #217346; border-color: #217346;" title="تصدير للـ Excel">
+                        📊 تصدير إكسيل
+                    </a>
                     <a th:if="${businessDayId != null}" th:href="@{/accounts/day/{id}(id=${businessDayId})}"
                         class="btn btn-secondary" th:text="#{accounts.courier.btn_back_day}">← العودة لحسابات اليوم</a>
                     <a th:unless="${businessDayId != null}" th:href="@{/accounts}" class="btn btn-secondary"
@@ -170,12 +174,12 @@
                                         <input type="hidden" name="businessDayId" th:value="${businessDayId}">
                                         <input type="hidden" name="courierId" th:value="${courier.id}">
                                         <input type="number" name="manualCourierCommission" step="0.01" min="0"
-                                            placeholder="تلقائي"
+                                            th:placeholder="#{accounts.courier.placeholder_auto}"
                                             th:value="${order.manualCourierCommission != null ? order.manualCourierCommission : ''}"
                                             style="width: 80px; padding: 2px 6px; font-size: 0.8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-primary);">
                                         <button type="submit" class="btn btn-sm btn-primary"
                                             style="padding: 2px 8px; font-size: 0.7rem;"
-                                            title="حفظ العمولة الفردية">💾</button>
+                                            th:title="#{accounts.courier.title_save_manual_commission}">💾</button>
                                     </form>
                                 </td>
                                 <td>
@@ -189,7 +193,7 @@
                                             style="width: 80px; padding: 2px 6px; font-size: 0.8rem; border: 1px solid var(--surface-border); border-radius: var(--radius-sm); background: var(--surface-card); color: var(--text-primary);">
                                         <button type="submit" class="btn btn-sm btn-primary"
                                             style="padding: 2px 8px; font-size: 0.7rem;"
-                                            title="حفظ قيمة الرفض">💾</button>
+                                            th:title="#{accounts.courier.title_save_rejection_value}">💾</button>
                                     </form>
                                 </td>
                                 <td
@@ -211,7 +215,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

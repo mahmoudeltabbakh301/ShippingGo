@@ -58,17 +58,17 @@
                                 th:placeholder="#{auth.fullname.placeholder}" required autofocus>
                         </div>
                         <div class="form-group">
-                            <label class="form-label form-label-required" for="username">اسم المستخدم</label>
+                            <label class="form-label form-label-required" for="username" th:text="#{auth.username.label}">اسم المستخدم</label>
                             <input type="text" id="username" th:field="*{username}" class="form-control"
-                                placeholder="أدخل اسم المستخدم" required>
+                                th:placeholder="#{auth.username.placeholder}" required>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label form-label-required" for="email">البريد الإلكتروني</label>
+                            <label class="form-label form-label-required" for="email" th:text="#{auth.email.label}">البريد الإلكتروني</label>
                             <input type="email" id="email" th:field="*{email}" class="form-control"
-                                placeholder="example@mail.com" required>
+                                th:placeholder="#{auth.email.placeholder}" required>
                         </div>
                         <div class="form-group">
                             <label class="form-label form-label-required" for="phone" th:text="#{auth.phone.label}">رقم
@@ -76,17 +76,17 @@
                             <input type="tel" id="phone" th:field="*{phone}" class="form-control"
                                 th:classappend="${#fields.hasErrors('phone')} ? 'is-invalid' : ''"
                                 th:placeholder="#{auth.phone.placeholder}" pattern="^01[0125][0-9]{8}$"
-                                title="رقم الهاتف يجب أن يكون رقماً مصري مكون من 11 رقم" required>
+                                th:title="#{auth.phone.title}" required>
                             <div th:if="${#fields.hasErrors('phone')}" class="invalid-feedback" th:errors="*{phone}">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label form-label-required" for="governorate">المحافظة</label>
+                        <label class="form-label form-label-required" for="governorate" th:text="#{auth.governorate.label}">المحافظة</label>
                         <select id="governorate" th:field="*{governorate}" class="form-control" required>
-                            <option value="">اختر المحافظة</option>
-                            <option th:each="gov : ${governorates}" th:value="${gov}" th:text="${gov.arabicName}">
+                            <option value="" th:text="#{auth.governorate.placeholder}">اختر المحافظة</option>
+                            <option th:each="gov : ${governorates}" th:value="${gov}" th:text="|#{'enum.governorate.' + ${gov.name()}}|">
                             </option>
                         </select>
                     </div>
@@ -104,7 +104,7 @@
                         <div class="form-check">
                             <input type="checkbox" id="createOrganization" th:field="*{createOrganization}"
                                 class="form-check-input" onchange="toggleOrganizationOptions()">
-                            <label class="form-check-label" for="createOrganization">
+                            <label class="form-check-label" for="createOrganization" th:text="#{auth.org.create.label}">
                                 أريد إنشاء منظمة (شركة، متجر، أو مكتب)
                             </label>
                         </div>
@@ -118,7 +118,7 @@
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeStore">
                                     <div class="type-option-icon">🏪</div>
-                                    <div class="type-option-title">متجر</div>
+                                    <div class="type-option-title" th:text="#{auth.org.type.store}">متجر</div>
                                 </label>
                             </div>
                             <div class="type-option">
@@ -126,7 +126,7 @@
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeCompany">
                                     <div class="type-option-icon">🏢</div>
-                                    <div class="type-option-title">شركة شحن</div>
+                                    <div class="type-option-title" th:text="#{auth.org.type.company}">شركة شحن</div>
                                 </label>
                             </div>
                             <div class="type-option">
@@ -134,46 +134,46 @@
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeOffice">
                                     <div class="type-option-icon">🏬</div>
-                                    <div class="type-option-title">مكتب شحن</div>
+                                    <div class="type-option-title" th:text="#{auth.org.type.office}">مكتب شحن</div>
                                 </label>
                             </div>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label form-label-required" for="organizationName">اسم
+                            <label class="form-label form-label-required" for="organizationName" th:text="#{auth.org.name.label}">اسم
                                 الشركة/المكتب</label>
                             <input type="text" id="organizationName" th:field="*{organizationName}" class="form-control"
-                                placeholder="أدخل اسم الشركة أو المكتب">
+                                th:placeholder="#{auth.org.name.placeholder}">
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label" for="organizationPhone">هاتف الشركة/المكتب</label>
+                                <label class="form-label" for="organizationPhone" th:text="#{auth.org.phone.label}">هاتف الشركة/المكتب</label>
                                 <input type="tel" id="organizationPhone" th:field="*{organizationPhone}"
-                                    class="form-control" placeholder="رقم الهاتف" pattern="^01[0125][0-9]{8}$"
-                                    title="رقم الهاتف يجب أن يكون رقماً مصرياً صالحاً يبدأ بـ 010 أو 011 أو 012 أو 015 متبوعاً بـ 8 أرقام">
+                                    class="form-control" th:placeholder="#{auth.org.phone.placeholder}" pattern="^01[0125][0-9]{8}$"
+                                    th:title="#{auth.org.phone.title}">
                                 <div th:if="${#fields.hasErrors('organizationPhone')}" class="invalid-feedback"
                                     th:errors="*{organizationPhone}"></div>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" for="organizationEmail">البريد الإلكتروني</label>
+                                <label class="form-label" for="organizationEmail" th:text="#{auth.org.email.label}">البريد الإلكتروني</label>
                                 <input type="email" id="organizationEmail" th:field="*{organizationEmail}"
-                                    class="form-control" placeholder="البريد الإلكتروني">
+                                    class="form-control" th:placeholder="#{auth.org.email.placeholder}">
                             </div>
                         </div>
 
                         <div class="form-group">
                             <input type="text" id="organizationAddress" th:field="*{organizationAddress}"
-                                class="form-control" placeholder="عنوان الشركة أو المكتب">
+                                class="form-control" th:placeholder="#{auth.org.address.placeholder}">
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label form-label-required" for="organizationGovernorate">محافظة
+                            <label class="form-label form-label-required" for="organizationGovernorate" th:text="#{auth.org.gov.label}">محافظة
                                 المقر</label>
                             <select id="organizationGovernorate" th:field="*{organizationGovernorate}"
                                 class="form-control">
-                                <option value="">اختر المحافظة</option>
-                                <option th:each="gov : ${governorates}" th:value="${gov}" th:text="${gov.arabicName}">
+                                <option value="" th:text="#{auth.org.gov.placeholder}">اختر المحافظة</option>
+                                <option th:each="gov : ${governorates}" th:value="${gov}" th:text="|#{'enum.governorate.' + ${gov.name()}}|">
                                 </option>
                             </select>
                         </div>

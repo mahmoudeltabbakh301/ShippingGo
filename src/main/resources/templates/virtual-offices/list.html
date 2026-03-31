@@ -108,7 +108,7 @@
                         </div>
                         <!-- إعدادات العمولات -->
                         <hr style="margin: 15px 0; border: 0; border-top: 1px solid var(--border-color);">
-                        <h4 style="margin-bottom: 15px;">إعدادات العمولات (اختياري)</h4>
+                        <h4 style="margin-bottom: 15px;" th:text="#{virtual_offices.modal.commissions_title}">إعدادات العمولات (اختياري)</h4>
 
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                             <div class="form-group">
@@ -116,8 +116,8 @@
 
                                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                                     <button type="button" class="btn btn-secondary"
-                                        onclick="document.getElementById('createModal').style.display='none'">إلغاء</button>
-                                    <button type="submit" class="btn btn-primary">حفظ</button>
+                                        onclick="document.getElementById('createModal').style.display='none'" th:text="#{btn.cancel}">إلغاء</button>
+                                    <button type="submit" class="btn btn-primary" th:text="#{btn.save}">حفظ</button>
                                 </div>
                     </form>
                 </div>

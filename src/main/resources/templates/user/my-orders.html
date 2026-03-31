@@ -218,8 +218,8 @@
         <main class="main-content">
             <!-- Header -->
             <div class="dashboard-header">
-                <h1 class="welcome-title">👋 مرحباً بك يا <span th:text="${user.fullName}"></span></h1>
-                <a th:if="${param.code}" th:href="@{/user/my-orders}" class="btn btn-outline btn-sm">عرض كل الطلبات</a>
+                <h1 class="welcome-title">👋 <span th:text="#{dashboard.welcome}">مرحباً بك يا</span> <span th:text="${user.fullName}"></span></h1>
+                <a th:if="${param.code}" th:href="@{/user/my-orders}" class="btn btn-outline btn-sm" th:text="#{user.orders.btn.view_all}">عرض كل الطلبات</a>
             </div>
 
             <!-- Error Message -->
@@ -233,29 +233,29 @@
                 <!-- Track Shipment Card -->
                 <div class="feature-card primary-card">
                     <div class="feature-icon">🔍</div>
-                    <h3 class="feature-title">تتبع شحنة</h3>
-                    <p class="feature-desc">أدخل كود الشحنة لتتمكن من معرفة حالتها فوراً</p>
+                    <h3 class="feature-title" th:text="#{user.orders.card.track.title}">تتبع شحنة</h3>
+                    <p class="feature-desc" th:text="#{user.orders.card.track.desc}">أدخل كود الشحنة لتتمكن من معرفة حالتها فوراً</p>
                     <form th:action="@{/user/my-orders}" method="get" class="track-form">
-                        <input type="text" name="code" class="track-input" placeholder="مثال: SHP-12345" required
+                        <input type="text" name="code" class="track-input" th:placeholder="#{user.orders.card.track.placeholder}" required
                             th:value="${param.code}">
-                        <button type="submit" class="track-btn">تتبع</button>
+                        <button type="submit" class="track-btn" th:text="#{user.orders.card.track.btn}">تتبع</button>
                     </form>
                 </div>
 
                 <!-- Send Shipment Card -->
-                <div class="feature-card" style="cursor: pointer;" onclick="alert('هذه الخدمة ستتوفر قريباً عبر خاصية الـ GPS')">
-                    <div class="coming-soon-badge">قريباً</div>
+                <div class="feature-card" style="cursor: pointer;" th:attr="onclick='alert(\'' + #{user.orders.js.coming_soon} + '\')'">
+                    <div class="coming-soon-badge" th:text="#{user.orders.card.send.coming_soon}">قريباً</div>
                     <div class="feature-icon">📦</div>
-                    <h3 class="feature-title" style="color: var(--text-color);">إرسال شحنة</h3>
-                    <p class="feature-desc">ارسل طرد لأي مكان آخر عبر أقرب شركة أو مكتب شحن باستخدام الـ GPS.</p>
+                    <h3 class="feature-title" style="color: var(--text-color);" th:text="#{user.orders.card.send.title}">إرسال شحنة</h3>
+                    <p class="feature-desc" th:text="#{user.orders.card.send.desc}">ارسل طرد لأي مكان آخر عبر أقرب شركة أو مكتب شحن باستخدام الـ GPS.</p>
                 </div>
             </div>
 
             <!-- Recent Orders List -->
             <div class="orders-header">
                 <h2 class="section-title">
-                    <span th:if="${param.code}">نتائج البحث</span>
-                    <span th:unless="${param.code}">طلباتك الأخيرة</span>
+                    <span th:if="${param.code}" th:text="#{user.orders.section.search_results}">نتائج البحث</span>
+                    <span th:unless="${param.code}" th:text="#{user.orders.section.recent}">طلباتك الأخيرة</span>
                 </h2>
             </div>
             
@@ -264,13 +264,13 @@
                     <table class="table" th:if="${!#lists.isEmpty(orders)}">
                         <thead>
                             <tr>
-                                <th>كود الطلب</th>
-                                <th>المستلم</th>
-                                <th>العنوان</th>
-                                <th>المبلغ المطلوب</th>
-                                <th>رسوم الشحن</th>
-                                <th>تاريخ الإنشاء</th>
-                                <th>الحالة</th>
+                                <th th:text="#{user.orders.table.code}">كود الطلب</th>
+                                <th th:text="#{user.orders.table.recipient}">المستلم</th>
+                                <th th:text="#{user.orders.table.address}">العنوان</th>
+                                <th th:text="#{user.orders.table.amount}">المبلغ المطلوب</th>
+                                <th th:text="#{user.orders.table.shipping_fee}">رسوم الشحن</th>
+                                <th th:text="#{user.orders.table.date}">تاريخ الإنشاء</th>
+                                <th th:text="#{user.orders.table.status}">الحالة</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -288,7 +288,7 @@
                                 <td>
                                     <span class="status-badge"
                                         th:classappend="${'status-' + order.status}"
-                                        th:text="${order.status}">WAITING</span>
+                                        th:text="#{${'order.status.' + order.status}}">WAITING</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -297,8 +297,8 @@
                     <!-- Empty State -->
                     <div class="table-empty" th:if="${#lists.isEmpty(orders)}">
                         <div class="table-empty-icon" style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
-                        <div class="table-empty-text" style="font-size: 1.25rem; font-weight: 600;">لاتوجد شحنات مسجلة برقم هاتفك</div>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">بمجرد قيام أي شركة بإنشاء بوليصة شحن برقم هاتفك، ستظهر هنا تلقائياً.</p>
+                        <div class="table-empty-text" style="font-size: 1.25rem; font-weight: 600;" th:text="#{user.orders.empty.title}">لاتوجد شحنات مسجلة برقم هاتفك</div>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;" th:text="#{user.orders.empty.desc}">بمجرد قيام أي شركة بإنشاء بوليصة شحن برقم هاتفك، ستظهر هنا تلقائياً.</p>
                     </div>
                 </div>
             </div>
@@ -307,11 +307,7 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
-    <script>
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
-    </script>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

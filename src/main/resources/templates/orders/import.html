@@ -95,19 +95,19 @@
                             إلى مكتب (اختياري)</label>
 
                         <select id="assignedToOrganizationId" name="assignedToOrganizationId" class="form-select">
-                            <option value="">-- بدون إسناد --</option>
+                            <option value="" th:text="#{orders.import.unassigned}">-- بدون إسناد --</option>
 
-                            <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                            <optgroup th:label="#{orders.list.group_companies}" th:if="${companies != null && !companies.isEmpty()}">
                                 <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}">
                                 </option>
                             </optgroup>
 
-                            <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                            <optgroup th:label="#{orders.list.group_offices}" th:if="${offices != null && !offices.isEmpty()}">
                                 <option th:each="office : ${offices}" th:value="${office.id}" th:text="${office.name}">
                                 </option>
                             </optgroup>
 
-                            <optgroup label="المكاتب الافتراضية"
+                            <optgroup th:label="#{orders.list.group_virtual_offices}"
                                 th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
                                 <option th:each="vo : ${virtualOffices}" th:value="${vo.id}" th:text="${vo.name}">
                                 </option>
@@ -139,7 +139,7 @@
                     <button type="submit" id="importSubmitBtn" class="btn btn-primary btn-lg"
                         style="margin-bottom: var(--space-4);">
                         <span id="btnText" th:text="#{orders.btn.import}">📥 استيراد الطلبات</span>
-                        <span id="btnSpinner" style="display: none;">⏳ جاري الاستيراد...</span>
+                        <span id="btnSpinner" style="display: none;" th:text="#{orders.import.importing}">⏳ جاري الاستيراد...</span>
                     </button>
                     <a th:href="@{/business-days}" class="btn btn-secondary btn-lg" id="importCancelBtn"
                         th:text="#{orders.btn.cancel}">إلغاء</a>
@@ -149,7 +149,8 @@
     </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 
     <script th:inline="javascript">
         const fileInput = document.getElementById('file');

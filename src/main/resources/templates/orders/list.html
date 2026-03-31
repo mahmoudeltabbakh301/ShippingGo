@@ -57,7 +57,7 @@
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon delivered">💰</div>
-                    <div class="stat-value" th:text="${totalAmount} + ' ج.م'">0 ج.م</div>
+                    <div class="stat-value" th:text="${totalAmount} + ' ' + #{business_days.view.currency}">0 ج.م</div>
                     <div class="stat-label" th:text="#{orders.list.total_amount}">إجمالي المخزون المالي</div>
                 </div>
             </div>
@@ -94,15 +94,15 @@
                                 th:text="#{orders.filter.office_unassigned}">غير مسند</option>
 
                             <!-- Companies OptGroup -->
-                            <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                            <optgroup th:label="#{orders.list.group_companies}" th:if="${companies != null && !companies.isEmpty()}">
                                 <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"
                                     th:selected="${officeId == c.id}"></option>
                             </optgroup>
-                            <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                            <optgroup th:label="#{orders.list.group_offices}" th:if="${offices != null && !offices.isEmpty()}">
                                 <option th:each="office : ${offices}" th:value="${office.id}" th:text="${office.name}"
                                     th:selected="${officeId == office.id}"></option>
                             </optgroup>
-                            <optgroup label="المكاتب الافتراضية"
+                            <optgroup th:label="#{orders.list.group_virtual_offices}"
                                 th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
                                 <option th:each="vo : ${virtualOffices}" th:value="${vo.id}" th:text="${vo.name}"
                                     th:selected="${officeId == vo.id}"></option>
@@ -183,11 +183,11 @@
                                         <span th:if="${order.ownerOrganization.id == organization.id}">
                                             <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
                                                 th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
-                                                title="تم الإسناد إلى"></span>
+                                                th:title="#{orders.tooltip.assigned_to}"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
                                                 th:text="'➡️ ' + ${order.assignedToOrganization.name}"
-                                                title="تم الإسناد إلى"></span>
+                                                th:title="#{orders.tooltip.assigned_to}"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
                                         </span>
@@ -195,15 +195,15 @@
                                         <!-- منظمة وسيطة أو نهائية: يظهر من أسند ومن أسند إليه -->
                                         <span th:if="${order.ownerOrganization.id != organization.id}">
                                             <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
-                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" th:title="#{orders.tooltip.incoming_from}"></span>
                                             <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
                                                 th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
-                                                title="تم الإسناد إلى"></span>
+                                                th:title="#{orders.tooltip.assigned_to}"></span>
                                             <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
                                                 th:text="'⬅️ ' + ${order.ownerOrganization.name}"
-                                                title="وارد من"></span>
+                                                th:title="#{orders.tooltip.incoming_from}"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
                                                 th:text="${order.ownerOrganization.name}"></span>
@@ -226,7 +226,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

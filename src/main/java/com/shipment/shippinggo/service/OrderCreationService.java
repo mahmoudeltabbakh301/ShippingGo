@@ -22,6 +22,7 @@ public class OrderCreationService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
     private final OrderAssignmentRepository orderAssignmentRepository;
     private final OrderEventRepository orderEventRepository;
+    private final OrderInquiryRepository orderInquiryRepository;
     private final QrCodeService qrCodeService;
     private final CompanyRepository companyRepository;
     private final OfficeRepository officeRepository;
@@ -36,6 +37,7 @@ public class OrderCreationService {
             OrderStatusHistoryRepository orderStatusHistoryRepository,
             OrderAssignmentRepository orderAssignmentRepository,
             OrderEventRepository orderEventRepository,
+            OrderInquiryRepository orderInquiryRepository,
             QrCodeService qrCodeService,
             CompanyRepository companyRepository,
             OfficeRepository officeRepository,
@@ -49,6 +51,7 @@ public class OrderCreationService {
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.orderEventRepository = orderEventRepository;
+        this.orderInquiryRepository = orderInquiryRepository;
         this.qrCodeService = qrCodeService;
         this.companyRepository = companyRepository;
         this.officeRepository = officeRepository;
@@ -308,6 +311,7 @@ public class OrderCreationService {
         orderStatusHistoryRepository.deleteByOrder(order);
         orderAssignmentRepository.deleteByOrderId(orderId);
         orderEventRepository.deleteByOrderId(orderId);
+        orderInquiryRepository.deleteByOrderId(orderId);
         orderRepository.delete(order);
     }
 
@@ -345,6 +349,7 @@ public class OrderCreationService {
                 orderStatusHistoryRepository.deleteByOrder(order);
                 orderAssignmentRepository.deleteByOrderId(order.getId());
                 orderEventRepository.deleteByOrderId(order.getId());
+                orderInquiryRepository.deleteByOrderId(order.getId());
                 orderRepository.delete(order);
             }
         }

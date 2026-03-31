@@ -926,6 +926,86 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 @Param("governorate") Governorate governorate,
                 @Param("noGovernorate") Boolean noGovernorate,
                 @Param("incomingFromId") Long incomingFromId,
-                @Param("outgoingToId") Long outgoingToId);
+                @Param("outgoingToId") Long outgoingToId,
+                org.springframework.data.domain.Pageable pageable);
                 
+        @Query("SELECT COUNT(o) as totalCount, " +
+               "SUM(CASE WHEN o.status = 'DELIVERED' THEN 1 ELSE 0 END) as deliveredCount, " +
+               "SUM(CASE WHEN o.status = 'PARTIAL_DELIVERY' THEN 1 ELSE 0 END) as partialCount, " +
+               "SUM(CASE WHEN o.status = 'WAITING' THEN 1 ELSE 0 END) as waitingCount, " +
+               "SUM(CASE WHEN o.status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as inTransitCount, " +
+               "SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledCount, " +
+               "SUM(CASE WHEN o.status = 'REFUSED' THEN 1 ELSE 0 END) as refusedCount, " +
+               "SUM(CASE WHEN o.status = 'DEFERRED' THEN 1 ELSE 0 END) as deferredCount, " +
+               "COALESCE(SUM(o.amount), 0) as totalAmount, " +
+               "COALESCE(SUM(CASE WHEN o.status = 'DELIVERED' THEN o.amount WHEN o.status = 'PARTIAL_DELIVERY' THEN o.partialDeliveryAmount ELSE 0 END), 0) as deliveredAmount " +
+               "FROM Order o " +
+               "WHERE (o.businessDay.id = :businessDayId OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa WHERE oa.order = o AND oa.businessDay.id = :businessDayId AND oa.accepted = true" +
+               ")) " +
+               "AND (:search IS NULL OR (" +
+               "   LOWER(o.recipientName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+               "   LOWER(o.recipientPhone) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+               "   LOWER(o.recipientAddress) LIKE LOWER(CONCAT('%', :search, '%'))" +
+               ")) " +
+               "AND (:code IS NULL OR LOWER(o.code) LIKE LOWER(CONCAT('%', :code, '%'))) " +
+               "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId) " +
+               "AND (" +
+               "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+               "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+               ") " +
+               "AND (:status IS NULL OR o.status = :status) " +
+               "AND (:incomingFromId IS NULL OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa2 WHERE oa2.order = o AND oa2.assigneeOrganization.id = :orgId AND oa2.assignerOrganization.id = :incomingFromId" +
+               ")) " +
+               "AND (:outgoingToId IS NULL OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa3 WHERE oa3.order = o AND oa3.assignerOrganization.id = :orgId AND oa3.assigneeOrganization.id = :outgoingToId" +
+               "))")
+        com.shipment.shippinggo.dto.BusinessDayStatsQueryResult getBusinessDayStatsWithFullFilters(
+                @Param("businessDayId") Long businessDayId,
+                @Param("orgId") Long orgId,
+                @Param("search") String search,
+                @Param("code") String code,
+                @Param("courierId") Long courierId,
+                @Param("status") OrderStatus status,
+                @Param("governorate") Governorate governorate,
+                @Param("noGovernorate") Boolean noGovernorate,
+                @Param("incomingFromId") Long incomingFromId,
+                @Param("outgoingToId") Long outgoingToId);
+
+        @Query("SELECT o.id FROM Order o " +
+               "WHERE (o.businessDay.id = :businessDayId OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa WHERE oa.order = o AND oa.businessDay.id = :businessDayId AND oa.accepted = true" +
+               ")) " +
+               "AND (:search IS NULL OR (" +
+               "   LOWER(o.recipientName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+               "   LOWER(o.recipientPhone) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+               "   LOWER(o.recipientAddress) LIKE LOWER(CONCAT('%', :search, '%'))" +
+               ")) " +
+               "AND (:code IS NULL OR LOWER(o.code) LIKE LOWER(CONCAT('%', :code, '%'))) " +
+               "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId) " +
+               "AND (" +
+               "   (:noGovernorate = true AND o.governorate IS NULL) OR " +
+               "   (:noGovernorate = false AND (:governorate IS NULL OR o.governorate = :governorate))" +
+               ") " +
+               "AND (:status IS NULL OR o.status = :status) " +
+               "AND (:incomingFromId IS NULL OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa2 WHERE oa2.order = o AND oa2.assigneeOrganization.id = :orgId AND oa2.assignerOrganization.id = :incomingFromId" +
+               ")) " +
+               "AND (:outgoingToId IS NULL OR EXISTS (" +
+               "   SELECT 1 FROM OrderAssignment oa3 WHERE oa3.order = o AND oa3.assignerOrganization.id = :orgId AND oa3.assigneeOrganization.id = :outgoingToId" +
+               ")) " +
+               "AND o.status = 'WAITING'")
+        List<Long> findWaitingOrderIdsByBusinessDayWithFullFilters(
+                @Param("businessDayId") Long businessDayId,
+                @Param("orgId") Long orgId,
+                @Param("search") String search,
+                @Param("code") String code,
+                @Param("courierId") Long courierId,
+                @Param("status") OrderStatus status,
+                @Param("governorate") Governorate governorate,
+                @Param("noGovernorate") Boolean noGovernorate,
+                @Param("incomingFromId") Long incomingFromId,
+                @Param("outgoingToId") Long outgoingToId);
+
 }

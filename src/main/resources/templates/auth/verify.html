@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تأكيد الحساب - ShippingGo</title>
+    <title th:text="#{auth.verify.title} + ' - ' + #{app.title}">تأكيد الحساب - ShippingGo</title>
 
     <script>
         (function () {
@@ -32,10 +32,10 @@
             <div class="auth-card">
                 <div class="auth-logo">
                     <img th:src="@{/img/logo.jpg}" class="auth-logo-img" alt="Logo">
-                    <div class="auth-subtitle">نظام إدارة شحن الطرود</div>
+                    <div class="auth-subtitle" th:text="#{auth.subtitle}">نظام إدارة شحن الطرود</div>
                 </div>
 
-                <h1 class="auth-title">تأكيد الحساب</h1>
+                <h1 class="auth-title" th:text="#{auth.verify.title}">تأكيد الحساب</h1>
 
                 <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
                 <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
@@ -43,19 +43,19 @@
                 <form th:action="@{/verify}" method="post" class="auth-form">
                     <input type="hidden" name="email" th:value="${email}">
                     <div class="form-group">
-                        <label class="form-label" for="code">كود التفعيل (6 أرقام)</label>
+                        <label class="form-label" for="code" th:text="#{auth.verify.code_label}">كود التفعيل (6 أرقام)</label>
                         <input type="text" id="code" name="code" class="form-control"
-                            placeholder="أدخل الكود هنا" required autofocus maxlength="6" pattern="\d{6}">
+                            th:placeholder="#{auth.verify.code_placeholder}" required autofocus maxlength="6" pattern="\d{6}">
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;" th:text="#{auth.verify.btn}">
                         تأكيد الحساب
                     </button>
                 </form>
 
                 <div class="auth-footer">
-                    <span>العودة إلى</span>
-                    <a th:href="@{/login}">تسجيل الدخول</a>
+                    <span th:text="#{auth.verify.back_prompt}">العودة إلى</span>
+                    <a th:href="@{/login}" th:text="#{auth.login.link}">تسجيل الدخول</a>
                 </div>
             </div>
         </div>

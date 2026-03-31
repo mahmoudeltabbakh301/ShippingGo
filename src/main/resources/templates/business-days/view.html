@@ -52,16 +52,26 @@
                 </div>
                 <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <a th:href="@{/orders/new(businessDayId=${businessDay.id})}" class="btn btn-primary"
-                        sec:authorize="!hasRole('WAREHOUSE_MANAGER')" th:text="#{business_days.view.btn_new_order}">➕
+                        sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                        th:text="#{business_days.view.btn_new_order}">➕
                         طلب جديد</a>
                     <a th:href="@{/orders/import(businessDayId=${businessDay.id})}" class="btn btn-secondary"
-                        sec:authorize="!hasRole('WAREHOUSE_MANAGER')"
+                        sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
                         th:text="#{business_days.view.btn_import_excel}">📥 استيراد
                         Excel</a>
                     <a th:href="@{/business-days/{id}/export(id=${businessDay.id}, search=${search}, code=${code}, courierId=${courierId}, incomingFromId=${incomingFromId}, outgoingToId=${outgoingToId}, status=${status}, governorate=${governorate})}"
-                        class="btn" style="background-color: #10B981; color: white;">📊 تصدير Excel</a>
+                        sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT', 'DATA_ENTRY')" class="btn"
+                        style="background-color: #10B981; color: white;" th:text="#{business_days.view.export_excel}">📊
+                        تصدير Excel</a>
                     <a th:href="@{/business-days}" class="btn btn-secondary"
                         th:text="#{business_days.view.btn_all_days}">📅 كل الأيام</a>
+                    <a th:href="@{/business-days/{id}/inquiries(id=${businessDay.id})}" class="btn"
+                        sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP', 'DATA_ENTRY')"
+                        style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; position: relative;">
+                        <span th:text="#{business_days.view.btn_inquiries}">🔍 الاستعلامات</span>
+                        <span th:if="${inquiryCount != null && inquiryCount > 0}" th:text="${inquiryCount}"
+                            style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">0</span>
+                    </a>
 
                     <!-- Delete Actions (Admin Only) -->
                     <form th:action="@{/business-days/{id}/delete-orders(id=${businessDay.id})}" method="post"
@@ -101,34 +111,34 @@
                     <div class="stat-value" th:text="${inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_transit}">في الطريق</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon delivered">✅</div>
                     <div class="stat-value" th:text="${deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_delivered}">تم التسليم</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon cancelled">❌</div>
                     <div class="stat-value" th:text="${cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_cancelled}">ملغي</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon refused">🚫</div>
                     <div class="stat-value" th:text="${refusedCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_refused}">مرفوض</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon waiting">⏱️</div>
                     <div class="stat-value" th:text="${deferredCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_deferred}">مؤجل</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon transit">💰</div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 2, 'POINT')} + ' ' + #{business_days.view.currency}">
                         0 ج.م</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_total_amount}">إجمالي المبالغ</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
                     <div class="stat-icon delivered">✅</div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(deliveredAmount, 0, 'COMMA', 2, 'POINT')} + ' ' + #{business_days.view.currency}">
@@ -152,13 +162,13 @@
                             th:placeholder="#{business_days.view.code_placeholder}" style="width: 100px;">
 
                         <select name="incomingFromId" class="form-control" style="width: 130px;">
-                            <option value="">⬅️ كل الوارد</option>
+                            <option value="" th:text="#{business_days.view.filter_all_inward}">⬅️ كل الوارد</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${incomingFromId == lo.id}"></option>
                         </select>
 
                         <select name="outgoingToId" class="form-control" style="width: 130px;">
-                            <option value="">➡️ كل الصادر</option>
+                            <option value="" th:text="#{business_days.view.filter_all_outward}">➡️ كل الصادر</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${outgoingToId == lo.id}"></option>
                         </select>
@@ -181,10 +191,11 @@
 
                         <div class="form-group" style="margin-bottom: 0;">
                             <select name="governorate" class="form-control" style="width: 130px;">
-                                <option value="">كل المحافظات</option>
-                                <option value="NONE" th:selected="${governorate == 'NONE'}">بدون محافظه</option>
-                                <option th:each="gov : ${governorates}" th:value="${gov.name()}" th:text="${gov.arabicName}"
-                                    th:selected="${governorate == gov.name()}"></option>
+                                <option value="" th:text="#{business_days.view.filter_all_gov}">كل المحافظات</option>
+                                <option value="NONE" th:selected="${governorate == 'NONE'}"
+                                    th:text="#{business_days.view.filter_no_gov}">بدون محافظه</option>
+                                <option th:each="gov : ${governorates}" th:value="${gov.name()}"
+                                    th:text="${gov.arabicName}" th:selected="${governorate == gov.name()}"></option>
                             </select>
                         </div>
 
@@ -221,15 +232,17 @@
                                 <select name="organizationId" class="form-control" style="width: 150px;" required>
                                     <option value="" th:text="#{business_days.view.dropdown_office}">اختر مكتب...
                                     </option>
-                                    <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                                    <optgroup th:label="#{business_days.view.group_companies}"
+                                        th:if="${companies != null && !companies.isEmpty()}">
                                         <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}">
                                         </option>
                                     </optgroup>
-                                    <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                                    <optgroup th:label="#{business_days.view.group_offices}"
+                                        th:if="${offices != null && !offices.isEmpty()}">
                                         <option th:each="o : ${offices}" th:value="${o.id}" th:text="${o.name}">
                                         </option>
                                     </optgroup>
-                                    <optgroup label="المكاتب الافتراضية"
+                                    <optgroup th:label="#{business_days.view.group_virtual_offices}"
                                         th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
                                         <option th:each="vo : ${virtualOffices}" th:value="${vo.id}"
                                             th:text="${vo.name}">
@@ -237,7 +250,7 @@
                                     </optgroup>
                                 </select>
                                 <button type="submit" class="btn btn-secondary btn-sm"
-                                    th:text="#{business_days.view.bulk_assign_office}">🏢 إسناد لمؤسسه</button>
+                                    th:text="#{business_days.view.bulk_assign_org}">🏢 إسناد لمؤسسه</button>
                             </form>
 
                             <!-- Bulk assign to courier -->
@@ -269,12 +282,48 @@
                             </form>
 
                             <!-- Bulk Print Labels (10x15) -->
-                            <form id="bulkPrintForm" th:action="@{/business-days/{id}/bulk-print-labels(id=${businessDay.id})}" method="get"
+                            <form id="bulkPrintForm"
+                                th:action="@{/business-days/{id}/bulk-print-labels(id=${businessDay.id})}" method="get"
                                 style="display: flex; gap: var(--space-2); align-items: center;" target="_blank">
                                 <input type="hidden" name="orderIds" id="orderIdsForPrint" value="">
                                 <button type="submit" class="btn btn-dark btn-sm"
-                                    title="طباعة للمقاس الحراري Xprinter 10x15">🖨️ طباعة مجمعة (10x15)</button>
+                                    th:title="#{business_days.view.tooltip_thermal_print}"
+                                    th:text="#{global.btn_print}">🖨️ طباعة مجمعة (10x15)</button>
                             </form>
+
+                            <!-- Bulk Send as Inquiry (Companies Only) -->
+                            <th:block th:if="${organization.type.name() == 'COMPANY'}">
+                                <form id="bulkSendInquiryForm" th:action="@{/orders/send-inquiry}" method="post"
+                                    sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                                    style="display: flex; gap: var(--space-2); align-items: center;">
+                                    <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                    <input type="hidden" name="orderIds" id="orderIdsForInquiry" value="">
+                                    <select name="organizationId" id="inquiryOrgSelect" class="form-control"
+                                        style="width: 150px;" required>
+                                        <option value="" th:text="#{business_days.view.dropdown_office}">اختر مكتب...
+                                        </option>
+                                        <th:block th:if="${offices != null}">
+                                            <option th:each="o : ${offices}" th:value="${o.id}" th:text="${o.name}">
+                                            </option>
+                                        </th:block>
+                                    </select>
+                                    <button type="submit" class="btn btn-sm"
+                                        style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white;"
+                                        th:title="#{business_days.view.tooltip_inquiry_selected}"
+                                        th:text="#{global.btn_inquiry}">🔍 استعلام</button>
+                                </form>
+
+                                <form id="bulkSendInquiryAllForm" th:action="@{/orders/send-inquiry-all}" method="post"
+                                    sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                                    style="display: flex; gap: var(--space-2); align-items: center;">
+                                    <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                    <input type="hidden" name="orderIds" id="orderIdsForInquiryAll" value="">
+                                    <button type="submit" class="btn btn-sm"
+                                        style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white;"
+                                        th:title="#{business_days.view.tooltip_inquiry_all}"
+                                        th:text="#{global.btn_inquiry_all}">🔍 استعلام للكل</button>
+                                </form>
+                            </th:block>
                         </div>
                     </div>
 
@@ -282,7 +331,8 @@
                         <thead>
                             <tr>
                                 <th sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')" style="width: 40px;">
-                                    <input type="checkbox" id="selectAll" title="تحديد الكل" style="cursor: pointer;">
+                                    <input type="checkbox" id="selectAll" th:title="#{business_days.view.select_all}"
+                                        style="cursor: pointer;">
                                 </th>
 
                                 <th th:text="#{business_days.view.col_customer}">العميل</th>
@@ -295,75 +345,23 @@
                                 <th th:text="#{business_days.col.actions}">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr th:each="order : ${orders}">
-                                <td sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
-                                    <input th:if="${order.status.name() == 'WAITING'}" type="checkbox"
-                                        class="orderCheckbox" th:value="${order.id}" style="cursor: pointer;">
-                                    <input th:unless="${order.status.name() == 'WAITING'}" type="checkbox" disabled
-                                        style="cursor: not-allowed; opacity: 0.4;"
-                                        th:title="#{business_days.view.checkbox_disabled_tooltip}">
-                                </td>
-
-                                <td th:text="${order.recipientName}">الاسم</td>
-                                <td th:text="${order.recipientAddress}">العنوان</td>
-                                <td th:text="${order.recipientPhone}">رقم الهاتف</td>
-                                <td
-                                    th:text="${order.status.name() == 'PARTIAL_DELIVERY' && order.partialDeliveryAmount != null ? order.partialDeliveryAmount : order.amount} ?: '-'">
-                                    المبلغ</td>
-                                <td>
-                                    <span class="badge"
-                                        th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
-                                                          (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
-                                                          (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
-                                                          (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
-                                        th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
-                                </td>
-                                <td style="direction: ltr; text-align: right;">
-                                    <!-- استخدام سلسلة الإسناد لعرض الطرف الآخر -->
-                                    <th:block th:with="ctx=${orderChainContext.get(order.id)}">
-                                        <!-- المالك (المتجر): يظهر المنظمة التي أسند لها أو المسند إليها حالياً -->
-                                        <span th:if="${order.ownerOrganization.id == organization.id}">
-                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                                                th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
-                                                title="تم الإسناد إلى"></span>
-                                            <span
-                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
-                                                th:text="'➡️ ' + ${order.assignedToOrganization.name}"
-                                                title="تم الإسناد إلى"></span>
-                                            <span
-                                                th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
-                                        </span>
-
-                                        <!-- منظمة وسيطة أو نهائية (ليست المالك): يظهر من أسند ومن أسند إليه -->
-                                        <span th:if="${order.ownerOrganization.id != organization.id}">
-                                            <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
-                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
-                                            <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                                                th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
-                                                title="تم الإسناد إلى"></span>
-                                            <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
-                                            <span
-                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
-                                                th:text="'⬅️ ' + ${order.ownerOrganization.name}"
-                                                title="وارد من"></span>
-                                            <span
-                                                th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
-                                                th:text="${order.ownerOrganization.name}"></span>
-                                        </span>
-                                    </th:block>
-                                </td>
-                                <td
-                                    th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
-                                    -</td>
-                                <td>
-                                    <a th:href="@{/orders/{id}(id=${order.id}, businessDayId=${businessDay.id})}"
-                                        class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}">👁
-                                        عرض</a>
-                                </td>
-                            </tr>
+                        <tbody id="orderTableBody">
+                            <th:block th:replace="~{business-days/fragments/order-rows :: orderRows}"></th:block>
                         </tbody>
                     </table>
+
+                    <!-- Loading Indicator for Infinite Scroll -->
+                    <div id="infiniteScrollLoader" style="display: none; text-align: center; padding: 20px;">
+                        <span class="spinner"
+                            style="display: inline-block; width: 30px; height: 30px; border: 3px solid rgba(0,0,0,0.1); border-radius: 50%; border-top-color: var(--primary-color); animation: spin 1s ease-in-out infinite;"></span>
+                        <style>
+                            @keyframes spin {
+                                to {
+                                    transform: rotate(360deg);
+                                }
+                            }
+                        </style>
+                    </div>
 
                     <!-- JavaScript for bulk selection -->
                     <script>
@@ -375,18 +373,18 @@
                             var orderIdsForCourier = document.getElementById('orderIdsForCourier');
                             var orderIdsForCustody = document.getElementById('orderIdsForCustody');
                             var orderIdsForPrint = document.getElementById('orderIdsForPrint');
+                            var loader = document.getElementById('infiniteScrollLoader');
+
+                            // State to hold selected IDs across pages
+                            window.selectedOrderIdsSet = new Set();
+                            var isSelectAllLoading = false;
 
                             function getCheckboxes() {
                                 return document.querySelectorAll('.orderCheckbox');
                             }
 
-                            function updateBulkActions() {
-                                var checked = document.querySelectorAll('.orderCheckbox:checked');
-                                var allBoxes = getCheckboxes();
-                                var ids = [];
-                                for (var i = 0; i < checked.length; i++) {
-                                    ids.push(checked[i].value);
-                                }
+                            window.updateBulkActions = function () {
+                                var ids = Array.from(window.selectedOrderIdsSet);
                                 var idsStr = ids.join(',');
 
                                 if (orderIdsForOffice) orderIdsForOffice.value = idsStr;
@@ -394,42 +392,84 @@
                                 if (orderIdsForCustody) orderIdsForCustody.value = idsStr;
                                 if (orderIdsForPrint) orderIdsForPrint.value = idsStr;
 
+                                var orderIdsForInquiry = document.getElementById('orderIdsForInquiry');
+                                var orderIdsForInquiryAll = document.getElementById('orderIdsForInquiryAll');
+                                if (orderIdsForInquiry) orderIdsForInquiry.value = idsStr;
+                                if (orderIdsForInquiryAll) orderIdsForInquiryAll.value = idsStr;
+
                                 if (bulkActionsBar) {
-                                    if (checked.length > 0) {
+                                    if (ids.length > 0) {
                                         bulkActionsBar.style.display = 'block';
                                         if (selectedCountEl) {
-                                            selectedCountEl.innerHTML = checked.length + ' <span>طلب محدد</span>';
+                                            selectedCountEl.innerHTML = ids.length + ' <span>' + `[[#{business_days.view.orders_selected}]]` + '</span>';
                                         }
                                     } else {
                                         bulkActionsBar.style.display = 'none';
                                     }
                                 }
 
-                                if (selectAll && allBoxes.length > 0) {
-                                    selectAll.checked = (checked.length === allBoxes.length);
-                                }
+                                // Sync checkbox DOM states with the Set
+                                getCheckboxes().forEach(function (cb) {
+                                    if (window.selectedOrderIdsSet.has(cb.value)) {
+                                        cb.checked = true;
+                                    } else {
+                                        cb.checked = false;
+                                    }
+                                });
                             }
 
-                            // Select All checkbox (only selects WAITING orders)
+                            // Select All checkbox (Fetches all IDs from server)
                             if (selectAll) {
-                                selectAll.addEventListener('click', function () {
+                                selectAll.addEventListener('click', function (e) {
                                     var isChecked = selectAll.checked;
-                                    var boxes = getCheckboxes();
-                                    for (var i = 0; i < boxes.length; i++) {
-                                        if (!boxes[i].disabled) {
-                                            boxes[i].checked = isChecked;
-                                        }
+
+                                    if (isChecked) {
+                                        e.preventDefault(); // Wait until fetched
+                                        if (isSelectAllLoading) return;
+                                        isSelectAllLoading = true;
+                                        selectAll.disabled = true;
+                                        if (loader) loader.style.display = 'block';
+
+                                        var currentSearch = window.location.search;
+                                        var fetchUrl = window.location.pathname + '/matching-waiting-order-ids' + currentSearch;
+
+                                        fetch(fetchUrl)
+                                            .then(res => res.json())
+                                            .then(data => {
+                                                window.selectedOrderIdsSet.clear();
+                                                data.forEach(id => window.selectedOrderIdsSet.add(id.toString()));
+                                                selectAll.checked = true;
+                                                window.updateBulkActions();
+                                            })
+                                            .catch(err => {
+                                                console.error('Failed to load matching orders', err);
+                                                alert('فشل في جلب باقي الطلبات، يرجى المحاولة مرة أخرى.');
+                                                selectAll.checked = false;
+                                            })
+                                            .finally(() => {
+                                                isSelectAllLoading = false;
+                                                selectAll.disabled = false;
+                                                if (loader) loader.style.display = 'none';
+                                            });
+                                    } else {
+                                        window.selectedOrderIdsSet.clear();
+                                        window.updateBulkActions();
                                     }
-                                    updateBulkActions();
                                 });
                             }
 
                             // Use event delegation on the table for individual checkboxes
                             var orderTable = document.querySelector('.table-container table');
                             if (orderTable) {
-                                orderTable.addEventListener('click', function (e) {
+                                orderTable.addEventListener('change', function (e) {
                                     if (e.target && e.target.classList.contains('orderCheckbox')) {
-                                        updateBulkActions();
+                                        if (e.target.checked) {
+                                            window.selectedOrderIdsSet.add(e.target.value);
+                                        } else {
+                                            window.selectedOrderIdsSet.delete(e.target.value);
+                                            if (selectAll) selectAll.checked = false;
+                                        }
+                                        window.updateBulkActions();
                                     }
                                 });
                             }
@@ -479,6 +519,135 @@
                                     }
                                 });
                             }
+
+                            // Inquiry form validation
+                            var inquiryForm = document.getElementById('bulkSendInquiryForm');
+                            if (inquiryForm) {
+                                inquiryForm.addEventListener('submit', function (e) {
+                                    var orderIdsForInquiry = document.getElementById('orderIdsForInquiry');
+                                    if (!orderIdsForInquiry || !orderIdsForInquiry.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً');
+                                    }
+                                });
+                            }
+
+                            var inquiryAllForm = document.getElementById('bulkSendInquiryAllForm');
+                            if (inquiryAllForm) {
+                                inquiryAllForm.addEventListener('submit', function (e) {
+                                    var orderIdsForInquiryAll = document.getElementById('orderIdsForInquiryAll');
+                                    if (!orderIdsForInquiryAll || !orderIdsForInquiryAll.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً');
+                                    }
+                                });
+                            }
+                        });
+
+                        // Infinite Scroll implementation
+                        document.addEventListener('DOMContentLoaded', function () {
+                            let currentPage = 0;
+                            let isLoading = false;
+                            let hasMoreRecords = true;
+                            const size = 100;
+
+                            const loader = document.getElementById('infiniteScrollLoader');
+                            const tbody = document.getElementById('orderTableBody');
+
+                            if (!tbody) return; // If empty table
+
+                            // Check if initial row count < target size, then disable infinite scroll natively
+                            const initialRows = tbody.querySelectorAll('tr').length;
+                            if (initialRows < size) {
+                                hasMoreRecords = false;
+                            }
+
+                            // Setup request URL with all current filters
+                            function getNextPageUrl() {
+                                currentPage++;
+                                const urlParams = new URLSearchParams(window.location.search);
+                                urlParams.set('page', currentPage);
+                                urlParams.set('size', size);
+
+                                const baseUrl = window.location.pathname + '/orders-fragment';
+                                return baseUrl + '?' + urlParams.toString();
+                            }
+
+                            function loadMoreOrders() {
+                                if (isLoading || !hasMoreRecords) return;
+
+                                isLoading = true;
+                                loader.style.display = 'block';
+
+                                fetch(getNextPageUrl())
+                                    .then(response => {
+                                        if (!response.ok) throw new Error('Network error');
+                                        return response.text();
+                                    })
+                                    .then(html => {
+                                        // Trim and check if it has content
+                                        if (html.trim().length === 0) {
+                                            hasMoreRecords = false; // No more rows gracefully
+                                            loader.style.display = 'none';
+                                            return;
+                                        }
+
+                                        // Insert HTML logic
+                                        const tempDiv = document.createElement('tbody');
+                                        tempDiv.innerHTML = html;
+
+                                        const rowCount = tempDiv.querySelectorAll('tr').length;
+
+                                        if (rowCount === 0) {
+                                            hasMoreRecords = false;
+                                        } else {
+                                            while (tempDiv.firstChild) {
+                                                tbody.appendChild(tempDiv.firstChild);
+                                            }
+                                            // Sync new checkboxes with our global Set
+                                            if (typeof window.updateBulkActions === 'function') {
+                                                window.updateBulkActions();
+                                            }
+                                        }
+
+                                        if (rowCount < size) {
+                                            hasMoreRecords = false;
+                                        }
+                                    })
+                                    .catch(err => {
+                                        console.error('Failed to load more orders', err);
+                                        // Revert page logic so it tries again
+                                        currentPage--;
+                                        hasMoreRecords = false; // Stop auto-retrying on failure
+                                    })
+                                    .finally(() => {
+                                        isLoading = false;
+                                        loader.style.display = 'none';
+                                    });
+                            }
+
+                            // Setup Intersection Observer
+                            const options = {
+                                root: null,
+                                rootMargin: '0px',
+                                threshold: 0.1
+                            };
+
+                            const observer = new IntersectionObserver((entries) => {
+                                entries.forEach(entry => {
+                                    if (entry.isIntersecting) {
+                                        loadMoreOrders();
+                                    }
+                                });
+                            }, options);
+
+                            // Let's create an invisible element at end of table container to observe
+                            var endMarker = document.createElement('div');
+                            endMarker.style.height = '10px';
+                            endMarker.style.width = '100%';
+                            document.querySelector('.table-container').appendChild(endMarker);
+
+                            observer.observe(endMarker);
                         });
                     </script>
                 </div>
@@ -488,7 +657,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

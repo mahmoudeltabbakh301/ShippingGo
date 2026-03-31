@@ -535,11 +535,11 @@
             <!-- ============== STORE VIEW: Linked Companies & Offices ============== -->
             <div th:if="${organization.type.name() == 'STORE'}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🏪 شركات الشحن المشتركة</h3>
+                    <h3 class="card-title">🏪 <span th:text="#{network.list.store_joined_companies}">شركات الشحن المشتركة</span></h3>
                 </div>
                 <div th:if="${joinedCompanies == null or joinedCompanies.isEmpty()}" class="table-empty">
                     <div class="table-empty-icon">🏢</div>
-                    <div class="table-empty-text">لم تنضم لأي شركة شحن بعد. اضغط على "تصفح الشركات" للبدء</div>
+                    <div class="table-empty-text" th:text="#{network.list.store_joined_companies_empty}">لم تنضم لأي شركة شحن بعد. اضغط على "تصفح الشركات" للبدء</div>
                 </div>
                 <div class="table-container" style="border: none;"
                     th:if="${companyRelations != null and !companyRelations.isEmpty()}">
@@ -576,11 +576,11 @@
             <!-- STORE VIEW: Linked Offices -->
             <div th:if="${organization.type.name() == 'STORE'}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🏬 مكاتب الشحن المشتركة</h3>
+                    <h3 class="card-title">🏬 <span th:text="#{network.list.store_joined_offices}">مكاتب الشحن المشتركة</span></h3>
                 </div>
                 <div th:if="${joinedOffices == null or joinedOffices.isEmpty()}" class="table-empty">
                     <div class="table-empty-icon">🏬</div>
-                    <div class="table-empty-text">لم تنضم لأي مكتب شحن بعد. اضغط على "تصفح المكاتب" للبدء</div>
+                    <div class="table-empty-text" th:text="#{network.list.store_joined_offices_empty}">لم تنضم لأي مكتب شحن بعد. اضغط على "تصفح المكاتب" للبدء</div>
                 </div>
                 <div class="table-container" style="border: none;"
                     th:if="${officeRelations != null and !officeRelations.isEmpty()}">

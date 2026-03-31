@@ -41,7 +41,7 @@
 
         <!-- Main Navigation -->
         <div class="nav-section"
-            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY', 'ACCOUNTANT', 'FOLLOW_UP','WAREHOUSE_MANAGER')">
+            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY', 'ACCOUNTANT', 'FOLLOW_UP', 'WAREHOUSE_MANAGER')">
             <div class="nav-section-title" th:text="#{nav.main}">القائمة الرئيسية</div>
             <ul class="nav-list">
                 <li class="nav-item">
@@ -59,7 +59,7 @@
                         <span th:text="#{nav.business-days}">أيام العمل</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'WAREHOUSE_MANAGER')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'WAREHOUSE_MANAGER', 'ACCOUNTANT')">
                     <a th:href="@{/warehouse}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/warehouse')} ? 'active' : ''">
                         <span class="nav-link-icon">🏭</span>
@@ -75,7 +75,7 @@
                         <span th:text="#{nav.network}">الشبكة</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'WAREHOUSE_MANAGER')"
                     th:if="${currentOrgType != 'STORE'}">
                     <a th:href="@{/shipment-requests}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/shipment-requests')} ? 'active' : ''">
@@ -103,7 +103,7 @@
         </div>
 
         <!-- Management -->
-        <div class="nav-section" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT' , 'SUPER_ADMIN')">
+        <div class="nav-section" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT', 'FOLLOW_UP', 'SUPER_ADMIN')">
             <div class="nav-section-title" th:text="#{nav.management}">الإدارة</div>
             <ul class="nav-list">
 
@@ -123,14 +123,14 @@
                             th:text="${pendingMembersCount}">0</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP')">
                     <a th:href="@{/dashboard/map}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/dashboard/map')} ? 'active' : ''">
                         <span class="nav-link-icon">🗺️</span>
                         <span th:text="#{dashboard.map.title}">تتبع المناديب</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT')">
                     <a th:href="@{/dashboard/reports}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/dashboard/reports')} ? 'active' : ''">
                         <span class="nav-link-icon">📊</span>

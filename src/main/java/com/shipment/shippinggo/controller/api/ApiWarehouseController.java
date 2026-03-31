@@ -14,6 +14,7 @@ import com.shipment.shippinggo.service.OrganizationService;
 import com.shipment.shippinggo.service.WarehouseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -70,11 +71,11 @@ public class ApiWarehouseController {
 
             // Warehouse orders (WAITING status)
             List<Order> warehouseOrders = warehouseService.getWarehouseOrders(
-                    activeDay.getId(), null, null, null, null, null, null, null);
+                    activeDay.getId(), null, null, null, null, null, null, null, Pageable.unpaged());
             
             // External warehouse orders
             List<Order> externalOrders = warehouseService.getExternalWarehouseOrders(
-                    activeDay.getId(), null, null, null, null, null, null, null);
+                    activeDay.getId(), null, null, null, null, null, null, null, Pageable.unpaged());
 
             long waitingCount = warehouseOrders.stream()
                     .filter(o -> o.getStatus() == OrderStatus.WAITING).count();

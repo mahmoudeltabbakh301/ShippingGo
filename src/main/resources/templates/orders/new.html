@@ -80,15 +80,15 @@
                                 <label class="form-label" for="code" th:text="#{orders.new.company_code}">كود
                                     الاوردر</label>
                                 <input type="text" id="code" th:field="*{code}" class="form-control"
-                                    th:placeholder="#{orders.new.company_code_placeholder}">
+                                    th:placeholder="#{orders.new.company_code_placeholder_auto}">
                             </div>
 
                             <div class="form-group" style="grid-column: span 2;">
-                                <label class="form-label" for="governorate">المحافظة</label>
+                                <label class="form-label" for="governorate" th:text="#{orders.new.governorate}">المحافظة</label>
                                 <select id="governorate" th:field="*{governorate}" class="form-control">
-                                    <option value="">--- اختر المحافظة ---</option>
+                                    <option value="" th:text="#{orders.new.select_governorate}">--- اختر المحافظة ---</option>
                                     <option th:each="gov : ${governorates}" th:value="${gov}"
-                                        th:text="${gov.arabicName}">
+                                        th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}">
                                     </option>
                                 </select>
                             </div>
@@ -165,7 +165,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
     <script>
         function calculateTotalAmount() {
             var shippingPrice = parseFloat(document.getElementById('shippingPrice').value) || 0;

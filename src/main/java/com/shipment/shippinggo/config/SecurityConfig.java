@@ -100,12 +100,13 @@ public class SecurityConfig {
                                                                 "WAREHOUSE_MANAGER")
                                                 // Warehouse Management
                                                 .requestMatchers("/warehouse/**")
-                                                .hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE_MANAGER")
+                                                .hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE_MANAGER", "ACCOUNTANT")
                                                 // Courier (Admin, Manager, Data Entry, Courier)
                                                 .requestMatchers("/courier/**")
                                                 .hasAnyRole("ADMIN", "MANAGER", "DATA_ENTRY", "COURIER")
                                                 // Shipment Requests (الطلبيات) - for offices (Order Assignments)
-                                                .requestMatchers("/shipment-requests/**").hasAnyRole("ADMIN", "MANAGER")
+                                                .requestMatchers("/shipment-requests/**")
+                                                .hasAnyRole("ADMIN", "MANAGER", "WAREHOUSE_MANAGER")
                                                 // Org Shipment Requests (from users)
                                                 .requestMatchers("/org/shipment-requests/**")
                                                 .hasAnyRole("ADMIN", "MANAGER", "DATA_ENTRY")
@@ -189,7 +190,7 @@ public class SecurityConfig {
                         // Include 10.0.2.2 for Android emulator access
                         configuration.setAllowedOriginPatterns(
                                         java.util.List.of("http://localhost:3000", "http://localhost:8080",
-                                                        "http://10.0.2.2:8080", "http://192.168.1.6:8080",
+                                                        "http://10.0.2.2:8080", "http://192.168.1.5:8080",
                                                         "https://*.ngrok-free.dev",
                                                         "https://shipping-go.com", "https://www.shipping-go.com"));
                 }

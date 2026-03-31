@@ -32,7 +32,7 @@ public class WarehouseService {
      */
     public List<Order> getWarehouseOrders(Long businessDayId, String search, String code,
             Long courierId, Long officeId, com.shipment.shippinggo.enums.OrderStatus status,
-            Long incomingFromId, Long outgoingToId) {
+            Long incomingFromId, Long outgoingToId, org.springframework.data.domain.Pageable pageable) {
 
         BusinessDay bd = businessDayRepository.findById(businessDayId).orElse(null);
         if (bd == null)
@@ -41,12 +41,12 @@ public class WarehouseService {
 
         // جلب أوردرات يوم العمل بالفلاتر كاملة (تجنب N+1 والفلترة اليدوية للمنظمات)
         List<Order> allOrders = orderService.getOrdersByBusinessDayWithFullFilters(
-                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false);
+                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false, org.springframework.data.domain.Pageable.unpaged());
 
         java.util.Map<Long, java.util.Map<String, Boolean>> returnCtx = orderService.getOrderReturnContext(allOrders,
                 orgId);
 
-        return allOrders.stream()
+        List<Order> filtered = allOrders.stream()
                 .filter(o -> {
                     // أوردرات في حالة WAITING = داخل المخزن الأساسي
                     if (o.getStatus() == OrderStatus.WAITING) {
@@ -62,6 +62,14 @@ public class WarehouseService {
                     return false;
                 })
                 .toList();
+
+        if (pageable != null && pageable.isPaged()) {
+            int start = (int) pageable.getOffset();
+            if (start >= filtered.size()) return List.of();
+            int end = Math.min((start + pageable.getPageSize()), filtered.size());
+            return filtered.subList(start, end);
+        }
+        return filtered;
     }
 
     /**
@@ -70,7 +78,7 @@ public class WarehouseService {
      */
     public List<Order> getExternalWarehouseOrders(Long businessDayId, String search, String code,
             Long courierId, Long officeId, com.shipment.shippinggo.enums.OrderStatus status,
-            Long incomingFromId, Long outgoingToId) {
+            Long incomingFromId, Long outgoingToId, org.springframework.data.domain.Pageable pageable) {
 
         BusinessDay bd = businessDayRepository.findById(businessDayId).orElse(null);
         if (bd == null)
@@ -78,12 +86,12 @@ public class WarehouseService {
         Long orgId = bd.getOrganization().getId();
 
         List<Order> allOrders = orderService.getOrdersByBusinessDayWithFullFilters(
-                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false);
+                businessDayId, orgId, search, code, courierId, incomingFromId, outgoingToId, status, null, false, org.springframework.data.domain.Pageable.unpaged());
 
         java.util.Map<Long, java.util.Map<String, Boolean>> returnCtx = orderService.getOrderReturnContext(allOrders,
                 orgId);
 
-        return allOrders.stream()
+        List<Order> filtered = allOrders.stream()
                 .filter(o -> {
                     // في الطريق = في المخزن الخارجي
                     if (o.getStatus() == OrderStatus.IN_TRANSIT) {
@@ -103,6 +111,14 @@ public class WarehouseService {
                     return false;
                 })
                 .toList();
+
+        if (pageable != null && pageable.isPaged()) {
+            int start = (int) pageable.getOffset();
+            if (start >= filtered.size()) return List.of();
+            int end = Math.min((start + pageable.getPageSize()), filtered.size());
+            return filtered.subList(start, end);
+        }
+        return filtered;
     }
 
     /**

@@ -192,9 +192,9 @@
                                         </form>
                                         <form th:action="@{/members/{id}/remove(id=${m.id})}" method="post"
                                             style="display: inline;"
-                                            onsubmit="return confirm('هل أنت متأكد من حذف هذا العضو؟');">
+                                            th:onsubmit="|return confirm('#{members.list.confirm_delete}');|">
                                             <button type="submit" class="btn btn-sm btn-danger"
-                                                title="حذف العضو">❌</button>
+                                                th:title="#{members.list.delete_member}">❌</button>
                                         </form>
                                     </div>
                                 </td>
@@ -207,7 +207,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 </body>
 
 </html>

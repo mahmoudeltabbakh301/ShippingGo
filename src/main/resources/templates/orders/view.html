@@ -99,7 +99,7 @@
                         <span th:text="#{orders.view.title}">👁 تفاصيل الطلب:</span>
                         <span id="orderCodeValue">[[${order.code ?: order.id}]]</span>
                         <button type="button" class="btn btn-sm btn-secondary"
-                            onclick="copyToClipboard('orderCodeValue', this)" title="نسخ الكود"
+                            onclick="copyToClipboard('orderCodeValue', this)" th:title="#{orders.view.copy_code}"
                             style="padding: 3px 6px; font-size: 0.75em;">📋</button>
                     </h1>
                     <a th:if="${businessDayId != null}" th:href="@{/business-days/{id}(id=${businessDayId})}"
@@ -156,11 +156,11 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">المحافظة</label>
+                                <label class="form-label" th:text="#{orders.view.governorate}">المحافظة</label>
                                 <select name="governorate" class="form-control">
-                                    <option value="">غير محدد</option>
+                                    <option value="" th:text="#{orders.view.select_governorate}">غير محدد</option>
                                     <option th:each="gov : ${governorates}" th:value="${gov}"
-                                        th:text="${gov.arabicName}" th:selected="${order.governorate == gov}"></option>
+                                        th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}" th:selected="${order.governorate == gov}"></option>
                                 </select>
                             </div>
 
@@ -192,7 +192,7 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">الكمية</label>
+                                <label class="form-label" th:text="#{orders.view.quantity}">الكمية</label>
                                 <input type="number" name="quantity" class="form-control" th:value="${order.quantity}"
                                     min="1">
                             </div>
@@ -204,20 +204,20 @@
                             </div>
 
                             <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                                <label class="form-label" style="color: var(--accent-1);">سعر الاستلام الجزئي</label>
+                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.partialDeliveryAmount}"></p>
                             </div>
 
                             <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                                <label class="form-label" style="color: var(--accent-1);">القطع المسلمة</label>
+                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.deliveredPieces}"></p>
                             </div>
 
                             <div class="form-group"
                                 th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
-                                <label class="form-label" style="color: var(--accent-1);">المبلغ المحصل الفعلي</label>
+                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.collected_amount}">المبلغ المحصل الفعلي</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.collectedAmount}"></p>
                             </div>
@@ -271,7 +271,7 @@
                                         th:text="${order.recipientPhone} ?: '-'"></p>
                                     <button th:if="${order.recipientPhone != null}" type="button"
                                         class="btn btn-sm btn-secondary"
-                                        onclick="copyToClipboard('phoneFollowUp', this)" title="نسخ الهاتف"
+                                        onclick="copyToClipboard('phoneFollowUp', this)" th:title="#{orders.view.copy_phone_tooltip}"
                                         style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
                                 </div>
                             </div>
@@ -365,7 +365,7 @@
                                     th:text="${order.recipientPhone} ?: '-'"></p>
                                 <button th:if="${order.recipientPhone != null}" type="button"
                                     class="btn btn-sm btn-secondary" onclick="copyToClipboard('phoneReadOnly', this)"
-                                    title="نسخ الهاتف"
+                                    th:title="#{orders.view.copy_phone_tooltip}"
                                     style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
                             </div>
                         </div>
@@ -394,22 +394,22 @@
                             </p>
                         </div>
                         <div class="detail-item" th:if="${order.quantity != null}">
-                            <p class="detail-label-text">الكمية</p>
+                            <p class="detail-label-text" th:text="#{orders.view.quantity}">الكمية</p>
                             <p class="detail-value-text">[[${order.quantity}]]</p>
                         </div>
 
                         <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                            <p class="detail-label-text" style="color: var(--accent-1);">القطع المسلمة</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</p>
                             <p class="detail-value-text">[[${order.deliveredPieces}]]</p>
                         </div>
                         <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                            <p class="detail-label-text" style="color: var(--accent-1);">سعر الاستلام الجزئي</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</p>
                             <p class="detail-value-text">[[${order.partialDeliveryAmount}]]</p>
                         </div>
 
                         <div class="detail-item"
                             th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
-                            <p class="detail-label-text" style="color: var(--accent-1);">المبلغ المحصل الفعلي</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.actual_collected_amount}">المبلغ المحصل الفعلي</p>
                             <p class="detail-value-text">[[${order.collectedAmount}]]</p>
                         </div>
                         <div class="detail-item"
@@ -469,11 +469,11 @@
                                 </select>
                             </div>
                             <div class="form-group" id="partialDeliveryGroup" style="display: none;">
-                                <label class="form-label" style="color: var(--accent-1);">القطع المسلمة</label>
+                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
                                 <input type="number" name="deliveredPieces" class="form-control" min="1"
                                     th:value="${order.deliveredPieces}">
                                 <label class="form-label"
-                                    style="color: var(--accent-1); margin-top: var(--space-2);">سعر الاستلام
+                                    style="color: var(--accent-1); margin-top: var(--space-2);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام
                                     الجزئي</label>
                                 <input type="number" name="partialDeliveryAmount" class="form-control" step="0.01"
                                     min="0" th:value="${order.partialDeliveryAmount}">
@@ -520,18 +520,18 @@
                                             th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
                                             th:text="#{orders.view.assign_office_select}">اختر مكتباً...</option>
 
-                                        <optgroup label="الشركات" th:if="${companies != null && !companies.isEmpty()}">
+                                        <optgroup th:label="#{orders.list.group_companies}" th:if="${companies != null && !companies.isEmpty()}">
                                             <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"
                                                 th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == c.id}">
                                             </option>
                                         </optgroup>
 
-                                        <optgroup label="المكاتب" th:if="${offices != null && !offices.isEmpty()}">
+                                        <optgroup th:label="#{orders.list.group_offices}" th:if="${offices != null && !offices.isEmpty()}">
                                             <option th:each="o : ${offices}" th:value="${o.id}" th:text="${o.name}"
                                                 th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == o.id}">
                                             </option>
                                         </optgroup>
-                                        <optgroup label="المكاتب الافتراضية"
+                                        <optgroup th:label="#{orders.list.group_virtual_offices}"
                                             th:if="${virtualOffices != null && !virtualOffices.isEmpty()}">
                                             <option th:each="vo : ${virtualOffices}" th:value="${vo.id}"
                                                 th:text="${vo.name}"
@@ -554,7 +554,7 @@
                             <div th:if="${assignmentChain != null && !assignmentChain.isEmpty()}"
                                 style="margin-top: var(--space-4); margin-bottom: var(--space-2);">
                                 <h5
-                                    style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);">
+                                    style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);" th:text="#{orders.view.assignment_chain_title}">
                                     سلسلة إسناد الطلب
                                 </h5>
                                 <div style="display: flex; flex-direction: column; gap: var(--space-2);">
@@ -570,10 +570,10 @@
                                                 style="color: var(--primary-600); font-weight: 600;"
                                                 target="_blank"></a>
                                             <span th:if="${assignment.accepted}"
-                                                style="color: var(--success-600); font-size: 0.75rem; margin-inline-start: var(--space-1);">✓
+                                                style="color: var(--success-600); font-size: 0.75rem; margin-inline-start: var(--space-1);" th:text="'✓ ' + #{orders.view.assignment_accepted}">✓
                                                 مقبول</span>
                                             <span th:unless="${assignment.accepted}"
-                                                style="color: var(--warning-600); font-size: 0.75rem; margin-inline-start: var(--space-1);">⏳
+                                                style="color: var(--warning-600); font-size: 0.75rem; margin-inline-start: var(--space-1);" th:text="'⏳ ' + #{orders.view.assignment_pending}">⏳
                                                 بانتظار القبول</span>
                                         </div>
                                     </div>
@@ -589,7 +589,7 @@
                                 <input type="hidden" name="businessDayId"
                                     th:value="${businessDayId ?: order.businessDay?.id}">
                                 <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.9rem;"
-                                    title="إلغاء الإسناد الأخير المعلق">
+                                    th:text="#{orders.btn.cancel_assignment_request}">
                                     ❌ إلغاء طلب الإسناد
                                 </button>
                             </form>
@@ -654,21 +654,7 @@
                             th:if="${order.businessDay.isCustody}">
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
-                                <h4 class="card-title" th:text="#{orders.view.remove_custody_title}"
-                                    style="margin: 0; font-size: 1rem;">📤 إزالة من عهدة المخزن</h4>
-                            </div>
-                            <form th:action="@{/orders/{id}/remove-custody(id=${order.id})}" method="post"
-                                th:onsubmit="|return confirm('#{orders.view.remove_custody_confirm}');|">
-                                <input type="hidden" name="businessDayId"
-                                    th:value="${businessDayId ?: order.businessDay?.id}">
-                                <button type="submit" class="btn btn-secondary" style="width: 100%;"
-                                    th:text="#{orders.btn.remove_custody}">إزالة من العهدة</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Delete Order (Admin and Manager) -->
+                          <!-- Delete Order (Admin and Manager) -->
                 <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
                     style="border: 1px solid var(--danger-border);">
                     <div class="card-header"
@@ -696,8 +682,7 @@
                     style="border: 2px solid var(--danger-400);">
                     <div class="card-header"
                         style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); background-color: var(--danger-50); margin: calc(-1 * var(--space-6)); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-6); border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
-                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;">📦 تتبع
-                            إرجاع المرتجع</h4>
+                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;" th:text="#{orders.view.return_tracking_title}">📦 تتبع إرجاع المرتجع</h4>
                     </div>
 
                     <!-- Completed -->
@@ -705,14 +690,14 @@
                         style="text-align: center; padding: var(--space-3);">
                         <div style="font-size: 1.5rem;">✅</div>
                         <p
-                            style="font-weight: 700; color: var(--success-600); margin-top: var(--space-2); font-size: 0.9rem;">
+                            style="font-weight: 700; color: var(--success-600); margin-top: var(--space-2); font-size: 0.9rem;" th:text="#{orders.view.returned_to_owner_success}">
                             تم إرجاع الطلب بالكامل للمالك الأصلي
                         </p>
                     </div>
 
                     <!-- Chain Progress -->
                     <div th:unless="${returnStatus.get('returnedToOwner')}">
-                        <p style="color: var(--text-secondary); margin-bottom: var(--space-2); font-size: 0.8rem;">
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-2); font-size: 0.8rem;" th:text="#{orders.view.return_stages}">
                             مراحل استلام المرتجع (من الأسفل للأعلى):
                         </p>
 
@@ -726,7 +711,7 @@
                                 <div>
                                     <span style="font-weight: 600;" th:text="${lvl.get('assigneeName')}"></span>
                                     <span style="color: var(--text-tertiary); font-size: 0.75rem;"
-                                        th:text="${lvl.get('returnConfirmed') ? '(تم التأكيد)' : '(بانتظار التأكيد)'}"></span>
+                                        th:text="${lvl.get('returnConfirmed') ? #{orders.view.return_confirmed} : #{orders.view.return_pending}}"></span>
                                 </div>
                             </div>
                             <!-- Owner (final destination) -->
@@ -734,7 +719,7 @@
                                 th:styleappend="${returnStatus.get('returnedToOwner') ? 'background: var(--success-50); border: 1px solid var(--success-200);' : 'background: var(--dark-surface); border: 1px solid var(--dark-border);'}">
                                 <span>🏠</span>
                                 <span style="font-weight: 600; font-size: 0.85rem;"
-                                    th:text="${order.ownerOrganization.name} + ' (المالك)'"></span>
+                                    th:text="${order.ownerOrganization.name} + ' ' + #{orders.view.owner_label}"></span>
                             </div>
                         </div>
 
@@ -794,7 +779,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
 
     <script th:inline="javascript">
         function copyToClipboard(elementId, buttonElement) {

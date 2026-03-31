@@ -106,6 +106,15 @@ public class BusinessDayService {
         }
     }
 
+    public org.springframework.data.domain.Page<BusinessDay> getBusinessDaysForUserPageable(Long organizationId, User user, org.springframework.data.domain.Pageable pageable) {
+        if (user.getRole() == com.shipment.shippinggo.enums.Role.ADMIN) {
+            return businessDayRepository.findByOrganizationIdAndIsCustodyFalseOrderByDateDesc(organizationId, pageable);
+        } else {
+            return businessDayRepository
+                    .findByOrganizationIdAndActiveTrueAndIsCustodyFalseOrderByDateDesc(organizationId, pageable);
+        }
+    }
+
     // جلب جميع أيام العهدة (Custody) للمستخدم بناءً على دوره
     public List<BusinessDay> getCustodyBusinessDaysForUser(Long organizationId, User user) {
         if (user.getRole() == com.shipment.shippinggo.enums.Role.ADMIN) {

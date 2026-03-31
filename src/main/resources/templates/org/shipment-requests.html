@@ -200,10 +200,8 @@
 
     <!-- Mobile Menu Toggle -->
     <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
     <script>
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('open');
-        }
 
         function toggleAll(source) {
             const checkboxes = document.querySelectorAll('.request-checkbox:not(:disabled)');

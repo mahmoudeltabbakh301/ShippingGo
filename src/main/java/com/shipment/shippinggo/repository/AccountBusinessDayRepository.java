@@ -24,6 +24,10 @@ public interface AccountBusinessDayRepository extends JpaRepository<AccountBusin
     List<AccountBusinessDay> findByOrganizationIdAndBusinessDayIsCustodyFalseOrderByBusinessDayDateDesc(
             Long organizationId);
 
+    // جلب أيام الحسابات مُقسمة لصفحات
+    org.springframework.data.domain.Page<AccountBusinessDay> findByOrganizationIdAndBusinessDayIsCustodyFalseOrderByBusinessDayDateDesc(
+            Long organizationId, org.springframework.data.domain.Pageable pageable);
+
     // جلب يوم حسابات حسب التاريخ والمنظمة
     Optional<AccountBusinessDay> findByOrganizationIdAndBusinessDayDate(Long organizationId, LocalDate date);
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <th:block th:fragment="inquiryRows">
+        <tr th:each="inquiry : ${inquiries}">
+            <td th:text="${inquiry.order.recipientName}">الاسم</td>
+            <td th:text="${inquiry.order.recipientAddress}">العنوان</td>
+            <td th:text="${inquiry.order.recipientPhone}">رقم الهاتف</td>
+            <td
+                th:text="${inquiry.order.status.name() == 'PARTIAL_DELIVERY' && inquiry.order.partialDeliveryAmount != null ? inquiry.order.partialDeliveryAmount : inquiry.order.amount} ?: '-'">
+                المبلغ</td>
+            <td>
+                <span class="badge"
+                    th:classappend="${inquiry.order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                      (inquiry.order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
+                                      (inquiry.order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                      (inquiry.order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                    th:text="${#locale.language == 'en' ? inquiry.order.status : inquiry.order.status.arabicName}">الحالة</span>
+            </td>
+            <td>
+                <span style="display: inline-flex; align-items: center; gap: 4px;">
+                    <span style="color: var(--accent-1);">🏢</span>
+                    <span th:text="${inquiry.order.ownerOrganization.name}">المنظمة</span>
+                </span>
+            </td>
+            <td>
+                <span th:if="${inquiry.order.assignedToOrganization != null}"
+                    th:text="${inquiry.order.assignedToOrganization.name}"
+                    style="color: var(--accent-1); font-weight: 500;">-</span>
+                <span th:unless="${inquiry.order.assignedToOrganization != null}">-</span>
+            </td>
+            <td th:if="${inquiry.order.assignedToCourier != null}">
+                <a th:href="@{/profile/{id}(id=${inquiry.order.assignedToCourier.id})}"
+                    th:text="${inquiry.order.assignedToCourier.fullName}"
+                    style="text-decoration: none; font-weight: 500; color: var(--accent-1);"
+                    target="_blank" title="عرض تفاصيل المندوب"></a>
+            </td>
+            <td th:unless="${inquiry.order.assignedToCourier != null}">-</td>
+            <td th:text="${inquiry.order.code} ?: '-'">-</td>
+        </tr>
+    </th:block>
+</body>
+</html>

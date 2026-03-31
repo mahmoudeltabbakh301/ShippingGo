@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+    <th:block th:fragment="orderRows">
+        <tr th:each="order : ${orders}">
+            <td th:text="${order.recipientName}">الاسم</td>
+            <td th:text="${order.recipientAddress}">العنوان</td>
+            <td th:text="${order.recipientPhone}">رقم الهاتف</td>
+            <td th:text="${order.quantity} ?: '-'">الكمية</td>
+            <td
+                th:text="${order.status.name() == 'PARTIAL_DELIVERY' &amp;&amp; order.partialDeliveryAmount != null ? order.partialDeliveryAmount : order.amount} ?: '-'">
+                المبلغ</td>
+            <td>
+                <span class="badge"
+                    th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                      (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
+                                      (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                      (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                    th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
+            </td>
+            <td>
+                <!-- في الطريق -->
+                <span th:if="${order.status.name() == 'IN_TRANSIT'}" class="badge badge-transit"
+                    th:text="#{warehouse.status.in_transit}">في الطريق</span>
+                <!-- تم التسليم -->
+                <span th:if="${order.status.name() == 'DELIVERED'}" class="badge badge-delivered"
+                    th:text="#{warehouse.status.delivered}">تم التسليم</span>
+                <!-- حالة المرتجع في المخزن الخارجي -->
+                <th:block
+                    th:if="${order.status.name() == 'CANCELLED' || order.status.name() == 'REFUSED' || order.status.name() == 'PARTIAL_DELIVERY' || order.status.name() == 'DEFERRED'}">
+                    <span
+                        th:if="${returnContext.get(order.id) != null &amp;&amp; returnContext.get(order.id).get('hasConfirmed')}"
+                        class="badge badge-delivered">✅ تم التأكيد</span>
+                    <span
+                        th:if="${returnContext.get(order.id) == null || !returnContext.get(order.id).get('hasConfirmed')}"
+                        class="badge badge-waiting"
+                        th:text="#{warehouse.status.awaiting_receipt}">في انتظار تأكيد
+                        الاستلام</span>
+                </th:block>
+            </td>
+            <td style="direction: ltr; text-align: right;">
+                <th:block th:with="ctx=${orderChainContext.get(order.id)}">
+                    <span th:if="${order.ownerOrganization.id == organization.id}">
+                        <span th:if="${ctx != null &amp;&amp; ctx.containsKey('outgoingTo')}"
+                            th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
+                            title="تم الإسناد إلى"></span>
+                        <span
+                            th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) &amp;&amp; order.assignedToOrganization != null}"
+                            th:text="'➡️ ' + ${order.assignedToOrganization.name}"
+                            title="تم الإسناد إلى"></span>
+                        <span
+                            th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) &amp;&amp; order.assignedToOrganization == null}">-</span>
+                    </span>
+
+                    <span th:if="${order.ownerOrganization.id != organization.id}">
+                        <span th:if="${ctx != null &amp;&amp; ctx.containsKey('incomingFrom')}"
+                            th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                        <span th:if="${ctx != null &amp;&amp; ctx.containsKey('outgoingTo')}"
+                            th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
+                            title="تم الإسناد إلى"></span>
+                        <span
+                            th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) &amp;&amp; order.assignedToOrganization != null &amp;&amp; order.assignedToOrganization.id == organization.id}"
+                            th:text="'⬅️ ' + ${order.ownerOrganization.name}"
+                            title="وارد من"></span>
+                        <span
+                            th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) &amp;&amp; (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
+                            th:text="${order.ownerOrganization.name}"></span>
+                    </span>
+                </th:block>
+            </td>
+            <td
+                th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
+                -</td>
+            <td>
+                <a th:href="@{/orders/{id}(id=${order.id}, businessDayId=${businessDay.id})}"
+                    class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}">👁
+                    عرض</a>
+                <!-- زر تأكيد الاستلام -->
+                <form
+                    th:if="${(order.status.name() == 'CANCELLED' || order.status.name() == 'REFUSED' || order.status.name() == 'PARTIAL_DELIVERY' || order.status.name() == 'DEFERRED') 
+                                &amp;&amp; returnContext.get(order.id) != null &amp;&amp; returnContext.get(order.id).get('canConfirm')}"
+                    th:action="@{/warehouse/confirm-receipt/{orderId}(orderId=${order.id})}"
+                    method="post" style="display: inline;">
+                    <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                    <button type="submit" class="btn btn-sm btn-primary"
+                        onclick="return confirm('هل تريد تأكيد استلام هذا الأوردر في المخزن؟')"
+                        th:text="#{warehouse.btn.confirm_receipt}">✅ تأكيد الاستلام</button>
+                </form>
+                <span
+                    th:if="${(order.status.name() == 'CANCELLED' || order.status.name() == 'REFUSED' || order.status.name() == 'PARTIAL_DELIVERY' || order.status.name() == 'DEFERRED') 
+                                &amp;&amp; returnContext.get(order.id) != null &amp;&amp; !returnContext.get(order.id).get('canConfirm') &amp;&amp; !returnContext.get(order.id).get('hasConfirmed')}"
+                    class="badge badge-waiting">في انتظار التأكيد من طرف آخر</span>
+                <span
+                    th:if="${(order.status.name() == 'CANCELLED' || order.status.name() == 'REFUSED' || order.status.name() == 'PARTIAL_DELIVERY' || order.status.name() == 'DEFERRED') 
+                                &amp;&amp; returnContext.get(order.id) != null &amp;&amp; returnContext.get(order.id).get('hasConfirmed')}"
+                    class="badge badge-delivered">✅ تم التأكيد</span>
+            </td>
+        </tr>
+    </th:block>
+</body>
+</html>
