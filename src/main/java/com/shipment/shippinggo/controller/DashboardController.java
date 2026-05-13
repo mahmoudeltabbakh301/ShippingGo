@@ -104,6 +104,9 @@ public class DashboardController {
                 model.addAttribute("sharedOffices", organizationService.getOfficesByCompany(org.getId()));
             } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
                 model.addAttribute("sharedCompanies", organizationService.getCompaniesByStore(org.getId()));
+            } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+                // Clients only see the organization they belong to
+                model.addAttribute("sharedCompanies", organizationService.getLinkedOrganizations(org));
             } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
                 model.addAttribute("sharedCompanies", organizationService.getCompaniesByOffice(org.getId()));
             }
@@ -189,19 +192,16 @@ public class DashboardController {
         }
         model.addAttribute("organization", org);
 
-        // Pass couriers for Courier Report tab
+        // قائمة أيام العمل للفلترة
+        var businessDays = businessDayService.getBusinessDaysForUser(org.getId(), user);
+        model.addAttribute("businessDays", businessDays);
+
+        // المناديب
         model.addAttribute("couriers", organizationService.getCouriers(org));
 
-        // Pass related organizations for Organization Report tab
-        if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
-            model.addAttribute("linkedOrgs", organizationService.getOfficesByCompany(org.getId()));
-        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
-            model.addAttribute("linkedOrgs", organizationService.getCompaniesByStore(org.getId()));
-        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
-            model.addAttribute("linkedOrgs", organizationService.getCompaniesByOffice(org.getId()));
-        } else {
-            model.addAttribute("linkedOrgs", java.util.List.of());
-        }
+        // المنظمات المرتبطة
+        java.util.List<Organization> linkedOrgs = organizationService.getLinkedOrganizations(org);
+        model.addAttribute("linkedOrgs", linkedOrgs);
 
         return "dashboard/reports";
     }

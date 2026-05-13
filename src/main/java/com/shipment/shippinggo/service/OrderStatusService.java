@@ -29,6 +29,7 @@ public class OrderStatusService {
     private final OrderAssignmentService orderAssignmentService;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final OutboundWebhookService outboundWebhookService;
 
     public OrderStatusService(OrderRepository orderRepository,
             OrderStatusHistoryRepository orderStatusHistoryRepository,
@@ -37,7 +38,8 @@ public class OrderStatusService {
             AccountService accountService,
             OrderAssignmentService orderAssignmentService,
             NotificationService notificationService,
-            SimpMessagingTemplate messagingTemplate) {
+            SimpMessagingTemplate messagingTemplate,
+            OutboundWebhookService outboundWebhookService) {
         this.orderRepository = orderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
@@ -46,6 +48,7 @@ public class OrderStatusService {
         this.orderAssignmentService = orderAssignmentService;
         this.notificationService = notificationService;
         this.messagingTemplate = messagingTemplate;
+        this.outboundWebhookService = outboundWebhookService;
     }
 
     @Transactional
@@ -195,16 +198,23 @@ public class OrderStatusService {
                         payload);
             }
 
-            // Send Push Notification to Owner Organization
-            if (order.getOwnerOrganization() != null) {
-                notificationService.sendOrderStatusUpdateNotification(
-                    order.getOwnerOrganization(), 
-                    order.getCode(), 
-                    newStatus.getArabicName()
-                );
+            // Send Push Notification to ALL participating organizations
+            // تخطي حالة الانتظار وحالة في الطريق - لا نرسل إشعار عند إنشاء أوردر جديد، العودة للانتظار، أو كونه في الطريق
+            if (newStatus != com.shipment.shippinggo.enums.OrderStatus.WAITING && 
+                newStatus != com.shipment.shippinggo.enums.OrderStatus.IN_TRANSIT) {
+                notificationService.sendOrderStatusUpdateNotification(order, newStatus.getArabicName());
             }
         } catch (Exception e) {
             System.err.println("Failed to broadcast WebSocket or Push message: " + e.getMessage());
+        }
+
+        // إرسال Outbound Webhook للأنظمة الخارجية (إن وُجدت)
+        if (order.getExternalOrderId() != null && order.getSourcePlatform() != null) {
+            try {
+                outboundWebhookService.sendStatusUpdate(order, previousStatus, newStatus);
+            } catch (Exception e) {
+                System.err.println("Failed to send Outbound Webhook: " + e.getMessage());
+            }
         }
     }
 

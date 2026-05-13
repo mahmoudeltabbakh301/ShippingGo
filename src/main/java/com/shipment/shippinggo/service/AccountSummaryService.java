@@ -284,7 +284,147 @@ public class AccountSummaryService {
             }
         }
 
+        // 4. UNASSIGNED (أوردرات المنظمة غير المسندة لأي منظمة أخرى)
+        List<Order> unassignedOrders = orderRepository.findUnassignedOrdersByBusinessDay(org.getId(), businessDayId);
+        if (!unassignedOrders.isEmpty()) {
+            AccountSummaryDTO dto = calculateUnassignedSummary(org, unassignedOrders);
+            summaries.add(dto);
+        }
+
         return summaries;
+    }
+
+    // حساب ملخص الأوردرات غير المسندة
+    public AccountSummaryDTO calculateUnassignedSummary(Organization organization, List<Order> orders) {
+
+        long deliveredOrders = orders.stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED || o.getStatus() == OrderStatus.PARTIAL_DELIVERY)
+                .count();
+        long returnedOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.REFUSED).count();
+        long cancelledOrders = orders.stream().filter(o -> o.getStatus() == OrderStatus.CANCELLED).count();
+        long otherOrders = orders.size() - deliveredOrders - returnedOrders - cancelledOrders;
+
+        BigDecimal deliveredAmount = BigDecimal.ZERO;
+        BigDecimal returnedAmount = BigDecimal.ZERO;
+        BigDecimal partialDeliveryAmount = BigDecimal.ZERO;
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        BigDecimal deliveryCommission = BigDecimal.ZERO;
+        BigDecimal rejectionCommission = BigDecimal.ZERO;
+        BigDecimal cancellationCommission = BigDecimal.ZERO;
+
+        // جلب إعدادات العمولة الافتراضية لـ "غير مسند"
+        java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> defaultSetting =
+                commissionService.getUnassignedCommission(organization, null);
+
+        Map<com.shipment.shippinggo.enums.Governorate, java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting>> settingsCache = new HashMap<>();
+
+        for (Order order : orders) {
+            boolean isReturned = order.getStatus() == OrderStatus.REFUSED;
+            boolean isPartial = order.getStatus() == OrderStatus.PARTIAL_DELIVERY;
+            boolean isCancelled = order.getStatus() == OrderStatus.CANCELLED;
+            boolean isDelivered = order.getStatus() == OrderStatus.DELIVERED;
+
+            totalAmount = totalAmount.add(order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
+
+            // جلب الإعداد المناسب (حسب المحافظة أو الافتراضي)
+            java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> setting;
+            if (order.getGovernorate() != null) {
+                setting = settingsCache.computeIfAbsent(order.getGovernorate(),
+                        g -> commissionService.getUnassignedCommission(organization, g));
+                if (setting.isEmpty()) setting = defaultSetting;
+            } else {
+                setting = defaultSetting;
+            }
+
+            BigDecimal currentDeliveryCommission = BigDecimal.ZERO;
+            BigDecimal currentRejectionCommission = BigDecimal.ZERO;
+            BigDecimal currentCancellationCommission = BigDecimal.ZERO;
+
+            if (order.getManualOrgCommission() != null) {
+                if (isReturned) {
+                    currentRejectionCommission = order.getManualOrgCommission();
+                } else if (isCancelled) {
+                    currentCancellationCommission = order.getManualOrgCommission();
+                } else {
+                    currentDeliveryCommission = order.getManualOrgCommission();
+                }
+            } else if (setting.isPresent()) {
+                if (isDelivered || isPartial) {
+                    BigDecimal baseAmount = isPartial ? order.getPartialDeliveryAmount()
+                            : (order.getCollectedAmount() != null ? order.getCollectedAmount() : order.getAmount());
+                    if (baseAmount != null && baseAmount.compareTo(BigDecimal.ZERO) > 0) {
+                        currentDeliveryCommission = commissionService.calculateCommission(setting.get(), baseAmount);
+                    }
+                }
+
+                if (isReturned) {
+                    BigDecimal rejectionPayment = order.getRejectionPayment();
+                    if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
+                        currentRejectionCommission = BigDecimal.ZERO;
+                    } else if (setting.get().getRejectionCommission() != null) {
+                        currentRejectionCommission = setting.get().getRejectionCommission();
+                    }
+                }
+
+                if (isCancelled) {
+                    if (setting.get().getCancellationCommission() != null) {
+                        currentCancellationCommission = setting.get().getCancellationCommission();
+                    }
+                }
+            }
+
+            if (isDelivered) {
+                BigDecimal collected = order.getCollectedAmount() != null ? order.getCollectedAmount()
+                        : (order.getAmount() != null ? order.getAmount() : BigDecimal.ZERO);
+                deliveredAmount = deliveredAmount.add(collected);
+            } else if (isReturned) {
+                returnedAmount = returnedAmount.add(
+                        order.getRejectionPayment() != null ? order.getRejectionPayment() : BigDecimal.ZERO);
+            } else if (isPartial) {
+                partialDeliveryAmount = partialDeliveryAmount.add(
+                        order.getPartialDeliveryAmount() != null ? order.getPartialDeliveryAmount() : BigDecimal.ZERO);
+            }
+
+            deliveryCommission = deliveryCommission.add(currentDeliveryCommission);
+            rejectionCommission = rejectionCommission.add(currentRejectionCommission);
+            cancellationCommission = cancellationCommission.add(currentCancellationCommission);
+        }
+
+        BigDecimal totalCommissions = deliveryCommission.add(rejectionCommission).add(cancellationCommission);
+        BigDecimal finalDeliveredAmount = deliveredAmount.add(partialDeliveryAmount);
+        BigDecimal netAmount = finalDeliveredAmount.subtract(totalCommissions);
+
+        AccountSummaryDTO summary = new AccountSummaryDTO();
+        summary.setId(-1L); // معرف خاص لـ "غير مسند"
+        summary.setName("غير مسند");
+        summary.setType("unassigned");
+        summary.setDirection("UNASSIGNED");
+        summary.setOrganizationId(organization.getId());
+        summary.setOrganizationName(organization.getName());
+
+        summary.setTotalOrders(orders.size());
+        summary.setDeliveredOrders(deliveredOrders);
+        summary.setRefusedOrders(returnedOrders);
+        summary.setReturnedOrders(returnedOrders);
+        summary.setCancelledOrders(cancelledOrders);
+        summary.setOtherOrders(otherOrders);
+
+        summary.setTotalAmount(totalAmount);
+        summary.setDeliveredAmount(finalDeliveredAmount);
+        summary.setReturnedAmount(returnedAmount);
+        summary.setPartialDeliveryAmount(partialDeliveryAmount);
+        summary.setTotalSales(totalAmount);
+
+        summary.setDeliveryCommission(deliveryCommission);
+        summary.setRejectionCommission(rejectionCommission);
+        summary.setCancellationCommission(cancellationCommission);
+
+        summary.setTotalCommissions(totalCommissions);
+        summary.setTotalCommission(totalCommissions);
+        summary.setNetAmount(netAmount);
+
+        return summary;
     }
 
     // جلب ملخص حساب المنظمة بناءً على يوم عمل محدد ومنظمة مُسندة/مُسند إليها
@@ -311,14 +451,14 @@ public class AccountSummaryService {
         if (assignee != null) {
             // OUTGOING
             Organization effectiveAssigner = assigner != null ? assigner : org;
-            return orderRepository.findAllById(orderAssignmentRepository
+            return orderRepository.findByIdIn(orderAssignmentRepository
                     .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndAssignerBusinessDayId(
                             effectiveAssigner.getId(), assignee.getId(), businessDay.getId())
                     .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else if (assigner != null) {
             // INCOMING
-            return orderRepository.findAllById(orderAssignmentRepository
+            return orderRepository.findByIdIn(orderAssignmentRepository
                     .findByAssignerOrganizationIdAndAssigneeOrganizationIdAndBusinessDayId(assigner.getId(),
                             org.getId(), businessDay.getId())
                     .stream()
@@ -347,12 +487,12 @@ public class AccountSummaryService {
             Organization assignee) {
         if (assignee != null) { // orders sent to user from assigner
             Organization effectiveAssigner = assigner != null ? assigner : organization;
-            return orderRepository.findAllById(orderAssignmentRepository
+            return orderRepository.findByIdIn(orderAssignmentRepository
                     .findByAssignerOrganizationIdAndAssigneeOrganizationId(effectiveAssigner.getId(), assignee.getId())
                     .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
         } else if (assigner != null) { // orders sent by user to assignee
-            return orderRepository.findAllById(orderAssignmentRepository
+            return orderRepository.findByIdIn(orderAssignmentRepository
                     .findByAssignerOrganizationIdAndAssigneeOrganizationId(assigner.getId(), organization.getId())
                     .stream()
                     .map(oa -> oa.getOrder().getId()).collect(Collectors.toList()));
@@ -407,9 +547,19 @@ public class AccountSummaryService {
         Organization commissionSource = "INCOMING".equals(summaryDirection) ? otherOrg : organization;
         Organization commissionTarget = "INCOMING".equals(summaryDirection) ? organization : otherOrg;
 
+        if (commissionSource != null
+                && commissionSource.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            Organization temp = commissionSource;
+            commissionSource = commissionTarget;
+            commissionTarget = temp;
+        }
+
+        final Organization finalCommissionSource = commissionSource;
+        final Organization finalCommissionTarget = commissionTarget;
+
         Map<com.shipment.shippinggo.enums.Governorate, java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting>> settingsCache = new HashMap<>();
         java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> defaultSetting = commissionService
-                .getOrganizationCommission(commissionSource, commissionTarget, null);
+                .getOrganizationCommission(finalCommissionSource, finalCommissionTarget, null);
 
         for (Order order : orders) {
             boolean isReturned = order.getStatus() == OrderStatus.REFUSED;
@@ -420,7 +570,8 @@ public class AccountSummaryService {
             java.util.Optional<com.shipment.shippinggo.entity.CommissionSetting> setting;
             if (order.getGovernorate() != null) {
                 setting = settingsCache.computeIfAbsent(order.getGovernorate(),
-                        g -> commissionService.getOrganizationCommission(commissionSource, commissionTarget, g));
+                        g -> commissionService.getOrganizationCommission(finalCommissionSource, finalCommissionTarget,
+                                g));
                 if (setting.isEmpty())
                     setting = defaultSetting;
             } else {
@@ -601,11 +752,8 @@ public class AccountSummaryService {
                 }
 
                 if (isReturned) {
-                    BigDecimal rejectionPayment = order.getRejectionPayment();
-                    if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
-                        currentRejectionCommission = commissionService.calculateCommission(courierSetting.get(),
-                                rejectionPayment);
-                    } else if (courierSetting.get().getRejectionCommission() != null) {
+                    // المندوب يأخذ عمولة الرفض المحددة له دائماً سواء تم الدفع أو لم يتم
+                    if (courierSetting.get().getRejectionCommission() != null) {
                         currentRejectionCommission = courierSetting.get().getRejectionCommission();
                     }
                 }

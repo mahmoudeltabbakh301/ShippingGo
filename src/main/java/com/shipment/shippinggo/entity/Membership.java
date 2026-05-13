@@ -49,6 +49,10 @@ public class Membership {
     @JoinColumn(name = "processed_by_id")
     private User processedBy;
 
+    @Builder.Default
+    @Column(name = "is_client_invitation", nullable = false)
+    private boolean clientInvitation = false;
+
     @PrePersist
     protected void onCreate() {
         invitedAt = LocalDateTime.now();

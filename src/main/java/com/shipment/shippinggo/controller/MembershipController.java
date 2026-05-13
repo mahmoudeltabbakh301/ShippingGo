@@ -4,7 +4,9 @@ import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.enums.Role;
 import com.shipment.shippinggo.service.OrganizationService;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -107,11 +109,17 @@ public class MembershipController {
             RedirectAttributes redirectAttributes) {
         try {
             organizationService.acceptInvitation(id, user);
+
+            // تحديث SecurityContext بالصلاحيات الجديدة فوراً بدون الحاجة لإعادة تسجيل الدخول
+            UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
+                    user, user.getPassword(), user.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
+
             redirectAttributes.addFlashAttribute("success", "تم قبول الدعوة بنجاح! يمكنك الآن ممارسة مهام عملك.");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }
-        return "redirect:/members/invitations";
+        return "redirect:/dashboard";
     }
 
     @PostMapping("/invitations/{id}/decline")

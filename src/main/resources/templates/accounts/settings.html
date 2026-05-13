@@ -165,6 +165,57 @@
                 </form>
             </div>
 
+            <!-- Add Unassigned Commission -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3 class="card-title">📦 عمولة غير مسند (أوردرات بدون إسناد)</h3>
+                </div>
+                <form th:action="@{/accounts/settings/unassigned}" method="post" class="form">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-4); padding: var(--space-4);">
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{accounts.settings.label_commission_type}">نوع
+                                العمولة</label>
+                            <select name="commissionType" class="form-select" required>
+                                <option th:each="type : ${commissionTypes}" th:value="${type.name()}"
+                                    th:text="${#locale.language == 'en' ? type : type.arabicName}">نوع</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{accounts.settings.label_governorate}">المحافظة</label>
+                            <select name="governorate" class="form-select">
+                                <option value="" th:text="#{accounts.settings.select_governorate}">الافتراضي (كل
+                                    المحافظات)</option>
+                                <option th:each="gov : ${governorates}" th:value="${gov.name()}"
+                                    th:text="${gov.arabicName}">محافظة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{accounts.settings.label_delivery_commission}">عمولة
+                                التسليم</label>
+                            <input type="number" name="commissionValue" step="0.01" min="0" class="form-input"
+                                placeholder="0.00" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{accounts.settings.label_rejection_commission}">عمولة
+                                الرفض</label>
+                            <input type="number" name="rejectionCommission" step="0.01" min="0" class="form-input"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" th:text="#{accounts.settings.label_cancellation_commission}">عمولة
+                                الإلغاء</label>
+                            <input type="number" name="cancellationCommission" step="0.01" min="0" class="form-input"
+                                placeholder="0.00">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="submit" class="btn btn-primary"
+                                th:text="#{accounts.settings.btn_save}">حفظ</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <!-- Current Commission Settings -->
             <div class="card">
                 <div class="card-header">
@@ -193,12 +244,15 @@
                                         th:text="${setting.targetOrganization.name}">منظمة</span>
                                     <span th:if="${setting.courier != null}"
                                         th:text="${setting.courier.fullName}">مندوب</span>
+                                    <span th:if="${setting.targetOrganization == null && setting.courier == null}">📦 غير مسند</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-pending" th:if="${setting.targetOrganization != null}"
                                         th:text="#{accounts.settings.type_org}">منظمة</span>
                                     <span class="badge badge-active" th:if="${setting.courier != null}"
                                         th:text="#{accounts.settings.type_courier}">مندوب</span>
+                                    <span class="badge" style="background: #f59e0b; color: #000;"
+                                        th:if="${setting.targetOrganization == null && setting.courier == null}">غير مسند</span>
                                 </td>
                                 <td>
                                     <span th:if="${setting.governorate != null}"
@@ -206,7 +260,10 @@
                                     <span th:if="${setting.governorate == null && setting.targetOrganization != null}"
                                         class="text-muted"
                                         th:text="#{accounts.settings.select_governorate}">الافتراضي</span>
-                                    <span th:if="${setting.courier != null}">-</span>
+                                    <span th:if="${setting.governorate == null && setting.targetOrganization == null && setting.courier == null}"
+                                        class="text-muted"
+                                        th:text="#{accounts.settings.select_governorate}">الافتراضي</span>
+                                    <span th:if="${setting.courier != null && setting.governorate == null}">-</span>
                                 </td>
                                 <td
                                     th:text="${#locale.language == 'en' ? setting.commissionType : setting.commissionType.arabicName}">

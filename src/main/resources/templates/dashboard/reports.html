@@ -28,31 +28,36 @@
     <style>
         .tabs-header {
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
+            gap: 0.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
             overflow-x: auto;
+            padding-bottom: 0;
         }
 
         .tab-btn {
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1.25rem;
             background: none;
             border: none;
-            border-bottom: 2px solid transparent;
-            color: var(--text-color);
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
+            font-size: 0.9rem;
+            margin-bottom: -2px;
         }
 
         .tab-btn:hover {
             color: var(--primary-color);
+            background: var(--bg-secondary);
         }
 
         .tab-btn.active {
             color: var(--primary-color);
             border-bottom-color: var(--primary-color);
+            background: var(--bg-secondary);
         }
 
         .tab-content {
@@ -61,6 +66,12 @@
 
         .tab-content.active {
             display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .filters-bar {
@@ -69,24 +80,39 @@
             gap: 1rem;
             align-items: center;
             background: var(--bg-secondary);
-            padding: 1rem;
+            padding: 1rem 1.25rem;
             border-radius: var(--radius-lg);
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
         }
 
         .quick-filters {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.35rem;
         }
 
         .quick-btn {
             padding: 0.4rem 0.8rem;
             border: 1px solid var(--border-color);
-            background: var(--bg-secondary);
+            background: var(--bg-primary);
             border-radius: var(--radius-md);
             cursor: pointer;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-color);
+            transition: all 0.15s;
         }
 
         .quick-btn.active,
@@ -97,24 +123,156 @@
         }
 
         .form-control {
-            padding: 0.5rem;
+            padding: 0.5rem 0.75rem;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             background: var(--bg-primary);
             color: var(--text-color);
+            font-size: 0.9rem;
         }
 
         .chart-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .finance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .finance-card {
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            background: var(--bg-secondary);
+        }
+
+        .finance-card h4 {
+            margin: 0 0 1rem 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .finance-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .finance-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .positive { color: var(--success-color, #10b981); }
+        .negative { color: var(--danger-color, #ef4444); }
+        .neutral { color: var(--text-color); }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .detail-table th,
+        .detail-table td {
+            padding: 0.65rem 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .detail-table tr:hover td {
+            background: var(--bg-secondary);
+        }
+
+        .perf-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--bg-secondary);
+        }
+
+        .perf-rank {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .perf-rank.gold { background: #fef3c7; color: #92400e; }
+        .perf-rank.silver { background: #f3f4f6; color: #4b5563; }
+        .perf-rank.bronze { background: #fed7aa; color: #9a3412; }
+        .perf-rank.normal { background: var(--bg-primary); color: var(--text-muted); }
+
+        .perf-info { flex: 1; }
+        .perf-name { font-weight: 600; margin-bottom: 0.25rem; }
+
+        .perf-stats {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .perf-bar {
+            width: 120px;
+            height: 8px;
+            background: var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .perf-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
         }
 
         @media (max-width: 768px) {
-            .chart-grid {
-                grid-template-columns: 1fr;
-            }
+            .chart-grid, .finance-grid { grid-template-columns: 1fr; }
+            .filters-bar { flex-direction: column; align-items: stretch; }
+            .perf-stats { flex-wrap: wrap; }
         }
     </style>
 </head>
@@ -124,37 +282,134 @@
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
 
         <main class="main-content">
-            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 1rem;">
                 <h1 class="page-title">📊 <span>التقارير والإحصائيات</span></h1>
                 <button class="btn btn-outline" onclick="window.print()">🖨️ طباعة</button>
             </div>
 
             <!-- Tabs -->
             <div class="tabs-header">
-                <button class="tab-btn active" onclick="switchTab('dashboard')">لوحة المعلومات</button>
-                <button class="tab-btn" onclick="switchTab('couriers')">أداء المناديب</button>
-                <button class="tab-btn" onclick="switchTab('orgs')" th:if="${!linkedOrgs.isEmpty()}">الماليات
-                    والحركة</button>
-                <button class="tab-btn" onclick="switchTab('geo')">خريطة المحافظات</button>
+                <button class="tab-btn active" onclick="switchTab('financial')">💰 الملخص المالي</button>
+                <button class="tab-btn" onclick="switchTab('dashboard')">📦 الأداء العام</button>
+                <button class="tab-btn" onclick="switchTab('couriers')">🚴 أداء المناديب</button>
+                <button class="tab-btn" onclick="switchTab('orgs')" th:if="${!linkedOrgs.isEmpty()}">🏢 أداء المنظمات</button>
+                <button class="tab-btn" onclick="switchTab('geo')">🗺️ المحافظات</button>
             </div>
 
             <!-- Global Filters -->
             <div class="filters-bar">
-                <div class="quick-filters">
-                    <button class="quick-btn" onclick="setDateRange('today')">اليوم</button>
-                    <button class="quick-btn" onclick="setDateRange('week')">هذا الأسبوع</button>
-                    <button class="quick-btn active" onclick="setDateRange('month')">هذا الشهر</button>
+                <div class="filter-group">
+                    <label>الفترة:</label>
+                    <div class="quick-filters">
+                        <button class="quick-btn" onclick="setDateRange('today', this)">اليوم</button>
+                        <button class="quick-btn" onclick="setDateRange('week', this)">أسبوع</button>
+                        <button class="quick-btn active" onclick="setDateRange('month', this)">شهر</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap:0.5rem; align-items:center;">
+                <div class="filter-group">
+                    <label>يوم عمل:</label>
+                    <select id="businessDaySelect" class="form-control" onchange="onFilterChange()">
+                        <option value="">-- كل الأيام --</option>
+                        <option th:each="bd : ${businessDays}" th:value="${bd.id}"
+                            th:text="${bd.name != null ? bd.name : bd.date}"></option>
+                    </select>
+                </div>
+                <div class="filter-group">
                     <label>من:</label>
-                    <input type="date" id="dateFrom" class="form-control" onchange="loadData()">
+                    <input type="date" id="dateFrom" class="form-control" onchange="onFilterChange()">
+                </div>
+                <div class="filter-group">
                     <label>إلى:</label>
-                    <input type="date" id="dateTo" class="form-control" onchange="loadData()">
+                    <input type="date" id="dateTo" class="form-control" onchange="onFilterChange()">
                 </div>
             </div>
 
-            <!-- Tab 1: Dashboard -->
-            <div id="tab-dashboard" class="tab-content active">
+            <!-- Tab 1: Financial Summary -->
+            <div id="tab-financial" class="tab-content active">
+                <div id="financialLoading" class="loading-spinner">⏳ جاري تحميل البيانات المالية...</div>
+                <div id="financialContent" style="display:none;">
+
+                    <!-- الصافي الكلي -->
+                    <div class="card" style="text-align:center; padding:2rem; margin-bottom:1.5rem; border: 2px solid var(--primary-color);">
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">صافي المكسب الكلي</div>
+                        <div id="fin-net-profit" class="finance-value" style="font-size:2.5rem;">0 ج.م</div>
+                        <div style="display:flex; justify-content:center; gap:2rem; margin-top:1rem; flex-wrap: wrap;">
+                            <div>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات واردة</span><br>
+                                <span id="fin-incoming-total" class="positive" style="font-weight:700;">0 ج.م</span>
+                            </div>
+                            <div>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات صادرة</span><br>
+                                <span id="fin-outgoing-total" class="negative" style="font-weight:700;">0 ج.م</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تفاصيل الأوردرات + العمولات -->
+                    <div class="finance-grid">
+                        <div class="finance-card">
+                            <h4>📤 العمولات الصادرة (لمنظمات)</h4>
+                            <div class="finance-value negative" id="fin-out-org">0 ج.م</div>
+                            <div class="finance-sub" id="fin-out-org-count">0 منظمة</div>
+                        </div>
+                        <div class="finance-card">
+                            <h4>🚴 عمولات المناديب</h4>
+                            <div class="finance-value negative" id="fin-courier-comm">0 ج.م</div>
+                            <div class="finance-sub" id="fin-courier-count">0 مندوب</div>
+                        </div>
+                        <div class="finance-card">
+                            <h4>📥 العمولات الواردة (من منظمات)</h4>
+                            <div class="finance-value positive" id="fin-in-org">0 ج.م</div>
+                            <div class="finance-sub" id="fin-in-org-count">0 منظمة</div>
+                        </div>
+                    </div>
+
+                    <!-- تفاصيل المنظمات الصادرة -->
+                    <div class="section-header">
+                        <h3>📤 تفاصيل العمولات الصادرة</h3>
+                    </div>
+                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>المنظمة/المندوب</th>
+                                    <th>الأوردرات</th>
+                                    <th>مسلم</th>
+                                    <th>ع. توصيل</th>
+                                    <th>ع. رفض</th>
+                                    <th>ع. إلغاء</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fin-outgoing-details"></tbody>
+                        </table>
+                    </div>
+
+                    <!-- تفاصيل المنظمات الواردة -->
+                    <div class="section-header">
+                        <h3>📥 تفاصيل العمولات الواردة</h3>
+                    </div>
+                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
+                        <table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>المنظمة</th>
+                                    <th>الأوردرات</th>
+                                    <th>مسلم</th>
+                                    <th>ع. توصيل</th>
+                                    <th>ع. رفض</th>
+                                    <th>ع. إلغاء</th>
+                                    <th>الإجمالي</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fin-incoming-details"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Dashboard (Period) -->
+            <div id="tab-dashboard" class="tab-content">
                 <div class="stats-grid" style="margin-bottom: var(--space-6);">
                     <div class="stat-card">
                         <div class="stat-icon new">📦</div>
@@ -179,117 +434,131 @@
                     <div class="stat-card">
                         <div class="stat-icon in-progress">🎯</div>
                         <div class="stat-value" id="dash-success-rate">0%</div>
-                        <div class="stat-label">نسبة النجاح</div>
+                        <div class="stat-label">نسبة التوصيل</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon waiting">💰</div>
                         <div class="stat-value" id="dash-revenue">0 ج.م</div>
-                        <div class="stat-label">الصافي المتوقع</div>
+                        <div class="stat-label">إجمالي المحصّل</div>
                     </div>
                 </div>
 
                 <div class="chart-grid">
                     <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">اتجاه الطلبات والمبالغ</h3>
-                        </div>
+                        <div class="card-header"><h3 class="card-title">اتجاه الطلبات والمبالغ</h3></div>
                         <div style="padding: 20px;"><canvas id="trendChart"></canvas></div>
                     </div>
                     <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">توزيع الحالات</h3>
-                        </div>
-                        <div style="padding: 20px; max-width:400px; margin:auto;"><canvas id="statusChart"></canvas>
-                        </div>
+                        <div class="card-header"><h3 class="card-title">توزيع الحالات</h3></div>
+                        <div style="padding: 20px; max-width:400px; margin:auto;"><canvas id="statusChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 2: Couriers -->
+            <!-- Tab 3: Couriers Performance -->
             <div id="tab-couriers" class="tab-content">
-                <div class="filters-bar" style="background:transparent; padding:0; margin-bottom:1rem;">
-                    <select id="courierSelect" class="form-control" style="min-width:250px;"
-                        onchange="loadCourierData()">
-                        <option value="">-- اختر المندوب --</option>
-                        <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.fullName}"></option>
-                    </select>
+                <div class="section-header">
+                    <h3>ترتيب المناديب حسب الأداء</h3>
                 </div>
-
-                <div id="courierDataSection" style="display:none;">
-                    <div class="stats-grid" style="margin-bottom: 2rem;">
-                        <div class="stat-card">
-                            <div class="stat-icon delivered">✅</div>
-                            <div class="stat-value" id="c-success">0%</div>
-                            <div class="stat-label">نسبة النجاح</div>
+                <div id="courierPerfLoading" class="loading-spinner">⏳ جاري تحميل بيانات الأداء...</div>
+                <div id="courierPerfContent" style="display:none;">
+                    <!-- ملخص -->
+                    <div class="finance-grid" style="margin-bottom:1.5rem;">
+                        <div class="finance-card">
+                            <h4>🏆 أفضل أداء</h4>
+                            <div class="finance-value positive" id="cperf-top-name">-</div>
+                            <div class="finance-sub" id="cperf-top-rate">0%</div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon new">📦</div>
-                            <div class="stat-value" id="c-total">0</div>
-                            <div class="stat-label">الطلبات المسندة</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-icon waiting">💵</div>
-                            <div class="stat-value" id="c-commission">0 ج.م</div>
-                            <div class="stat-label">العمولة المستحقة</div>
+                        <div class="finance-card">
+                            <h4>📊 متوسط الأداء</h4>
+                            <div class="finance-value neutral" id="cperf-avg-rate">0%</div>
+                            <div class="finance-sub" id="cperf-avg-count">0 أوردر</div>
                         </div>
                     </div>
+
+                    <!-- الترتيب -->
+                    <div id="courierPerfList" style="display:grid; gap:0.75rem; margin-bottom:1.5rem;"></div>
+
+                    <!-- chart -->
                     <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">التوزيع الجغرافي للمندوب</h3>
+                        <div class="card-header"><h3 class="card-title">مقارنة أداء المناديب</h3></div>
+                        <div style="padding:20px;"><canvas id="courierCompChart"></canvas></div>
+                    </div>
+
+                    <!-- تقرير مندوب فردي -->
+                    <div class="section-header" style="margin-top:2rem;">
+                        <h3>تقرير مندوب فردي</h3>
+                    </div>
+                    <div class="filter-group" style="margin-bottom:1rem;">
+                        <select id="courierSelect" class="form-control" style="min-width:250px;" onchange="loadCourierDetail()">
+                            <option value="">-- اختر المندوب --</option>
+                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.fullName}"></option>
+                        </select>
+                    </div>
+                    <div id="courierDetailSection" style="display:none;">
+                        <div class="finance-grid">
+                            <div class="finance-card">
+                                <h4>📦 الأوردرات</h4>
+                                <div class="finance-value" id="cd-total">0</div>
+                                <div class="finance-sub"><span id="cd-delivered">0</span> مسلم • <span id="cd-refused">0</span> مرفوض • <span id="cd-cancelled">0</span> ملغي</div>
+                            </div>
+                            <div class="finance-card">
+                                <h4>💵 إجمالي المحصّل</h4>
+                                <div class="finance-value" id="cd-collected">0 ج.م</div>
+                                <div class="finance-sub">
+                                    تسليم: <span id="cd-col-del">0</span> • جزئي: <span id="cd-col-par">0</span> • رفض: <span id="cd-col-rej">0</span>
+                                </div>
+                            </div>
+                            <div class="finance-card">
+                                <h4>🏷️ العمولات المستحقة</h4>
+                                <div class="finance-value positive" id="cd-commission">0 ج.م</div>
+                                <div class="finance-sub">
+                                    توصيل: <span id="cd-com-del">0</span> • رفض: <span id="cd-com-rej">0</span> • إلغاء: <span id="cd-com-can">0</span>
+                                </div>
+                            </div>
+                            <div class="finance-card" style="border: 2px solid var(--primary-color);">
+                                <h4>💰 المطلوب تسليمه</h4>
+                                <div class="finance-value" id="cd-due" style="color:var(--primary-color);">0 ج.م</div>
+                                <div class="finance-sub">= المحصّل − العمولات</div>
+                            </div>
                         </div>
-                        <div style="padding: 20px;"><canvas id="courierGeoChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 3: Organizations (Finance) -->
+            <!-- Tab 4: Organizations Performance -->
             <div id="tab-orgs" class="tab-content" th:if="${!linkedOrgs.isEmpty()}">
-                <div class="filters-bar" style="background:transparent; padding:0; margin-bottom:1rem;">
-                    <select id="orgSelect" class="form-control" style="min-width:250px;" onchange="loadOrgData()">
-                        <option value="">-- اختر المنظمة التابعة --</option>
-                        <option th:each="o : ${linkedOrgs}" th:value="${o.id}" th:text="${o.name}"></option>
-                    </select>
+                <div class="section-header">
+                    <h3>ترتيب المنظمات حسب الأداء</h3>
                 </div>
-
-                <div id="orgDataSection" style="display:none;">
-                    <div class="chart-grid">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">الداخل (الوارد إلينا)</h3>
-                            </div>
-                            <div style="padding: 20px; text-align:center;">
-                                <h1 id="o-in-orders" style="color:var(--primary-color)">0</h1>
-                                <p>طلب</p>
-                                <h2 id="o-in-amount" style="margin-top:1rem; color:var(--success-color)">0 ج.م</h2>
-                                <p>مبالغ محصلة</p>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">الخارج (الصادر لهم)</h3>
-                            </div>
-                            <div style="padding: 20px; text-align:center;">
-                                <h1 id="o-out-orders" style="color:var(--warning-color)">0</h1>
-                                <p>طلب</p>
-                                <h2 id="o-out-amount" style="margin-top:1rem; color:var(--danger-color)">0 ج.م</h2>
-                                <p>مبالغ مطلوبة</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card" style="margin-top:2rem; text-align:center; padding:2rem;">
-                        <h3>الميزان المالي (الصافي)</h3>
-                        <h1 id="o-balance" style="font-size:3rem; margin-top:1rem;">0 ج.م</h1>
+                <div id="orgPerfLoading" class="loading-spinner">⏳ جاري تحميل بيانات المنظمات...</div>
+                <div id="orgPerfContent" style="display:none;">
+                    <div id="orgPerfList" style="display:grid; gap:0.75rem; margin-bottom:1.5rem;"></div>
+                    <div class="card">
+                        <div class="card-header"><h3 class="card-title">مقارنة أداء المنظمات</h3></div>
+                        <div style="padding:20px;"><canvas id="orgCompChart"></canvas></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Tab 4: Geographic Map -->
+            <!-- Tab 5: Geographic -->
             <div id="tab-geo" class="tab-content">
                 <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">توزيع الطلبات على المحافظات</h3>
-                    </div>
+                    <div class="card-header"><h3 class="card-title">توزيع الطلبات على المحافظات</h3></div>
                     <div style="padding: 20px;"><canvas id="geoChart"></canvas></div>
+                </div>
+                <div class="card" style="margin-top:1.5rem; overflow-x:auto;">
+                    <table class="detail-table" id="geoTable">
+                        <thead>
+                            <tr>
+                                <th>المحافظة</th>
+                                <th>الطلبات</th>
+                                <th>نسبة التوصيل</th>
+                                <th>الإيرادات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="geoTableBody"></tbody>
+                    </table>
                 </div>
             </div>
 
@@ -299,194 +568,427 @@
     <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
 
     <script>
-        let trendChartObj = null;
-        let statusChartObj = null;
-        let cGeoChartObj = null;
-        let geoChartObj = null;
+        // ===================== Chart instances =====================
+        let trendChartObj = null, statusChartObj = null;
+        let geoChartObj = null, courierCompChartObj = null, orgCompChartObj = null;
 
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         const textColor = isDark ? '#f3f4f6' : '#1f2937';
         const gridColor = isDark ? '#374151' : '#e5e7eb';
+        const chartFont = { family: "'Cairo', sans-serif" };
 
-        function initDates() {
-            setDateRange('month'); // default
+        // ===================== Filter State =====================
+        function getFilterParams() {
+            const bdId = document.getElementById('businessDaySelect').value;
+            const f = document.getElementById('dateFrom').value;
+            const t = document.getElementById('dateTo').value;
+
+            let params = [];
+            if (bdId) params.push('businessDayId=' + bdId);
+            if (f) params.push('from=' + f);
+            if (t) params.push('to=' + t);
+            return params.length > 0 ? '?' + params.join('&') : '';
         }
 
-        function setDateRange(range) {
+        function initDates() {
+            setDateRange('month', document.querySelector('.quick-btn.active'));
+        }
+
+        function setDateRange(range, btn) {
             document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            if (btn) btn.classList.add('active');
+
+            // مسح يوم العمل عند إختيار فترة
+            document.getElementById('businessDaySelect').value = '';
 
             const to = new Date();
             let from = new Date();
-
-            if (range === 'today') {
-                // from is today
-            } else if (range === 'week') {
-                from.setDate(to.getDate() - 7);
-            } else if (range === 'month') {
-                from.setMonth(to.getMonth() - 1);
-            }
+            if (range === 'week') from.setDate(to.getDate() - 7);
+            else if (range === 'month') from.setMonth(to.getMonth() - 1);
 
             document.getElementById('dateTo').value = to.toISOString().split('T')[0];
             document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
+            onFilterChange();
+        }
 
-            loadData();
+        function onFilterChange() {
+            const bdId = document.getElementById('businessDaySelect').value;
+            const datesDisabled = !!bdId;
+            document.getElementById('dateFrom').disabled = datesDisabled;
+            document.getElementById('dateTo').disabled = datesDisabled;
+
+            loadAllData();
         }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
             event.target.classList.add('active');
             document.getElementById('tab-' + tabId).classList.add('active');
 
-            if (tabId === 'geo' && !geoChartObj) loadGeoData();
+            // Lazy load
+            if (tabId === 'financial' && !window._financialLoaded) loadFinancialData();
+            if (tabId === 'dashboard' && !window._dashboardLoaded) loadDashboardData();
+            if (tabId === 'couriers' && !window._couriersLoaded) loadCourierPerformance();
+            if (tabId === 'orgs' && !window._orgsLoaded) loadOrgPerformance();
+            if (tabId === 'geo' && !window._geoLoaded) loadGeoData();
         }
 
-        function getDatesQS() {
-            const f = document.getElementById('dateFrom').value;
-            const t = document.getElementById('dateTo').value;
-            return `?from=${f}&to=${t}`;
+        function loadAllData() {
+            window._financialLoaded = false;
+            window._dashboardLoaded = false;
+            window._couriersLoaded = false;
+            window._orgsLoaded = false;
+            window._geoLoaded = false;
+
+            // Load active tab
+            const activeTab = document.querySelector('.tab-content.active');
+            if (activeTab) {
+                const tabId = activeTab.id.replace('tab-', '');
+                if (tabId === 'financial') loadFinancialData();
+                else if (tabId === 'dashboard') loadDashboardData();
+                else if (tabId === 'couriers') loadCourierPerformance();
+                else if (tabId === 'orgs') loadOrgPerformance();
+                else if (tabId === 'geo') loadGeoData();
+            }
         }
 
-        function loadData() {
-            loadDashboardData();
-            if (document.getElementById('courierSelect') && document.getElementById('courierSelect').value) loadCourierData();
-            if (document.getElementById('orgSelect') && document.getElementById('orgSelect').value) loadOrgData();
-            if (document.getElementById('tab-geo').classList.contains('active')) loadGeoData();
+        function fmt(n) {
+            if (n == null) return '0';
+            return Number(n).toLocaleString('ar-EG', { maximumFractionDigits: 2 });
         }
 
+        // ===================== Financial Summary =====================
+        async function loadFinancialData() {
+            const loadEl = document.getElementById('financialLoading');
+            const contentEl = document.getElementById('financialContent');
+            loadEl.style.display = 'block';
+            contentEl.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/reports/financial' + getFilterParams());
+                const d = await res.json();
+
+                const netProfit = d.netProfit || 0;
+                const npEl = document.getElementById('fin-net-profit');
+                npEl.innerText = fmt(netProfit) + ' ج.م';
+                npEl.className = 'finance-value ' + (netProfit > 0 ? 'positive' : netProfit < 0 ? 'negative' : 'neutral');
+
+                document.getElementById('fin-incoming-total').innerText = fmt(d.totalIncomingCommissions) + ' ج.م';
+                document.getElementById('fin-outgoing-total').innerText = fmt(d.totalOutgoingCommissions) + ' ج.م';
+
+                document.getElementById('fin-out-org').innerText = fmt(d.outgoingOrgCommissions) + ' ج.م';
+                document.getElementById('fin-out-org-count').innerText = (d.outgoingOrgDetails?.length || 0) + ' منظمة';
+                document.getElementById('fin-courier-comm').innerText = fmt(d.courierCommissions) + ' ج.م';
+                document.getElementById('fin-courier-count').innerText = (d.courierDetails?.length || 0) + ' مندوب';
+                document.getElementById('fin-in-org').innerText = fmt(d.incomingOrgCommissions) + ' ج.م';
+                document.getElementById('fin-in-org-count').innerText = (d.incomingOrgDetails?.length || 0) + ' منظمة';
+
+                // تفاصيل الصادر
+                const outBody = document.getElementById('fin-outgoing-details');
+                outBody.innerHTML = '';
+                const allOut = [...(d.outgoingOrgDetails || []), ...(d.courierDetails || [])];
+                if (allOut.length === 0) {
+                    outBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
+                } else {
+                    allOut.forEach(e => {
+                        outBody.innerHTML += `<tr>
+                            <td>${e.entityName} <small style="color:var(--text-muted)">(${e.entityType === 'courier' ? 'مندوب' : 'منظمة'})</small></td>
+                            <td>${e.totalOrders}</td>
+                            <td>${e.deliveredOrders}</td>
+                            <td>${fmt(e.deliveryCommission)}</td>
+                            <td>${fmt(e.rejectionCommission)}</td>
+                            <td>${fmt(e.cancellationCommission)}</td>
+                            <td><strong>${fmt(e.totalCommission)}</strong></td>
+                        </tr>`;
+                    });
+                }
+
+                // تفاصيل الوارد
+                const inBody = document.getElementById('fin-incoming-details');
+                inBody.innerHTML = '';
+                const allIn = d.incomingOrgDetails || [];
+                if (allIn.length === 0) {
+                    inBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
+                } else {
+                    allIn.forEach(e => {
+                        inBody.innerHTML += `<tr>
+                            <td>${e.entityName}</td>
+                            <td>${e.totalOrders}</td>
+                            <td>${e.deliveredOrders}</td>
+                            <td>${fmt(e.deliveryCommission)}</td>
+                            <td>${fmt(e.rejectionCommission)}</td>
+                            <td>${fmt(e.cancellationCommission)}</td>
+                            <td><strong class="positive">${fmt(e.totalCommission)}</strong></td>
+                        </tr>`;
+                    });
+                }
+
+                window._financialLoaded = true;
+            } catch (e) { console.error('Error loading financial data', e); }
+            loadEl.style.display = 'none';
+            contentEl.style.display = 'block';
+        }
+
+        // ===================== Dashboard (Period) =====================
         async function loadDashboardData() {
             try {
-                const res = await fetch('/api/reports/period' + getDatesQS());
-                const data = await res.json();
+                const res = await fetch('/api/reports/period' + getFilterParams());
+                const d = await res.json();
 
-                document.getElementById('dash-total').innerText = data.totalOrders;
-                document.getElementById('dash-delivered').innerText = data.delivered;
-                document.getElementById('dash-refused').innerText = data.refused;
-                document.getElementById('dash-cancelled').innerText = data.cancelled;
-                document.getElementById('dash-success-rate').innerText = data.deliveryRate + '%';
-                document.getElementById('dash-revenue').innerText = data.totalCollected + ' ج.م';
+                document.getElementById('dash-total').innerText = d.totalOrders;
+                document.getElementById('dash-delivered').innerText = (d.delivered || 0) + (d.partial || 0);
+                document.getElementById('dash-refused').innerText = d.refused;
+                document.getElementById('dash-cancelled').innerText = d.cancelled;
+                document.getElementById('dash-success-rate').innerText = d.deliveryRate + '%';
+                document.getElementById('dash-revenue').innerText = fmt(d.totalCollected) + ' ج.م';
 
-                updateStatusChart(data);
+                updateStatusChart(d);
 
-                const trendRes = await fetch('/api/reports/trends' + getDatesQS());
-                const trendData = await trendRes.json();
-                updateTrendChart(trendData);
-            } catch (e) { console.error('Error loading dashboard data', e); }
+                // Trends only for date range (not BD)
+                if (!document.getElementById('businessDaySelect').value) {
+                    const tRes = await fetch('/api/reports/trends' + getFilterParams());
+                    const tData = await tRes.json();
+                    updateTrendChart(tData);
+                }
+
+                window._dashboardLoaded = true;
+            } catch (e) { console.error('Error loading dashboard', e); }
         }
 
-        async function loadCourierData() {
+        // ===================== Courier Performance =====================
+        async function loadCourierPerformance() {
+            const loadEl = document.getElementById('courierPerfLoading');
+            const contentEl = document.getElementById('courierPerfContent');
+            loadEl.style.display = 'block';
+            contentEl.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/reports/performance/couriers' + getFilterParams());
+                const d = await res.json();
+
+                if (d.topPerformer) {
+                    document.getElementById('cperf-top-name').innerText = d.topPerformer.entityName;
+                    document.getElementById('cperf-top-rate').innerText = d.topPerformer.deliveryRate + '% نسبة توصيل';
+                }
+                document.getElementById('cperf-avg-rate').innerText = d.averageDeliveryRate + '%';
+                document.getElementById('cperf-avg-count').innerText = Math.round(d.averageOrderCount) + ' أوردر/مندوب';
+
+                // List
+                const listEl = document.getElementById('courierPerfList');
+                listEl.innerHTML = '';
+                (d.entries || []).forEach(e => {
+                    const rankClass = e.rank === 1 ? 'gold' : e.rank === 2 ? 'silver' : e.rank === 3 ? 'bronze' : 'normal';
+                    const barColor = e.deliveryRate >= 70 ? '#10b981' : e.deliveryRate >= 40 ? '#f59e0b' : '#ef4444';
+                    listEl.innerHTML += `
+                        <div class="perf-card">
+                            <div class="perf-rank ${rankClass}">${e.rank}</div>
+                            <div class="perf-info">
+                                <div class="perf-name">${e.entityName}</div>
+                                <div class="perf-stats">
+                                    <span>📦 ${e.totalOrders}</span>
+                                    <span>✅ ${e.deliveredOrders}</span>
+                                    <span>❌ ${e.refusedOrders}</span>
+                                    <span>💰 ${fmt(e.totalCommission)} ج.م</span>
+                                </div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-weight:700; margin-bottom:4px;">${e.deliveryRate}%</div>
+                                <div class="perf-bar">
+                                    <div class="perf-bar-fill" style="width:${e.deliveryRate}%; background:${barColor};"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+
+                updateCourierCompChart(d.entries || []);
+                window._couriersLoaded = true;
+            } catch (e) { console.error('Error loading courier perf', e); }
+            loadEl.style.display = 'none';
+            contentEl.style.display = 'block';
+        }
+
+        async function loadCourierDetail() {
             const cid = document.getElementById('courierSelect').value;
-            if (!cid) return;
-            document.getElementById('courierDataSection').style.display = 'block';
+            if (!cid) { document.getElementById('courierDetailSection').style.display = 'none'; return; }
+            document.getElementById('courierDetailSection').style.display = 'block';
 
             try {
-                const res = await fetch(`/api/reports/courier/${cid}` + getDatesQS());
-                const data = await res.json();
+                const res = await fetch(`/api/reports/courier/${cid}` + getFilterParams());
+                const d = await res.json();
 
-                document.getElementById('c-total').innerText = data.periodStats.totalOrders;
-                document.getElementById('c-success').innerText = data.periodStats.deliveryRate + '%';
-                document.getElementById('c-commission').innerText = data.totalCommission + ' ج.م';
+                document.getElementById('cd-total').innerText = d.periodStats?.totalOrders || 0;
+                document.getElementById('cd-delivered').innerText = d.periodStats?.delivered || 0;
+                document.getElementById('cd-refused').innerText = d.periodStats?.refused || 0;
+                document.getElementById('cd-cancelled').innerText = d.periodStats?.cancelled || 0;
 
-                updateCourierGeoChart(data.ordersByGovernorate);
-            } catch (e) { console.error('Error loading courier data', e); }
+                document.getElementById('cd-collected').innerText = fmt(d.totalCollected) + ' ج.م';
+                document.getElementById('cd-col-del').innerText = fmt(d.collectedDelivered);
+                document.getElementById('cd-col-par').innerText = fmt(d.collectedPartial);
+                document.getElementById('cd-col-rej').innerText = fmt(d.collectedRejection);
+
+                document.getElementById('cd-commission').innerText = fmt(d.totalCommission) + ' ج.م';
+                document.getElementById('cd-com-del').innerText = fmt(d.deliveryCommission);
+                document.getElementById('cd-com-rej').innerText = fmt(d.rejectionCommission);
+                document.getElementById('cd-com-can').innerText = fmt(d.cancellationCommission);
+
+                document.getElementById('cd-due').innerText = fmt(d.amountDue) + ' ج.م';
+            } catch (e) { console.error('Error loading courier detail', e); }
         }
 
-        async function loadOrgData() {
-            const oid = document.getElementById('orgSelect').value;
-            if (!oid) return;
-            document.getElementById('orgDataSection').style.display = 'block';
+        // ===================== Organization Performance =====================
+        async function loadOrgPerformance() {
+            const loadEl = document.getElementById('orgPerfLoading');
+            const contentEl = document.getElementById('orgPerfContent');
+            if (!loadEl || !contentEl) return;
+            loadEl.style.display = 'block';
+            contentEl.style.display = 'none';
 
             try {
-                const res = await fetch(`/api/reports/organization/${oid}` + getDatesQS());
-                const data = await res.json();
+                const res = await fetch('/api/reports/performance/organizations' + getFilterParams());
+                const d = await res.json();
 
-                document.getElementById('o-in-orders').innerText = data.incomingOrders;
-                document.getElementById('o-in-amount').innerText = data.incomingAmount + ' ج.م';
-                document.getElementById('o-out-orders').innerText = data.outgoingOrders;
-                document.getElementById('o-out-amount').innerText = data.outgoingAmount + ' ج.م';
+                const listEl = document.getElementById('orgPerfList');
+                listEl.innerHTML = '';
+                (d.entries || []).forEach(e => {
+                    const rankClass = e.rank === 1 ? 'gold' : e.rank === 2 ? 'silver' : e.rank === 3 ? 'bronze' : 'normal';
+                    const barColor = e.deliveryRate >= 70 ? '#10b981' : e.deliveryRate >= 40 ? '#f59e0b' : '#ef4444';
+                    listEl.innerHTML += `
+                        <div class="perf-card">
+                            <div class="perf-rank ${rankClass}">${e.rank}</div>
+                            <div class="perf-info">
+                                <div class="perf-name">${e.entityName}</div>
+                                <div class="perf-stats">
+                                    <span>📦 ${e.totalOrders}</span>
+                                    <span>✅ ${e.deliveredOrders}</span>
+                                    <span>❌ ${e.refusedOrders}</span>
+                                    <span>💰 ${fmt(e.netAmount)} ج.م صافي</span>
+                                </div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-weight:700; margin-bottom:4px;">${e.deliveryRate}%</div>
+                                <div class="perf-bar">
+                                    <div class="perf-bar-fill" style="width:${e.deliveryRate}%; background:${barColor};"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                });
 
-                const balEl = document.getElementById('o-balance');
-                balEl.innerText = data.netBalance + ' ج.م';
-                if (data.netBalance > 0) balEl.style.color = 'var(--success-color)';
-                else if (data.netBalance < 0) balEl.style.color = 'var(--danger-color)';
-                else balEl.style.color = 'var(--text-color)';
-
-            } catch (e) { console.error('Error loading org data', e); }
+                updateOrgCompChart(d.entries || []);
+                window._orgsLoaded = true;
+            } catch (e) { console.error('Error loading org perf', e); }
+            loadEl.style.display = 'none';
+            contentEl.style.display = 'block';
         }
 
+        // ===================== Geographic =====================
         async function loadGeoData() {
             try {
-                const res = await fetch('/api/reports/geographic' + getDatesQS());
-                const data = await res.json();
-                updateGeoChart(data.statsByGovernorate);
+                const res = await fetch('/api/reports/geographic' + getFilterParams());
+                const d = await res.json();
+                updateGeoChart(d.statsByGovernorate);
+                updateGeoTable(d.statsByGovernorate);
+                window._geoLoaded = true;
             } catch (e) { console.error('Error loading geo data', e); }
         }
 
-        // Charts Helpers
+        function updateGeoTable(dataMap) {
+            const tbody = document.getElementById('geoTableBody');
+            tbody.innerHTML = '';
+            if (!dataMap || Object.keys(dataMap).length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
+                return;
+            }
+            const sorted = Object.entries(dataMap).sort((a, b) => b[1].totalOrders - a[1].totalOrders);
+            sorted.forEach(([gov, s]) => {
+                const rateColor = s.deliveryRate >= 70 ? 'positive' : s.deliveryRate >= 40 ? '' : 'negative';
+                tbody.innerHTML += `<tr>
+                    <td><strong>${gov}</strong></td>
+                    <td>${s.totalOrders}</td>
+                    <td class="${rateColor}">${s.deliveryRate}%</td>
+                    <td>${fmt(s.totalRevenue)} ج.م</td>
+                </tr>`;
+            });
+        }
+
+        // ===================== Chart Helpers =====================
         function updateStatusChart(data) {
             const ctx = document.getElementById('statusChart').getContext('2d');
-            const cData = [data.delivered, data.refused, data.cancelled, data.partial, data.inTransit, data.deferred];
-
             if (statusChartObj) statusChartObj.destroy();
-
             statusChartObj = new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: ['تم التسليم', 'مرفوض', 'ملغي', 'استلام جزئي', 'في الطريق', 'مؤجل'],
-                    datasets: [{
-                        data: cData,
+                    datasets: [{ data: [data.delivered, data.refused, data.cancelled, data.partial, data.inTransit, data.deferred],
                         backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'],
-                        borderWidth: 1, borderColor: isDark ? '#1f2937' : '#ffffff'
-                    }]
+                        borderWidth: 2, borderColor: isDark ? '#1f2937' : '#ffffff' }]
                 },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } } }
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: chartFont } } } }
             });
         }
 
         function updateTrendChart(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             if (trendChartObj) trendChartObj.destroy();
-
             trendChartObj = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.labels,
                     datasets: [
-                        { label: 'الطلبات', data: data.orderCounts, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
-                        { label: 'الإيرادات', data: data.revenues, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5, 5], tension: 0.4, yAxisID: 'y1' }
+                        { label: 'الطلبات', data: data.orderCounts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
+                        { label: 'الإيرادات', data: data.revenues, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5,5], tension: 0.4, yAxisID: 'y1' }
                     ]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
+                    plugins: { legend: { labels: { color: textColor, font: chartFont } } },
                     scales: {
                         x: { grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { type: 'linear', display: true, position: 'left', grid: { color: gridColor }, ticks: { color: textColor } },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
+                        y: { position: 'left', grid: { color: gridColor }, ticks: { color: textColor } },
+                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
                     }
                 }
             });
         }
 
-        function updateCourierGeoChart(dataMap) {
-            const ctx = document.getElementById('courierGeoChart').getContext('2d');
-            if (cGeoChartObj) cGeoChartObj.destroy();
-
-            const labels = Object.keys(dataMap);
-            const data = Object.values(dataMap);
-
-            cGeoChartObj = new Chart(ctx, {
+        function updateCourierCompChart(entries) {
+            const ctx = document.getElementById('courierCompChart').getContext('2d');
+            if (courierCompChartObj) courierCompChartObj.destroy();
+            courierCompChartObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels,
-                    datasets: [{ label: 'الطلبات', data: data, backgroundColor: '#8b5cf6' }]
+                    labels: entries.map(e => e.entityName),
+                    datasets: [
+                        { label: 'مسلم', data: entries.map(e => e.deliveredOrders), backgroundColor: '#10b981' },
+                        { label: 'مرفوض', data: entries.map(e => e.refusedOrders), backgroundColor: '#ef4444' },
+                        { label: 'ملغي', data: entries.map(e => e.cancelledOrders), backgroundColor: '#f59e0b' }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
-                    scales: { x: { ticks: { color: textColor } }, y: { ticks: { color: textColor }, beginAtZero: true } }
+                    scales: { x: { stacked: true, ticks: { color: textColor } }, y: { stacked: true, ticks: { color: textColor }, beginAtZero: true } },
+                    plugins: { legend: { labels: { color: textColor, font: chartFont } } }
+                }
+            });
+        }
+
+        function updateOrgCompChart(entries) {
+            const ctx = document.getElementById('orgCompChart').getContext('2d');
+            if (orgCompChartObj) orgCompChartObj.destroy();
+            orgCompChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: entries.map(e => e.entityName),
+                    datasets: [
+                        { label: 'مسلم', data: entries.map(e => e.deliveredOrders), backgroundColor: '#10b981' },
+                        { label: 'مرفوض', data: entries.map(e => e.refusedOrders), backgroundColor: '#ef4444' },
+                        { label: 'ملغي', data: entries.map(e => e.cancelledOrders), backgroundColor: '#f59e0b' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: { x: { stacked: true, ticks: { color: textColor } }, y: { stacked: true, ticks: { color: textColor }, beginAtZero: true } },
+                    plugins: { legend: { labels: { color: textColor, font: chartFont } } }
                 }
             });
         }
@@ -494,23 +996,21 @@
         function updateGeoChart(dataMap) {
             const ctx = document.getElementById('geoChart').getContext('2d');
             if (geoChartObj) geoChartObj.destroy();
-
-            const labels = Object.keys(dataMap);
-            const dataCounts = labels.map(l => dataMap[l].totalOrders);
-            const dataRates = labels.map(l => dataMap[l].deliveryRate);
-
+            const labels = Object.keys(dataMap || {});
+            const counts = labels.map(l => dataMap[l].totalOrders);
+            const rates = labels.map(l => dataMap[l].deliveryRate);
             geoChartObj = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'الطلبات المسندة', data: dataCounts, backgroundColor: '#3b82f6', yAxisID: 'y' },
-                        { label: 'نسبة النجاح %', data: dataRates, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'y1' }
+                        { label: 'الطلبات', data: counts, backgroundColor: '#3b82f6', yAxisID: 'y' },
+                        { label: 'نسبة النجاح %', data: rates, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'y1' }
                     ]
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { labels: { color: textColor, font: { family: "'Cairo', sans-serif" } } } },
+                    plugins: { legend: { labels: { color: textColor, font: chartFont } } },
                     scales: {
                         x: { ticks: { color: textColor } },
                         y: { position: 'left', ticks: { color: textColor }, beginAtZero: true },
@@ -521,7 +1021,6 @@
         }
 
         window.onload = initDates;
-
     </script>
 </body>
 

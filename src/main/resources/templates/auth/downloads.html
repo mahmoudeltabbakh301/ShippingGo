@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحميل التطبيق - ShippingGo</title>
+
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .download-links {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            margin-top: var(--space-5);
+            margin-bottom: var(--space-5);
+        }
+
+        .download-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-3);
+            font-size: 1.1rem;
+            padding: var(--space-3);
+            text-decoration: none;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+        }
+
+        .download-btn i {
+            font-size: 1.5rem;
+        }
+
+        .desktop-btn {
+            background-color: #0078D7;
+            color: white;
+            border: none;
+        }
+
+        .desktop-btn:hover {
+            background-color: #005a9e;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mobile-btn {
+            background-color: #3DDC84;
+            color: #000;
+            border: none;
+        }
+
+        .mobile-btn:hover {
+            background-color: #2ebc6b;
+            color: #000;
+            transform: translateY(-2px);
+        }
+
+        html[data-theme='dark'] .mobile-btn {
+            background-color: #2ebc6b;
+            color: white;
+        }
+
+        html[data-theme='dark'] .mobile-btn:hover {
+            background-color: #3DDC84;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-page">
+        <div class="auth-container">
+            <div class="auth-card" style="text-align: center;">
+                <!-- Logo -->
+                <div class="auth-logo">
+                    <img th:src="@{/img/logo.jpg}" class="auth-logo-img">
+                    <div class="auth-subtitle" th:text="#{auth.subtitle}">نظام إدارة شحن الطرود</div>
+                </div>
+
+                <h1 class="auth-title">تحميل التطبيق</h1>
+
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-4); margin-top: var(--space-2);">
+                    يمكنك تحميل برنامج سطح المكتب أو تطبيق الموبايل لنظام أندرويد من الروابط التالية:
+                </p>
+
+                <div class="download-links">
+                    <a href="https://www.mediafire.com/file/yw58ovveifbwjzb/ShippingGo+Setup+1.1.0.exe/file"
+                        target="_blank" class="download-btn desktop-btn">
+                        <i class="fa-brands fa-windows"></i>
+                        <span>تحميل برنامج سطح المكتب (Windows)</span>
+                    </a>
+
+                    <a href="https://www.mediafire.com/file/80ramr55n7acf8k/ShippingGo.apk/file" target="_blank"
+                        class="download-btn mobile-btn">
+                        <i class="fa-brands fa-android"></i>
+                        <span>تحميل تطبيق الموبايل (Android)</span>
+                    </a>
+                </div>
+
+                <div class="auth-footer"
+                    style="margin-top: var(--space-4); border-top: 1px solid var(--border-color); padding-top: var(--space-4);">
+                    <a th:href="@{/login}" class="btn btn-outline" style="width: 100%;">
+                        العودة لتسجيل الدخول
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+
+</html>

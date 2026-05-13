@@ -8,6 +8,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.util.Map;
 
+/**
+ * تقرير مالي سريع (محتفظ للتوافقية)
+ * للتقرير الشامل استخدم FinancialSummaryReport
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -19,12 +23,12 @@ public class FinancialReport {
     private BigDecimal totalCommissions = BigDecimal.ZERO;
     @Builder.Default
     private BigDecimal netProfit = BigDecimal.ZERO;
-    
+
     @Builder.Default
     private BigDecimal unpaidInvoices = BigDecimal.ZERO;
     @Builder.Default
     private BigDecimal paidInvoices = BigDecimal.ZERO;
-    
+
     private Map<String, BigDecimal> courierCommissions;
     private Map<String, BigDecimal> orgCommissions;
 }

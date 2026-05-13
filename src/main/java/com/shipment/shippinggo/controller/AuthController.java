@@ -159,6 +159,11 @@ public class AuthController {
             RedirectAttributes redirectAttributes) {
         
         try {
+            if (newPassword == null || newPassword.length() < 8) {
+                redirectAttributes.addAttribute("username", username);
+                redirectAttributes.addFlashAttribute("error", "كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+                return "redirect:/reset-password";
+            }
             boolean success = userService.verifyAndResetPassword(username, code, newPassword);
             if (success) {
                 redirectAttributes.addFlashAttribute("success", "تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.");
@@ -173,6 +178,11 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/reset-password";
         }
+    }
+
+    @GetMapping("/downloads")
+    public String showDownloads() {
+        return "auth/downloads";
     }
 
     @GetMapping("/access-denied")

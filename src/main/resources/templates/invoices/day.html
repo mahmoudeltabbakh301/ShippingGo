@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'فواتير ' + (${businessDay.name} ?: '') + ' - ShippingGo'">فواتير يوم العمل - ShippingGo</title>
+    
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/cards.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .receipt-chain {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            margin-top: var(--space-2);
+        }
+        .receipt-step {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            border: 1px solid var(--dark-border);
+        }
+        .receipt-step.confirmed {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+        .receipt-step.pending {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.3);
+        }
+        .receipt-step.waiting {
+            background: rgba(107, 114, 128, 0.08);
+            border-color: rgba(107, 114, 128, 0.3);
+            opacity: 0.6;
+        }
+        .receipt-icon {
+            font-size: 1.1rem;
+        }
+        .receipt-org-name {
+            font-weight: 600;
+            flex: 1;
+        }
+        .receipt-time {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+        .receipt-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .receipt-confirmed {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+        .receipt-pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
+        .invoice-detail-card {
+            margin-bottom: var(--space-4);
+            border: 1px solid var(--dark-border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+        }
+        .invoice-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--dark-surface);
+            border-bottom: 1px solid var(--dark-border);
+            flex-wrap: wrap;
+            gap: var(--space-2);
+        }
+        .invoice-detail-body {
+            padding: var(--space-4);
+        }
+        .invoice-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-3);
+        }
+        .invoice-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .invoice-info-label {
+            font-size: 0.8rem;
+            color: var(--text-tertiary);
+        }
+        .invoice-info-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .bulk-print-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--dark-surface);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            border: 1px solid var(--dark-border);
+        }
+        .total-count-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--dark-surface);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--space-4);
+            border: 1px solid var(--dark-border);
+        }
+        .total-count-bar .count-info {
+            font-weight: 600;
+            color: var(--accent-1);
+        }
+        /* Infinite scroll loading indicator */
+        .scroll-loader {
+            display: none;
+            text-align: center;
+            padding: var(--space-6);
+        }
+        .scroll-loader.active {
+            display: block;
+        }
+        .scroll-spinner {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--dark-border);
+            border-top-color: var(--accent-1);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .scroll-end-message {
+            display: none;
+            text-align: center;
+            padding: var(--space-4);
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+        .scroll-end-message.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📄 فواتير: [[${businessDay.name ?: #temporals.format(businessDay.date, 'yyyy/MM/dd')}]]</h1>
+                    <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
+                        <span th:text="${#temporals.format(businessDay.date, 'dd/MM/yyyy')}">التاريخ</span>
+                        &nbsp;•&nbsp; [[${organization.name}]]
+                    </p>
+                </div>
+                <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <a th:href="@{/invoices}" class="btn btn-secondary">📄 كل الفواتير</a>
+                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-secondary">📅 يوم العمل</a>
+                </div>
+            </div>
+
+            <!-- Total Count Bar -->
+            <div th:if="${invoices != null && !invoices.isEmpty()}" class="total-count-bar">
+                <span>📊 إجمالي الفواتير: <span class="count-info" th:text="${totalCount}">0</span></span>
+                <span th:if="${hasMore}" style="color: var(--text-tertiary); font-size: 0.85rem;">
+                    يتم تحميل المزيد عند التمرير للأسفل ⬇️
+                </span>
+            </div>
+
+            <!-- Search by Code -->
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">🔍 بحث عن فاتورة</h3>
+                    <form th:action="@{/invoices/day/{id}(id=${businessDay.id})}" method="get"
+                          style="display: flex; gap: var(--space-2); align-items: center;">
+                        <input type="text" name="code" class="form-control" th:value="${code}"
+                               placeholder="ابحث بكود الطلب أو رقم الفاتورة..." style="width: 300px;">
+                        <button type="submit" class="btn btn-primary btn-sm">بحث</button>
+                        <a th:if="${code != null && !code.isEmpty()}"
+                           th:href="@{/invoices/day/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm">✕</a>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bulk Print Bar -->
+            <div th:if="${invoices != null && !invoices.isEmpty()}" class="bulk-print-bar" id="bulkPrintBar" style="display: none;">
+                <div style="display: flex; align-items: center; gap: var(--space-3);">
+                    <span id="selectedInvoiceCount" style="font-weight: 600; color: var(--accent-1);">0 فاتورة محددة</span>
+                </div>
+                <form id="bulkPrintInvoicesForm" th:action="@{/invoices/bulk-print}" method="get" target="_blank"
+                      style="display: flex; gap: var(--space-2); align-items: center;">
+                    <input type="hidden" name="invoiceIds" id="invoiceIdsForPrint" value="">
+                    <button type="submit" class="btn btn-dark btn-sm">🖨️ طباعة المحدد</button>
+                </form>
+            </div>
+
+            <!-- Invoice Cards Container -->
+            <div id="invoicesContainer">
+                <th:block th:if="${invoices != null && !invoices.isEmpty()}">
+                    <div th:each="invoice : ${invoices}" class="invoice-detail-card">
+                        <div class="invoice-detail-header">
+                            <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                <input type="checkbox" class="invoiceCheckbox" th:value="${invoice.id}" 
+                                       style="cursor: pointer; width: 18px; height: 18px;">
+                                <div>
+                                    <strong th:text="${invoice.invoiceNumber}">INV-XXXX</strong>
+                                    <span style="margin: 0 var(--space-2); color: var(--text-tertiary);">|</span>
+                                    <span th:text="'كود: ' + ${invoice.order.code}">كود: SG-XXX</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <span th:if="${confirmationStatus.get(invoice.id)}" class="receipt-badge receipt-confirmed">
+                                    ✅ مكتمل
+                                </span>
+                                <span th:unless="${confirmationStatus.get(invoice.id)}" class="receipt-badge receipt-pending">
+                                    ⏳ في الانتظار
+                                </span>
+                                <a th:href="@{'/invoices/' + ${invoice.id} + '/print'}" 
+                                   class="btn btn-secondary btn-sm" target="_blank">🖨️ طباعة</a>
+                                <form th:if="${canConfirmMap.get(invoice.id)}"
+                                      th:action="@{'/invoices/' + ${invoice.id} + '/confirm-receipt'}" 
+                                      method="post" style="margin: 0;">
+                                    <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                    <button type="submit" class="btn btn-success btn-sm"
+                                        onclick="return confirm('هل تريد تأكيد استلام هذه الفاتورة؟')">
+                                        ✅ تأكيد الاستلام
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="invoice-detail-body">
+                            <!-- Order Info -->
+                            <div class="invoice-info-grid">
+                                <div class="invoice-info-item">
+                                    <span class="invoice-info-label">المستلم</span>
+                                    <span class="invoice-info-value" th:text="${invoice.order.recipientName}">الاسم</span>
+                                </div>
+                                <div class="invoice-info-item">
+                                    <span class="invoice-info-label">الهاتف</span>
+                                    <span class="invoice-info-value" th:text="${invoice.order.recipientPhone}">01XXXXXXXXX</span>
+                                </div>
+                                <div class="invoice-info-item">
+                                    <span class="invoice-info-label">المبلغ</span>
+                                    <span class="invoice-info-value" style="color: var(--accent-1);"
+                                          th:text="${invoice.totalAmount} + ' ج.م'">0 ج.م</span>
+                                </div>
+                                <div class="invoice-info-item">
+                                    <span class="invoice-info-label">تاريخ الإنشاء</span>
+                                    <span class="invoice-info-value" 
+                                          th:text="${#temporals.format(invoice.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026</span>
+                                </div>
+                            </div>
+
+                            <!-- Receipt Chain -->
+                            <div th:if="${receiptsMap.get(invoice.id) != null && !receiptsMap.get(invoice.id).isEmpty()}">
+                                <h4 style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);">
+                                    🔗 سلسلة تأكيد الاستلام
+                                </h4>
+                                <div class="receipt-chain">
+                                    <div th:each="receipt : ${receiptsMap.get(invoice.id)}" class="receipt-step"
+                                         th:classappend="${receipt.confirmed ? 'confirmed' : (canConfirmMap.get(invoice.id) && receipt.organization.id == organization.id ? 'pending' : 'waiting')}">
+                                        <span class="receipt-icon" 
+                                              th:text="${receipt.confirmed ? '✅' : '⏳'}">⏳</span>
+                                        <span class="receipt-org-name" th:text="${receipt.organization.name}">المنظمة</span>
+                                        <span th:if="${receipt.confirmed}" class="receipt-time"
+                                              th:text="${#temporals.format(receipt.confirmedAt, 'dd/MM HH:mm')}">01/01 12:00</span>
+                                        <span th:unless="${receipt.confirmed}" class="receipt-time">لم يتم التأكيد بعد</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </th:block>
+            </div>
+
+            <!-- Infinite Scroll Loading Indicator -->
+            <div id="scrollLoader" class="scroll-loader">
+                <div class="scroll-spinner"></div>
+                <p style="margin-top: var(--space-2); color: var(--text-tertiary);">جاري تحميل المزيد...</p>
+            </div>
+
+            <!-- End of results message -->
+            <div id="scrollEndMessage" class="scroll-end-message">
+                ✅ تم عرض جميع الفواتير
+            </div>
+
+            <div th:if="${invoices == null || invoices.isEmpty()}" 
+                 class="card" style="text-align: center; padding: var(--space-8);">
+                <div style="font-size: 3rem; margin-bottom: var(--space-4);">📄</div>
+                <p th:if="${code != null && !code.isEmpty()}" style="color: var(--text-tertiary);">
+                    لم يتم العثور على فواتير تطابق البحث.
+                </p>
+                <p th:unless="${code != null && !code.isEmpty()}" style="color: var(--text-tertiary);">
+                    لا توجد فواتير في هذا اليوم. قم بإنشاء فواتير من صفحة يوم العمل.
+                </p>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // ===== Bulk Print Logic =====
+            var selectedInvoiceIds = new Set();
+            var bulkPrintBar = document.getElementById('bulkPrintBar');
+            var selectedCountEl = document.getElementById('selectedInvoiceCount');
+            var invoiceIdsForPrint = document.getElementById('invoiceIdsForPrint');
+
+            function updateBulkPrint() {
+                var ids = Array.from(selectedInvoiceIds);
+                var idsStr = ids.join(',');
+                if (invoiceIdsForPrint) invoiceIdsForPrint.value = idsStr;
+
+                if (bulkPrintBar) {
+                    if (ids.length > 0) {
+                        bulkPrintBar.style.display = 'flex';
+                        if (selectedCountEl) {
+                            selectedCountEl.textContent = ids.length + ' فاتورة محددة';
+                        }
+                    } else {
+                        bulkPrintBar.style.display = 'none';
+                    }
+                }
+            }
+
+            document.addEventListener('change', function (e) {
+                if (e.target && e.target.classList.contains('invoiceCheckbox')) {
+                    if (e.target.checked) {
+                        selectedInvoiceIds.add(e.target.value);
+                    } else {
+                        selectedInvoiceIds.delete(e.target.value);
+                    }
+                    updateBulkPrint();
+                }
+            });
+
+            var bulkPrintForm = document.getElementById('bulkPrintInvoicesForm');
+            if (bulkPrintForm) {
+                bulkPrintForm.addEventListener('submit', function (e) {
+                    if (!invoiceIdsForPrint || !invoiceIdsForPrint.value) {
+                        e.preventDefault();
+                        alert('يرجى تحديد فواتير أولاً للطباعة');
+                    }
+                });
+            }
+
+            // ===== Infinite Scroll Logic =====
+            var businessDayId = /*[[${businessDay.id}]]*/ 0;
+            var hasMore = /*[[${hasMore}]]*/ false;
+            var currentPage = /*[[${currentPage}]]*/ 0;
+            var isSearchMode = /*[[${code != null && !code.isEmpty()}]]*/ false;
+            var isLoading = false;
+            var container = document.getElementById('invoicesContainer');
+            var loader = document.getElementById('scrollLoader');
+            var endMessage = document.getElementById('scrollEndMessage');
+            var csrfToken = document.querySelector('meta[name="_csrf"]');
+            var orgId = /*[[${organization.id}]]*/ 0;
+
+            // Show end message if no more to load and not in search mode
+            if (!hasMore && !isSearchMode && container && container.children.length > 0) {
+                if (endMessage) endMessage.classList.add('active');
+            }
+
+            function createInvoiceCardHTML(inv) {
+                var confirmBadge = inv.fullyConfirmed
+                    ? '<span class="receipt-badge receipt-confirmed">✅ مكتمل</span>'
+                    : '<span class="receipt-badge receipt-pending">⏳ في الانتظار</span>';
+
+                var confirmBtn = '';
+                if (inv.canConfirm) {
+                    confirmBtn = '<form action="/invoices/' + inv.id + '/confirm-receipt" method="post" style="margin:0;">' +
+                        '<input type="hidden" name="businessDayId" value="' + businessDayId + '">' +
+                        '<button type="submit" class="btn btn-success btn-sm" onclick="return confirm(\'هل تريد تأكيد استلام هذه الفاتورة؟\')">✅ تأكيد الاستلام</button>' +
+                        '</form>';
+                }
+
+                var receiptsHTML = '';
+                if (inv.receipts && inv.receipts.length > 0) {
+                    receiptsHTML = '<div><h4 style="font-size:0.9rem;margin-bottom:var(--space-2);color:var(--text-secondary);">🔗 سلسلة تأكيد الاستلام</h4><div class="receipt-chain">';
+                    for (var r = 0; r < inv.receipts.length; r++) {
+                        var receipt = inv.receipts[r];
+                        var stepClass = receipt.confirmed ? 'confirmed' : (inv.canConfirm && receipt.isCurrentOrg ? 'pending' : 'waiting');
+                        var icon = receipt.confirmed ? '✅' : '⏳';
+                        var timeText = receipt.confirmed && receipt.confirmedAt ? receipt.confirmedAt : 'لم يتم التأكيد بعد';
+                        receiptsHTML += '<div class="receipt-step ' + stepClass + '">' +
+                            '<span class="receipt-icon">' + icon + '</span>' +
+                            '<span class="receipt-org-name">' + receipt.orgName + '</span>' +
+                            '<span class="receipt-time">' + timeText + '</span>' +
+                            '</div>';
+                    }
+                    receiptsHTML += '</div></div>';
+                }
+
+                return '<div class="invoice-detail-card">' +
+                    '<div class="invoice-detail-header">' +
+                        '<div style="display:flex;align-items:center;gap:var(--space-3);">' +
+                            '<input type="checkbox" class="invoiceCheckbox" value="' + inv.id + '" style="cursor:pointer;width:18px;height:18px;">' +
+                            '<div><strong>' + inv.invoiceNumber + '</strong>' +
+                            '<span style="margin:0 var(--space-2);color:var(--text-tertiary);">|</span>' +
+                            '<span>كود: ' + (inv.orderCode || '') + '</span></div>' +
+                        '</div>' +
+                        '<div style="display:flex;gap:var(--space-2);align-items:center;">' +
+                            confirmBadge +
+                            '<a href="/invoices/' + inv.id + '/print" class="btn btn-secondary btn-sm" target="_blank">🖨️ طباعة</a>' +
+                            confirmBtn +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="invoice-detail-body">' +
+                        '<div class="invoice-info-grid">' +
+                            '<div class="invoice-info-item"><span class="invoice-info-label">المستلم</span><span class="invoice-info-value">' + (inv.recipientName || '') + '</span></div>' +
+                            '<div class="invoice-info-item"><span class="invoice-info-label">الهاتف</span><span class="invoice-info-value">' + (inv.recipientPhone || '') + '</span></div>' +
+                            '<div class="invoice-info-item"><span class="invoice-info-label">المبلغ</span><span class="invoice-info-value" style="color:var(--accent-1);">' + inv.totalAmount + ' ج.م</span></div>' +
+                            '<div class="invoice-info-item"><span class="invoice-info-label">تاريخ الإنشاء</span><span class="invoice-info-value">' + inv.createdAt + '</span></div>' +
+                        '</div>' +
+                        receiptsHTML +
+                    '</div>' +
+                '</div>';
+            }
+
+            function loadMore() {
+                if (isLoading || !hasMore || isSearchMode) return;
+                isLoading = true;
+                if (loader) loader.classList.add('active');
+                if (endMessage) endMessage.classList.remove('active');
+
+                var nextPage = currentPage + 1;
+                fetch('/invoices/day/' + businessDayId + '/load-more?page=' + nextPage, {
+                    headers: { 'Accept': 'application/json' }
+                })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if (data.invoices && data.invoices.length > 0) {
+                        for (var i = 0; i < data.invoices.length; i++) {
+                            container.insertAdjacentHTML('beforeend', createInvoiceCardHTML(data.invoices[i]));
+                        }
+                    }
+                    hasMore = data.hasMore;
+                    currentPage = data.currentPage;
+
+                    if (!hasMore) {
+                        if (endMessage) endMessage.classList.add('active');
+                    }
+                })
+                .catch(function(err) {
+                    console.error('Error loading more invoices:', err);
+                })
+                .finally(function() {
+                    isLoading = false;
+                    if (loader) loader.classList.remove('active');
+                });
+            }
+
+            // Scroll detection 
+            if (hasMore && !isSearchMode) {
+                window.addEventListener('scroll', function () {
+                    var scrollHeight = document.documentElement.scrollHeight;
+                    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+                    var clientHeight = document.documentElement.clientHeight;
+
+                    // Load 300px before reaching the bottom
+                    if (scrollTop + clientHeight >= scrollHeight - 300) {
+                        loadMore();
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

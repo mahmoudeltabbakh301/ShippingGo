@@ -1,26 +1,25 @@
 package com.shipment.shippinggo.controller;
 
 import com.shipment.shippinggo.annotation.CurrentOrganization;
-import com.shipment.shippinggo.entity.Organization;
-import com.shipment.shippinggo.entity.User;
+import com.shipment.shippinggo.dto.BusinessDayInvoiceSummaryDTO;
+import com.shipment.shippinggo.entity.*;
 import com.shipment.shippinggo.enums.Role;
+import com.shipment.shippinggo.service.BusinessDayService;
 import com.shipment.shippinggo.service.InvoiceService;
 import com.shipment.shippinggo.service.OrganizationService;
+import com.shipment.shippinggo.service.PdfService;
+import org.springframework.data.domain.Page;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.util.List;
-import com.shipment.shippinggo.entity.Order;
-import com.shipment.shippinggo.entity.Invoice;
-import com.shipment.shippinggo.service.PdfService;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/invoices")
@@ -29,91 +28,309 @@ public class InvoiceController {
     private final InvoiceService invoiceService;
     private final OrganizationService organizationService;
     private final PdfService pdfService;
+    private final BusinessDayService businessDayService;
 
-    public InvoiceController(InvoiceService invoiceService, OrganizationService organizationService, PdfService pdfService) {
+    public InvoiceController(InvoiceService invoiceService,
+                             OrganizationService organizationService,
+                             PdfService pdfService,
+                             BusinessDayService businessDayService) {
         this.invoiceService = invoiceService;
         this.organizationService = organizationService;
         this.pdfService = pdfService;
+        this.businessDayService = businessDayService;
     }
 
+    /**
+     * صفحة الفواتير - عرض ملخصات أيام العمل فقط (بدون تحميل الفواتير)
+     */
     @GetMapping
-    public String listInvoices(@CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
+    public String listInvoices(@CurrentOrganization Organization org,
+                               @AuthenticationPrincipal User user,
+                               Model model) {
         if (org == null) {
             org = organizationService.getOrganizationByUser(user);
         }
-        
         if (org == null) {
             return "redirect:/dashboard";
         }
 
-        model.addAttribute("invoices", invoiceService.getInvoicesByOrganization(org.getId()));
+        List<BusinessDayInvoiceSummaryDTO> summaries = invoiceService.getBusinessDaySummaries(org.getId());
+
+        model.addAttribute("summaries", summaries);
         model.addAttribute("organization", org);
 
         return "invoices/list";
     }
 
-    @PostMapping("/generate")
-    public String generateInvoice(@CurrentOrganization Organization org, @AuthenticationPrincipal User user, RedirectAttributes redirectAttributes) {
+    private static final int PAGE_SIZE = 50;
+
+    /**
+     * عرض فواتير يوم عمل محدد (أول 50 فاتورة)
+     */
+    @GetMapping("/day/{businessDayId}")
+    public String listInvoicesByDay(@PathVariable Long businessDayId,
+                                     @RequestParam(required = false) String code,
+                                     @CurrentOrganization Organization org,
+                                     @AuthenticationPrincipal User user,
+                                     Model model) {
+        if (org == null) {
+            org = organizationService.getOrganizationByUser(user);
+        }
+        if (org == null) {
+            return "redirect:/dashboard";
+        }
+
+        BusinessDay businessDay = businessDayService.getById(businessDayId);
+        if (businessDay == null) {
+            return "redirect:/invoices";
+        }
+
+        List<Invoice> invoices;
+        boolean hasMore = false;
+        long totalCount = 0;
+
+        if (code != null && !code.trim().isEmpty()) {
+            // البحث لا يستخدم pagination
+            invoices = invoiceService.searchInvoicesByCode(org.getId(), businessDayId, code.trim());
+            totalCount = invoices.size();
+        } else {
+            // أول صفحة فقط (50 فاتورة)
+            Page<Invoice> page = invoiceService.getInvoicesByBusinessDayPaged(org.getId(), businessDayId, 0, PAGE_SIZE);
+            invoices = page.getContent();
+            hasMore = page.hasNext();
+            totalCount = page.getTotalElements();
+        }
+
+        Map<Long, Boolean> confirmationStatus = new LinkedHashMap<>();
+        Map<Long, Boolean> canConfirmMap = new LinkedHashMap<>();
+        Map<Long, List<InvoiceReceipt>> receiptsMap = new LinkedHashMap<>();
+
+        for (Invoice invoice : invoices) {
+            confirmationStatus.put(invoice.getId(),
+                    invoiceService.isInvoiceFullyConfirmed(invoice.getId()));
+            canConfirmMap.put(invoice.getId(),
+                    invoiceService.canConfirmReceipt(invoice.getId(), org.getId()));
+            receiptsMap.put(invoice.getId(),
+                    invoiceService.getReceiptsForInvoice(invoice.getId()));
+        }
+
+        model.addAttribute("invoices", invoices);
+        model.addAttribute("businessDay", businessDay);
+        model.addAttribute("confirmationStatus", confirmationStatus);
+        model.addAttribute("canConfirmMap", canConfirmMap);
+        model.addAttribute("receiptsMap", receiptsMap);
+        model.addAttribute("organization", org);
+        model.addAttribute("code", code);
+        model.addAttribute("hasMore", hasMore);
+        model.addAttribute("totalCount", totalCount);
+        model.addAttribute("currentPage", 0);
+
+        return "invoices/day";
+    }
+
+    /**
+     * REST endpoint - تحميل المزيد من الفواتير (Infinite Scroll)
+     */
+    @GetMapping("/day/{businessDayId}/load-more")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> loadMoreInvoices(
+            @PathVariable Long businessDayId,
+            @RequestParam(defaultValue = "1") int page,
+            @CurrentOrganization Organization org,
+            @AuthenticationPrincipal User user) {
+        if (org == null) {
+            org = organizationService.getOrganizationByUser(user);
+        }
+        if (org == null) {
+            return ResponseEntity.status(403).build();
+        }
+
+        Page<Invoice> invoicePage = invoiceService.getInvoicesByBusinessDayPaged(
+                org.getId(), businessDayId, page, PAGE_SIZE);
+
+        List<Map<String, Object>> invoiceDataList = new ArrayList<>();
+        for (Invoice invoice : invoicePage.getContent()) {
+            Map<String, Object> invoiceData = new LinkedHashMap<>();
+            invoiceData.put("id", invoice.getId());
+            invoiceData.put("invoiceNumber", invoice.getInvoiceNumber());
+            invoiceData.put("totalAmount", invoice.getTotalAmount());
+            invoiceData.put("createdAt", invoice.getCreatedAt() != null ?
+                    invoice.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "");
+
+            // Order info
+            if (invoice.getOrder() != null) {
+                invoiceData.put("orderCode", invoice.getOrder().getCode());
+                invoiceData.put("recipientName", invoice.getOrder().getRecipientName());
+                invoiceData.put("recipientPhone", invoice.getOrder().getRecipientPhone());
+            }
+
+            // Confirmation status
+            boolean fullyConfirmed = invoiceService.isInvoiceFullyConfirmed(invoice.getId());
+            boolean canConfirm = invoiceService.canConfirmReceipt(invoice.getId(), org.getId());
+            invoiceData.put("fullyConfirmed", fullyConfirmed);
+            invoiceData.put("canConfirm", canConfirm);
+
+            // Receipt chain
+            List<InvoiceReceipt> receipts = invoiceService.getReceiptsForInvoice(invoice.getId());
+            List<Map<String, Object>> receiptList = new ArrayList<>();
+            for (InvoiceReceipt receipt : receipts) {
+                Map<String, Object> receiptData = new LinkedHashMap<>();
+                receiptData.put("orgName", receipt.getOrganization().getName());
+                receiptData.put("confirmed", receipt.isConfirmed());
+                receiptData.put("confirmedAt", receipt.isConfirmed() && receipt.getConfirmedAt() != null ?
+                        receipt.getConfirmedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm")) : null);
+                receiptData.put("isCurrentOrg", receipt.getOrganization().getId().equals(org.getId()));
+                receiptList.add(receiptData);
+            }
+            invoiceData.put("receipts", receiptList);
+
+            invoiceDataList.add(invoiceData);
+        }
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("invoices", invoiceDataList);
+        response.put("hasMore", invoicePage.hasNext());
+        response.put("currentPage", page);
+        response.put("totalPages", invoicePage.getTotalPages());
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * إنشاء فواتير من أوردرات محددة (من صفحة يوم العمل)
+     */
+    @PostMapping("/generate-for-orders")
+    public String generateForOrders(@RequestParam Long businessDayId,
+                                     @RequestParam String orderIds,
+                                     @CurrentOrganization Organization org,
+                                     @AuthenticationPrincipal User user,
+                                     RedirectAttributes redirectAttributes) {
         if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER && user.getRole() != Role.ACCOUNTANT) {
             redirectAttributes.addFlashAttribute("error", "غير مصرح بإنشاء الفواتير");
-            return "redirect:/invoices";
+            return "redirect:/business-days/" + businessDayId;
         }
 
         if (org == null) {
             org = organizationService.getOrganizationByUser(user);
         }
 
-        try {
-            invoiceService.generateInvoice(org);
-            redirectAttributes.addFlashAttribute("success", "تم إنشاء الفاتورة بنجاح");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "فشل إنشاء الفاتورة: " + e.getMessage());
+        BusinessDay businessDay = businessDayService.getById(businessDayId);
+        if (businessDay == null) {
+            redirectAttributes.addFlashAttribute("error", "يوم العمل غير موجود");
+            return "redirect:/business-days";
         }
 
-        return "redirect:/invoices";
+        try {
+            List<Long> ids = Arrays.stream(orderIds.split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+
+            List<Invoice> invoices = invoiceService.generateInvoicesForOrders(org, businessDay, ids, user);
+            redirectAttributes.addFlashAttribute("success",
+                    "تم إنشاء " + invoices.size() + " فاتورة بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "فشل إنشاء الفواتير: " + e.getMessage());
+        }
+
+        return "redirect:/business-days/" + businessDayId;
     }
 
-    @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long id, @CurrentOrganization Organization org, @AuthenticationPrincipal User user) {
+    /**
+     * طباعة فاتورة (PDF في نافذة جديدة)
+     */
+    @GetMapping("/{id}/print")
+    public ResponseEntity<byte[]> printInvoice(@PathVariable Long id,
+                                                @CurrentOrganization Organization org,
+                                                @AuthenticationPrincipal User user) {
         Invoice invoice = invoiceService.findById(id);
         if (invoice == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // Security check: Only the organization owner or site admins can download
         if (org == null) {
             org = organizationService.getOrganizationByUser(user);
         }
-        
-        if (user.getRole() != Role.ADMIN && user.getRole() != Role.SUPER_ADMIN && (org == null || !invoice.getOrganization().getId().equals(org.getId()))) {
-            return ResponseEntity.status(403).build();
-        }
 
-        List<Order> orders = invoiceService.getOrdersByInvoiceId(id);
-        byte[] pdfBytes = pdfService.generateInvoicePdf(invoice, orders);
+        byte[] pdfBytes = pdfService.generateInvoicePdf(invoice, List.of(invoice.getOrder()), org);
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Invoice-" + invoice.getInvoiceNumber() + ".pdf")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=Invoice-" + invoice.getInvoiceNumber() + ".pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfBytes);
     }
 
-    @PostMapping("/{id}/pay")
-    public String markAsPaid(@PathVariable Long id, @CurrentOrganization Organization org, @AuthenticationPrincipal User user, RedirectAttributes redirectAttributes) {
-        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER && user.getRole() != Role.ACCOUNTANT) {
-            redirectAttributes.addFlashAttribute("error", "غير مصرح بتعديل الفواتير");
-            return "redirect:/invoices";
+    /**
+     * طباعة فواتير مجمعة (عدة فواتير في PDF واحد)
+     */
+    @GetMapping("/bulk-print")
+    public ResponseEntity<byte[]> bulkPrint(@RequestParam String invoiceIds,
+                                             @CurrentOrganization Organization org,
+                                             @AuthenticationPrincipal User user) {
+        if (org == null) {
+            org = organizationService.getOrganizationByUser(user);
         }
 
-        Invoice invoice = invoiceService.findById(id);
-        if (invoice != null) {
-            invoice.setStatus("PAID");
-            invoiceService.saveInvoice(invoice);
-            redirectAttributes.addFlashAttribute("success", "تم تحديث حالة الفاتورة بنجاح");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "الفاتورة غير موجودة");
+        List<Long> ids = Arrays.stream(invoiceIds.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(Long::parseLong)
+                .collect(Collectors.toList());
+
+        List<Invoice> invoices = new ArrayList<>();
+        for (Long invoiceId : ids) {
+            Invoice invoice = invoiceService.findById(invoiceId);
+            if (invoice != null) {
+                invoices.add(invoice);
+            }
         }
-        
+
+        if (invoices.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        byte[] pdfBytes = pdfService.generateBulkInvoicePdf(invoices, org);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=Invoices-Bulk.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdfBytes);
+    }
+
+    /**
+     * تأكيد استلام الفاتورة
+     */
+    @PostMapping("/{id}/confirm-receipt")
+    public String confirmReceipt(@PathVariable Long id,
+                                  @RequestParam(required = false) Long businessDayId,
+                                  @CurrentOrganization Organization org,
+                                  @AuthenticationPrincipal User user,
+                                  RedirectAttributes redirectAttributes) {
+        if (org == null) {
+            org = organizationService.getOrganizationByUser(user);
+        }
+
+        try {
+            invoiceService.confirmReceipt(id, org, user);
+            redirectAttributes.addFlashAttribute("success", "تم تأكيد استلام الفاتورة بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        if (businessDayId != null) {
+            return "redirect:/invoices/day/" + businessDayId;
+        }
         return "redirect:/invoices";
+    }
+
+    /**
+     * تحميل فاتورة PDF (للتوافق مع الكود القديم)
+     */
+    @GetMapping("/{id}/download")
+    public ResponseEntity<byte[]> downloadInvoice(@PathVariable Long id,
+                                                   @CurrentOrganization Organization org,
+                                                   @AuthenticationPrincipal User user) {
+        return printInvoice(id, org, user);
     }
 }

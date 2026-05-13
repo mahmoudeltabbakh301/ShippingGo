@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(com.shipment.shippinggo.listener.OrderCacheEvictionListener.class)
 public class OrderAssignment {
 
     @Id
@@ -88,6 +89,14 @@ public class OrderAssignment {
     // عمولة المكتب الفردية (يحددها المُسند لهذا الإسناد تحديداً)
     @Column(precision = 10, scale = 2)
     private BigDecimal manualOrgCommission;
+
+    // اسم المنظمة المسند إليها (يُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "assignee_organization_name")
+    private String assigneeOrganizationName;
+
+    // اسم المنظمة المُسندة (يُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "assigner_organization_name")
+    private String assignerOrganizationName;
 
     // المستخدم الذي قام بالإسناد
     @ManyToOne(fetch = FetchType.LAZY)

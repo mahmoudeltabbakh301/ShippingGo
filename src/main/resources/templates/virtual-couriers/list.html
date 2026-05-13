@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{virtual_couriers.title} + ' - ShippingGo'">المناديب الافتراضيون - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        /* ===== Modal Overlay ===== */
+        .vc-modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1100;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.15);
+            backdrop-filter: none;
+        }
+        .vc-modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* ===== Modal Box ===== */
+        .vc-modal-box {
+            background-color: var(--bg-primary);
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 480px;
+            width: 92%;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+            color: var(--text-primary);
+            animation: vcSlideUp 0.25s ease;
+        }
+
+        /* ===== Delete Modal Specific ===== */
+        .vc-delete-icon {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: rgba(220, 53, 69, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 14px;
+            font-size: 26px;
+        }
+        .vc-delete-title {
+            text-align: center;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .vc-delete-message {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 6px;
+        }
+        .vc-delete-warning {
+            background: rgba(255, 193, 7, 0.08);
+            border: 1px solid rgba(255, 193, 7, 0.25);
+            border-radius: 8px;
+            padding: 12px 14px;
+            margin: 14px 0;
+            font-size: 13px;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        .vc-delete-warning strong { color: #e6a800; }
+        .vc-delete-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 18px;
+        }
+        .vc-delete-actions .btn { min-width: 110px; }
+
+        /* ===== Create / Edit Modal ===== */
+        .vc-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .vc-modal-header h2 { margin: 0; font-size: 18px; }
+        .vc-modal-close {
+            cursor: pointer;
+            font-size: 22px;
+            color: var(--text-secondary);
+            background: none; border: none;
+            padding: 4px 8px; line-height: 1;
+        }
+        .vc-modal-close:hover { color: var(--text-primary); }
+
+        .vc-form-group { margin-bottom: 14px; }
+        .vc-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .vc-form-input {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .vc-form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 99, 102, 241), 0.15);
+        }
+        .vc-form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 18px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .vc-virtual-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(255, 152, 0, 0.12);
+            color: #e65100;
+            font-weight: 600;
+        }
+
+        @keyframes vcSlideUp {
+            from { transform: translateY(16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${successMessage}" class="alert alert-success">
+                <span>✓</span>
+                <span th:text="${successMessage}"></span>
+            </div>
+            <div th:if="${errorMessage}" class="alert alert-danger">
+                <span>✕</span>
+                <span th:text="${errorMessage}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🚚 <span th:text="#{virtual_couriers.title}">المناديب الافتراضيون</span></h1>
+                    <p class="text-muted" th:text="#{virtual_couriers.description}">إنشاء مناديب افتراضيين للشركات التي ليس لديها مندوبين مسجلين</p>
+                </div>
+                <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <button type="button" class="btn btn-primary" onclick="openCreateModal()"
+                        th:text="#{virtual_couriers.create_btn}">+ إنشاء مندوب افتراضي</button>
+                </div>
+            </div>
+
+            <!-- Info Alert -->
+            <div class="alert" style="background: rgba(33, 150, 243, 0.08); border: 1px solid rgba(33, 150, 243, 0.25); color: var(--text-primary); margin-bottom: var(--space-4);">
+                <span>ℹ️</span>
+                <span th:text="#{virtual_couriers.info_message}">المندوب الافتراضي يعمل كمندوب عادي (إسناد أوردرات، حسابات، مخازن) لكن لا يمكنه تسجيل الدخول. تحديث الحالات يتم من قبل موظف المتابعة أو الأدمن.</span>
+            </div>
+
+            <!-- Virtual Couriers Table -->
+            <div class="card">
+                <div th:if="${virtualCouriers == null or virtualCouriers.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);"
+                    th:text="#{virtual_couriers.table.empty}">
+                    لا يوجد مناديب افتراضيون تابعين لمنظمتك.
+                </div>
+                <div th:if="${virtualCouriers != null and !virtualCouriers.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{virtual_couriers.table.name}">اسم المندوب</th>
+                                <th th:text="#{virtual_couriers.table.created_at}">تاريخ الإنشاء</th>
+                                <th th:text="#{virtual_couriers.table.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="vc : ${virtualCouriers}">
+                                <td>
+                                    <div style="font-weight: 600;" th:text="${vc.fullName}"></div>
+                                    <small>
+                                        <span class="vc-virtual-badge">🚫 <span th:text="#{virtual_couriers.badge}">مندوب افتراضي</span></span>
+                                    </small>
+                                </td>
+                                <td th:text="${#temporals.format(vc.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <button type="button" class="btn btn-sm btn-secondary"
+                                            th:data-id="${vc.id}"
+                                            th:data-name="${vc.fullName}"
+                                            onclick="openEditModal(this)">✏️</button>
+                                        <button type="button" class="btn btn-sm btn-danger"
+                                            th:data-id="${vc.id}"
+                                            th:data-name="${vc.fullName}"
+                                            onclick="openDeleteModal(this)"
+                                            th:text="#{virtual_couriers.table.delete_btn}">حذف</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ====================  -->
+            <!--  DELETE MODAL         -->
+            <!-- ====================  -->
+            <div id="deleteModal" class="vc-modal-overlay" onclick="if(event.target===this) closeDeleteModal()">
+                <div class="vc-modal-box">
+                    <div class="vc-delete-icon">⚠️</div>
+                    <div class="vc-delete-title"
+                        th:text="#{virtual_couriers.delete.modal.title}">تأكيد حذف المندوب الافتراضي</div>
+                    <div class="vc-delete-message">
+                        <span th:text="#{virtual_couriers.delete.modal.message}">هل أنت متأكد من حذف المندوب الافتراضي</span>
+                        <strong id="deleteVcName" style="color: var(--primary-color);"></strong>؟
+                    </div>
+                    <div class="vc-delete-warning">
+                        <strong>⚠️ <span th:text="#{virtual_couriers.delete.modal.warning_title}">تنبيه</span>:</strong><br>
+                        <span th:text="#{virtual_couriers.delete.modal.warning1}">• لن يمكن إسناد أي طلبات جديدة لهذا المندوب بعد الحذف.</span><br>
+                        <span th:text="#{virtual_couriers.delete.modal.warning2}">• سيتم الاحتفاظ باسم المندوب في جميع السجلات التاريخية.</span><br>
+                        <span th:text="#{virtual_couriers.delete.modal.warning3}">• هذا الإجراء لا يمكن التراجع عنه.</span>
+                    </div>
+                    <div class="vc-delete-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()"
+                            th:text="#{btn.cancel}">إلغاء</button>
+                        <form id="deleteForm" method="post" style="display: inline;">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-danger"
+                                th:text="#{virtual_couriers.delete.modal.confirm_btn}">نعم، احذف المندوب</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====================  -->
+            <!--  CREATE MODAL         -->
+            <!-- ====================  -->
+            <div id="createModal" class="vc-modal-overlay" onclick="if(event.target===this) closeCreateModal()">
+                <div class="vc-modal-box">
+                    <div class="vc-modal-header">
+                        <h2 th:text="#{virtual_couriers.modal.create_title}">إنشاء مندوب افتراضي جديد</h2>
+                        <button type="button" class="vc-modal-close" onclick="closeCreateModal()">&times;</button>
+                    </div>
+                    <form th:action="@{/virtual-couriers/create}" method="post">
+                        <div class="vc-form-group">
+                            <label for="createVcName" th:text="#{virtual_couriers.modal.name_label}">اسم المندوب الافتراضي</label>
+                            <input type="text" id="createVcName" name="name" class="vc-form-input" required
+                                autocomplete="off" th:placeholder="#{virtual_couriers.modal.name_placeholder}">
+                        </div>
+                        <div class="vc-form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeCreateModal()"
+                                th:text="#{btn.cancel}">إلغاء</button>
+                            <button type="submit" class="btn btn-primary"
+                                th:text="#{btn.save}">حفظ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ====================  -->
+            <!--  EDIT MODAL           -->
+            <!-- ====================  -->
+            <div id="editModal" class="vc-modal-overlay" onclick="if(event.target===this) closeEditModal()">
+                <div class="vc-modal-box">
+                    <div class="vc-modal-header">
+                        <h2>✏️ <span th:text="#{virtual_couriers.modal.edit_title}">تعديل المندوب الافتراضي</span></h2>
+                        <button type="button" class="vc-modal-close" onclick="closeEditModal()">&times;</button>
+                    </div>
+                    <form id="editForm" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="vc-form-group">
+                            <label for="editVcName" th:text="#{virtual_couriers.modal.name_label}">اسم المندوب الافتراضي</label>
+                            <input type="text" id="editVcName" name="name" class="vc-form-input" required
+                                autocomplete="off">
+                        </div>
+                        <div class="vc-form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()"
+                                th:text="#{btn.cancel}">إلغاء</button>
+                            <button type="submit" class="btn btn-primary"
+                                th:text="#{btn.save}">حفظ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var deleteBaseUrl = /*[[@{/virtual-couriers/delete/}]]*/ '/virtual-couriers/delete/';
+        var editBaseUrl   = /*[[@{/virtual-couriers/update/}]]*/ '/virtual-couriers/update/';
+
+        // ===== Delete Modal =====
+        function openDeleteModal(btn) {
+            var id   = btn.getAttribute('data-id');
+            var name = btn.getAttribute('data-name');
+            document.getElementById('deleteVcName').textContent = name;
+            document.getElementById('deleteForm').action = deleteBaseUrl + id;
+            document.getElementById('deleteModal').classList.add('show');
+        }
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('show');
+        }
+
+        // ===== Create Modal =====
+        function openCreateModal() {
+            document.getElementById('createVcName').value = '';
+            document.getElementById('createModal').classList.add('show');
+        }
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('show');
+        }
+
+        // ===== Edit Modal =====
+        function openEditModal(btn) {
+            var id   = btn.getAttribute('data-id');
+            var name = btn.getAttribute('data-name');
+            document.getElementById('editVcName').value = name;
+            document.getElementById('editForm').action = editBaseUrl + id;
+            document.getElementById('editModal').classList.add('show');
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // ===== Close on Escape =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+                closeCreateModal();
+                closeEditModal();
+            }
+        });
+        /*]]>*/
+    </script>
+</body>
+
+</html>

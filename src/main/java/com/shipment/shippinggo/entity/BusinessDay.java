@@ -24,6 +24,10 @@ public class BusinessDay {
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
 
+    // اسم المنظمة (يُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "organization_name")
+    private String organizationName;
+
     @Column(nullable = false)
     private LocalDate date;
 

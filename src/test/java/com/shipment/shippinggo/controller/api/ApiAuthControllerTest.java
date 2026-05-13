@@ -1,5 +1,6 @@
 package com.shipment.shippinggo.controller.api;
 
+import com.shipment.shippinggo.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shipment.shippinggo.dto.LoginRequest;
 import com.shipment.shippinggo.entity.User;
@@ -32,6 +33,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false) // Disable security filters for simple controller testing
 class ApiAuthControllerTest {
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private UserRepository userRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,6 +56,9 @@ class ApiAuthControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthFilter;
+
+    @MockBean
+    private com.shipment.shippinggo.service.NotificationService notificationService;
 
     @MockBean
     private OrganizationService organizationService;
@@ -79,7 +86,7 @@ class ApiAuthControllerTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authentication);
         
-        when(jwtUtil.generateToken(testUser)).thenReturn("mock-jwt-token");
+        when(jwtUtil.generateMobileToken(testUser)).thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

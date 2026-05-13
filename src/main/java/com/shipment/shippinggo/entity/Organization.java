@@ -41,6 +41,9 @@ public abstract class Organization {
     @Column(columnDefinition = "TEXT")
     private String about;
 
+    @Column(name = "logo_url")
+    private String logoUrl;
+
     private Double latitude;
     private Double longitude;
 

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{clients.title} + ' - ShippingGo'">العملاء - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1 class="page-title">🤝 <span th:text="#{clients.manage}">إدارة العملاء</span></h1>
+            </div>
+
+            <!-- Invite Client Card -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3 class="card-title">📩 <span th:text="#{clients.invite_new}">دعوة عميل جديد</span></h3>
+                </div>
+                <div class="card-body" style="padding: var(--space-4);">
+                    <form th:action="@{/clients/invite}" method="post"
+                        style="display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+                            <label class="form-label" th:text="#{clients.invite.identifier}">رقم الهاتف أو اسم المستخدم</label>
+                            <input type="text" name="identifier" class="form-control" required autocomplete="off"
+                                th:placeholder="#{clients.invite.placeholder}">
+                        </div>
+                        <button type="submit" class="btn btn-primary" th:text="'📩 ' + #{clients.invite.send}">📩 إرسال الدعوة</button>
+                    </form>
+                    <div style="margin-top: var(--space-3); color: var(--text-secondary); font-size: 0.85rem;" th:text="'💡 ' + #{clients.invite.hint}">
+                        💡 العميل يجب أن يكون مسجلاً في النظام كعضو أولاً. عند قبول الدعوة سيتم إنشاء منظمة عميل له تلقائياً وربطها بمنظمتك.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Invitations -->
+            <div class="card" th:if="${!pendingInvitations.isEmpty()}" style="margin-bottom: var(--space-6);">
+                <div class="card-header">
+                    <h3 class="card-title">⏳ <span th:text="#{clients.pending_invitations}">دعوات بانتظار الرد</span></h3>
+                </div>
+                <div class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{clients.table.name}">الاسم</th>
+                                <th th:text="#{clients.table.phone}">الهاتف</th>
+                                <th th:text="#{clients.table.username}">اسم المستخدم</th>
+                                <th th:text="#{clients.table.invite_date}">تاريخ الدعوة</th>
+                                <th th:text="#{clients.table.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="m : ${pendingInvitations}">
+                                <td th:text="${m.user.fullName}">الاسم</td>
+                                <td th:text="${m.user.phone} ?: '-'">الهاتف</td>
+                                <td th:text="${m.user.username}">اسم المستخدم</td>
+                                <td th:text="${#temporals.format(m.invitedAt, 'yyyy/MM/dd HH:mm')}">التاريخ</td>
+                                <td>
+                                    <form th:action="@{/clients/{id}/cancel-invite(id=${m.id})}" method="post"
+                                        style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger" th:text="'❌ ' + #{clients.invite.cancel}">❌ إلغاء الدعوة</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Active Clients -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🤝 <span th:text="#{clients.active_clients}">العملاء الحاليون</span></h3>
+                    <span class="badge badge-delivered" th:text="${#lists.size(clients)}">0</span>
+                </div>
+                <div th:if="${clients.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);" th:text="#{clients.empty_message}">
+                    لا يوجد عملاء مسجلين حالياً
+                </div>
+                <div th:if="${!clients.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{clients.table.org_name}">اسم منظمة العميل</th>
+                                <th th:text="#{clients.table.admin}">مسؤول العميل</th>
+                                <th th:text="#{clients.table.phone}">الهاتف</th>
+                                <th th:text="#{clients.table.governorate}">المحافظة</th>
+                                <th th:text="#{clients.table.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="client : ${clients}">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                                        <div style="width: 32px; height: 32px; background: var(--primary-gradient); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; color: white;">
+                                            <span th:text="${client.name != null && !client.name.isEmpty() ? #strings.substring(client.name, 0, 1) : '?'}"></span>
+                                        </div>
+                                        <div>
+                                            <div style="font-weight: 600;" th:text="${client.name}"></div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                                <span class="badge badge-pending" th:text="#{clients.type.client}">عميل</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td th:text="${client.admin != null ? client.admin.fullName : '-'}">المسؤول</td>
+                                <td th:text="${client.phone} ?: '-'">الهاتف</td>
+                                <td th:text="${client.governorate != null ? client.governorate.arabicName : '-'}">المحافظة</td>
+                                <td>
+                                    <form th:action="@{/clients/{id}/remove(id=${client.id})}" method="post"
+                                        style="display: inline;"
+                                        th:onsubmit="'return confirm(\'' + #{clients.confirm.remove} + '\');'">
+                                        <button type="submit" class="btn btn-sm btn-danger"
+                                            th:title="#{clients.action.remove}" th:text="'❌ ' + #{clients.action.remove}">❌ إزالة</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+</body>
+
+</html>

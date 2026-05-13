@@ -63,8 +63,8 @@ public class SettingsController {
             if (!newPassword.equals(confirmPassword)) {
                 throw new RuntimeException("كلمة المرور الجديدة غير متطابقة");
             }
-            if (newPassword.length() < 6) {
-                throw new RuntimeException("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+            if (newPassword.length() < 8) {
+                throw new RuntimeException("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
             }
 
             userService.updatePassword(user, newPassword);

@@ -255,7 +255,7 @@
 
                             <!-- Bulk assign to courier -->
                             <form id="bulkAssignCourierForm" th:action="@{/orders/bulk-assign-courier}" method="post"
-                                th:if="${organization == null || organization.type.name() != 'STORE'}"
+                                th:if="${organization == null || (organization.type.name() != 'STORE' && organization.type.name() != 'CLIENT')}"
                                 style="display: flex; gap: var(--space-2); align-items: center;">
                                 <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
                                 <input type="hidden" name="orderIds" id="orderIdsForCourier" value="">
@@ -289,6 +289,17 @@
                                 <button type="submit" class="btn btn-dark btn-sm"
                                     th:title="#{business_days.view.tooltip_thermal_print}"
                                     th:text="#{global.btn_print}">🖨️ طباعة مجمعة (10x15)</button>
+                            </form>
+
+                            <!-- Bulk Create Invoices -->
+                            <form id="bulkCreateInvoiceForm" th:action="@{/invoices/generate-for-orders}" method="post"
+                                sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT')"
+                                style="display: flex; gap: var(--space-2); align-items: center;">
+                                <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                <input type="hidden" name="orderIds" id="orderIdsForInvoice" value="">
+                                <button type="submit" class="btn btn-sm"
+                                    style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: white;"
+                                    title="إنشاء فاتورة للطلبات المحددة">📄 إنشاء فاتورة</button>
                             </form>
 
                             <!-- Bulk Send as Inquiry (Companies Only) -->
@@ -394,8 +405,10 @@
 
                                 var orderIdsForInquiry = document.getElementById('orderIdsForInquiry');
                                 var orderIdsForInquiryAll = document.getElementById('orderIdsForInquiryAll');
+                                var orderIdsForInvoiceEl = document.getElementById('orderIdsForInvoice');
                                 if (orderIdsForInquiry) orderIdsForInquiry.value = idsStr;
                                 if (orderIdsForInquiryAll) orderIdsForInquiryAll.value = idsStr;
+                                if (orderIdsForInvoiceEl) orderIdsForInvoiceEl.value = idsStr;
 
                                 if (bulkActionsBar) {
                                     if (ids.length > 0) {
@@ -539,6 +552,22 @@
                                     if (!orderIdsForInquiryAll || !orderIdsForInquiryAll.value) {
                                         e.preventDefault();
                                         alert('يرجى تحديد طلبات أولاً');
+                                    }
+                                });
+                            }
+
+                            // Invoice form validation
+                            var invoiceForm = document.getElementById('bulkCreateInvoiceForm');
+                            if (invoiceForm) {
+                                invoiceForm.addEventListener('submit', function (e) {
+                                    var orderIdsForInvoiceEl = document.getElementById('orderIdsForInvoice');
+                                    if (!orderIdsForInvoiceEl || !orderIdsForInvoiceEl.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً لإنشاء الفواتير');
+                                    } else {
+                                        if (!confirm('هل أنت متأكد من إنشاء فواتير للطلبات المحددة؟ سيتم إنشاء فاتورة منفصلة لكل طلب.')) {
+                                            e.preventDefault();
+                                        }
                                     }
                                 });
                             }

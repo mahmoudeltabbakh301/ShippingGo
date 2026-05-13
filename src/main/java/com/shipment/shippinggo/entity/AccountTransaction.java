@@ -28,6 +28,10 @@ public class AccountTransaction {
     @JoinColumn(name = "organization_id")
     private Organization organization;
 
+    // اسم المنظمة (يُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "organization_name")
+    private String organizationName;
+
     // المندوب (في حالة عمولة المندوب)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "courier_id")

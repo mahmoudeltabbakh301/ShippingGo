@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html th:replace="~{layouts/main :: html(content=~{::content}, pageCss=~{::pageCss})}">
+
+<th:block th:fragment="pageCss">
+    <link rel="stylesheet" th:href="@{/css/pages/notifications.css}">
+    <style>
+        .notifications-loading-spinner {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</th:block>
+
+<div th:fragment="content">
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1 class="page-title"><span style="margin-right: 5px;">🔔</span> <span th:text="#{notifications.title}">الإشعارات</span></h1>
+        <div class="page-actions" style="display: flex; gap: 0.75rem;">
+            <span class="notifications-count-label" th:if="${unreadCount > 0}">
+                <span th:text="${unreadCount}">0</span> <span th:text="#{notifications.unread}">غير مقروء</span>
+            </span>
+            <form th:action="@{/dashboard/notifications/mark-all-read}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-secondary" th:if="${unreadCount > 0}">
+                    ✓ <span th:text="#{notifications.mark_all_read}">تعليم الكل كمقروء</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="notifications-page-container">
+        <div th:if="${#lists.isEmpty(notifications)}" class="notifications-empty">
+            <div class="notifications-empty-icon">🔕</div>
+            <h3 th:text="#{notifications.empty_title}">لا توجد إشعارات</h3>
+            <p th:text="#{notifications.empty_message}">ستظهر هنا الإشعارات عند حدوث تحديثات على طلباتك ومنظمتك</p>
+        </div>
+
+        <div class="notifications-list" id="notificationsList" th:unless="${#lists.isEmpty(notifications)}"
+            th:data-current-page="${currentPage}" th:data-total-pages="${totalPages}">
+            <div th:each="notif : ${notifications}" th:class="${'notification-item' + (notif.read ? '' : ' unread')}"
+                th:data-id="${notif.id}">
+
+                <div class="notification-icon-wrapper">
+                    <span class="notification-type-icon" th:text="${notif.type == 'STATUS_UPDATE' ? '📦' : 
+                                    notif.type == 'ORG_ASSIGNMENT' || notif.type == 'BULK_ORG_ASSIGNMENT' ? '🏢' :
+                                    notif.type == 'ASSIGNMENT' || notif.type == 'BULK_ASSIGNMENT' ? '🚚' :
+                                    notif.type == 'UNASSIGNMENT' ? '❌' :
+                                    notif.type == 'CLIENT_ORDER' || notif.type == 'WEBHOOK_ORDER' ? '📥' :
+                                    notif.type == 'WORK_INVITATION' || notif.type == 'CLIENT_INVITATION' ? '📩' :
+                                    notif.type == 'INVITATION_RESPONSE' ? '✉️' :
+                                    '🔔'}">🔔</span>
+                    <span class="notification-unread-dot" th:if="${!notif.read}"></span>
+                </div>
+
+                <a th:href="${notif.linkUrl != null ? '/dashboard/notifications/go/' + notif.id : '/dashboard/notifications'}"
+                    class="notification-content-link">
+                    <div class="notification-content">
+                        <div class="notification-title"><bdi th:text="${notif.title}">عنوان الإشعار</bdi></div>
+                        <div class="notification-body"><bdi th:text="${notif.body}">تفاصيل الإشعار</bdi></div>
+                        <div class="notification-meta">
+                            <span class="notification-time" th:text="${notif.timeAgo}">منذ 5 دقائق</span>
+                            <span class="notification-type-badge" th:text="${
+                                notif.type == 'STATUS_UPDATE' ? #messages.msg('notifications.type.status_update') : 
+                                notif.type == 'ORG_ASSIGNMENT' || notif.type == 'BULK_ORG_ASSIGNMENT' ? #messages.msg('notifications.type.assignment') :
+                                notif.type == 'ASSIGNMENT' || notif.type == 'BULK_ASSIGNMENT' ? #messages.msg('notifications.type.delivery') :
+                                notif.type == 'UNASSIGNMENT' ? #messages.msg('notifications.type.unassignment') :
+                                notif.type == 'CLIENT_ORDER' || notif.type == 'WEBHOOK_ORDER' ? #messages.msg('notifications.type.new_order') :
+                                notif.type == 'WORK_INVITATION' || notif.type == 'CLIENT_INVITATION' ? #messages.msg('notifications.type.invitation') :
+                                notif.type == 'INVITATION_RESPONSE' ? #messages.msg('notifications.type.invitation_response') :
+                                #messages.msg('notifications.type.default')}">نوع</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Loading spinner for infinite scroll -->
+        <div id="infiniteScrollLoading" class="notifications-loading-spinner" style="display: none;">
+            <div class="spinner" th:text="#{notifications.loading_more}">جاري تحميل المزيد...</div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        const listContainer = document.getElementById('notificationsList');
+        const loadingSpinner = document.getElementById('infiniteScrollLoading');
+        if (!listContainer || !loadingSpinner) return;
+
+        let currentPage = parseInt(listContainer.getAttribute('data-current-page')) || 0;
+        let totalPages = parseInt(listContainer.getAttribute('data-total-pages')) || 1;
+        let isLoading = false;
+
+        // Helper to get correct icon
+        function getNotificationIcon(type) {
+            switch (type) {
+                case 'STATUS_UPDATE': return '📦';
+                case 'ORG_ASSIGNMENT': case 'BULK_ORG_ASSIGNMENT': return '🏢';
+                case 'ASSIGNMENT': case 'BULK_ASSIGNMENT': return '🚚';
+                case 'UNASSIGNMENT': return '❌';
+                case 'CLIENT_ORDER': case 'WEBHOOK_ORDER': return '📥';
+                case 'WORK_INVITATION': case 'CLIENT_INVITATION': return '📩';
+                case 'INVITATION_RESPONSE': return '✉️';
+                default: return '🔔';
+            }
+        }
+
+        // Helper to get correct type text
+        const i18nTypes = {
+            'STATUS_UPDATE': /*[[#{notifications.type.status_update}]]*/ 'تحديث حالة',
+            'ORG_ASSIGNMENT': /*[[#{notifications.type.assignment}]]*/ 'إسناد',
+            'ASSIGNMENT': /*[[#{notifications.type.delivery}]]*/ 'توصيل',
+            'UNASSIGNMENT': /*[[#{notifications.type.unassignment}]]*/ 'إلغاء إسناد',
+            'CLIENT_ORDER': /*[[#{notifications.type.new_order}]]*/ 'طلب جديد',
+            'WORK_INVITATION': /*[[#{notifications.type.invitation}]]*/ 'دعوة',
+            'INVITATION_RESPONSE': /*[[#{notifications.type.invitation_response}]]*/ 'رد على دعوة',
+            'DEFAULT': /*[[#{notifications.type.default}]]*/ 'إشعار'
+        };
+
+        function getNotificationTypeText(type) {
+            switch (type) {
+                case 'STATUS_UPDATE': return i18nTypes['STATUS_UPDATE'];
+                case 'ORG_ASSIGNMENT': case 'BULK_ORG_ASSIGNMENT': return i18nTypes['ORG_ASSIGNMENT'];
+                case 'ASSIGNMENT': case 'BULK_ASSIGNMENT': return i18nTypes['ASSIGNMENT'];
+                case 'UNASSIGNMENT': return i18nTypes['UNASSIGNMENT'];
+                case 'CLIENT_ORDER': case 'WEBHOOK_ORDER': return i18nTypes['CLIENT_ORDER'];
+                case 'WORK_INVITATION': case 'CLIENT_INVITATION': return i18nTypes['WORK_INVITATION'];
+                case 'INVITATION_RESPONSE': return i18nTypes['INVITATION_RESPONSE'];
+                default: return i18nTypes['DEFAULT'];
+            }
+        }
+
+        function loadMoreNotifications() {
+            if (isLoading || currentPage + 1 >= totalPages) return;
+            isLoading = true;
+            loadingSpinner.style.display = 'block';
+
+            let nextPage = currentPage + 1;
+            fetch('/api/v1/notifications?page=' + nextPage + '&size=20', {
+                credentials: 'same-origin',
+                headers: { 'Accept': 'application/json' }
+            })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.data && result.data.notifications) {
+                        const notifications = result.data.notifications;
+
+                        notifications.forEach(notif => {
+                            const item = document.createElement('div');
+                            item.className = 'notification-item' + (notif.read ? '' : ' unread');
+                            item.setAttribute('data-id', notif.id);
+
+                            const icon = getNotificationIcon(notif.type);
+                            const unreadDot = notif.read ? '' : '<span class="notification-unread-dot"></span>';
+                            const linkUrl = notif.linkUrl ? '/dashboard/notifications/go/' + notif.id : '/dashboard/notifications';
+                            const typeText = getNotificationTypeText(notif.type);
+
+                            item.innerHTML = `
+                        <div class="notification-icon-wrapper">
+                            <span class="notification-type-icon">${icon}</span>
+                            ${unreadDot}
+                        </div>
+                        <a href="${linkUrl}" class="notification-content-link">
+                            <div class="notification-content">
+                                <div class="notification-title"><bdi>${escapeHtml(notif.title)}</bdi></div>
+                                <div class="notification-body"><bdi>${escapeHtml(notif.body)}</bdi></div>
+                                <div class="notification-meta">
+                                    <span class="notification-time">${escapeHtml(notif.timeAgo || '')}</span>
+                                    <span class="notification-type-badge">${typeText}</span>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                            listContainer.appendChild(item);
+                        });
+
+                        currentPage = nextPage;
+                        totalPages = result.data.totalPages || totalPages;
+
+                        if (currentPage + 1 >= totalPages) {
+                            loadingSpinner.style.display = 'none';
+                            if (window.notifObserver) window.notifObserver.disconnect();
+                        } else {
+                            // Ready for next scroll
+                            loadingSpinner.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Failed to load more notifications:', err);
+                    loadingSpinner.style.display = 'none';
+                })
+                .finally(() => {
+                    isLoading = false;
+                });
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Use IntersectionObserver
+        window.notifObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // Once the spinner becomes visible, we trigger load More
+                // To ensure it works even if spinner height is 0, we can observe a threshold
+                if (entry.isIntersecting) {
+                    loadMoreNotifications();
+                }
+            });
+        }, {
+            rootMargin: '100px', // trigger a bit before reaching it
+            threshold: 0
+        });
+
+        if (currentPage + 1 < totalPages) {
+            // Show spinner so it can be intersected, or just keep it hidden until loading?
+            // Wait, if it's display: none, it cannot be intersected.
+            // It must be visible but maybe just an empty block if we don't want to show text.
+            // We can just keep display:block, visibility:hidden or just an empty div.
+            loadingSpinner.style.display = 'block';
+            loadingSpinner.innerHTML = ''; // hide text until actually loading
+            window.notifObserver.observe(loadingSpinner);
+        }
+    });
+</script>
+
+</html>

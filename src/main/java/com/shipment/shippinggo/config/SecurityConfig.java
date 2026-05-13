@@ -21,11 +21,14 @@ public class SecurityConfig {
 
         private final CustomUserDetailsService userDetailsService;
         private final com.shipment.shippinggo.security.JwtAuthenticationFilter jwtAuthFilter;
+        private final com.shipment.shippinggo.security.RoleRefreshFilter roleRefreshFilter;
 
         public SecurityConfig(CustomUserDetailsService userDetailsService,
-                        com.shipment.shippinggo.security.JwtAuthenticationFilter jwtAuthFilter) {
+                        com.shipment.shippinggo.security.JwtAuthenticationFilter jwtAuthFilter,
+                        com.shipment.shippinggo.security.RoleRefreshFilter roleRefreshFilter) {
                 this.userDetailsService = userDetailsService;
                 this.jwtAuthFilter = jwtAuthFilter;
+                this.roleRefreshFilter = roleRefreshFilter;
         }
 
         @Bean
@@ -68,12 +71,12 @@ public class SecurityConfig {
                                                 .requestMatchers("/css/**", "/js/**", "/images/**", "/img/**",
                                                                 "/webjars/**")
                                                 .permitAll()
-                                                // Public Verification API & WebSocket
-                                                .requestMatchers("/api/verify/**", "/api/orders/*/qr-image", "/ws/**")
+                                                // Public Verification API & WebSocket & Webhooks
+                                                .requestMatchers("/api/verify/**", "/api/orders/*/qr-image", "/ws/**", "/api/webhooks/**")
                                                 .permitAll()
                                                 // Auth pages & Health checks
                                                 .requestMatchers("/", "/login", "/register", "/register/**", "/verify",
-                                                                "/forgot-password", "/reset-password", "/actuator/**")
+                                                                "/forgot-password", "/reset-password", "/downloads", "/actuator/**")
                                                 .permitAll()
                                                 // Member Invitations (Accessible to all authenticated users)
                                                 .requestMatchers("/members/invitations",
@@ -112,10 +115,12 @@ public class SecurityConfig {
                                                 .hasAnyRole("ADMIN", "MANAGER", "DATA_ENTRY")
                                                 // Settings - all authenticated users
                                                 .requestMatchers("/settings/**").authenticated()
+                                                // Store Integrations (ADMIN, MANAGER)
+                                                .requestMatchers("/store/**").hasAnyRole("ADMIN", "MANAGER")
                                                 // User pages (for MEMBER role)
                                                 .requestMatchers("/user/**").hasRole("MEMBER")
                                                 // API Auth
-                                                .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                                                .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify", "/api/auth/refresh").permitAll()
                                                 // API endpoints for authenticated users
                                                 .requestMatchers("/api/v1/**", "/api/auth/me").authenticated()
                                                 .requestMatchers("/api/**").authenticated()
@@ -171,7 +176,10 @@ public class SecurityConfig {
                                                 }))
                                 // Add JWT filter
                                 .addFilterBefore(jwtAuthFilter,
-                                                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                                                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
+                                // Add Role Refresh filter (لتحديث الصلاحيات تلقائياً عند تغييرها من الأدمن)
+                                .addFilterAfter(roleRefreshFilter,
+                                                com.shipment.shippinggo.security.JwtAuthenticationFilter.class);
 
                 return http.build();
         }

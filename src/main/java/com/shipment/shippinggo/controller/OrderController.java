@@ -93,7 +93,8 @@ public class OrderController {
         model.addAttribute("couriers", organizationService.getCouriers(org));
         if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
             model.addAttribute("offices", organizationService.getOfficesByCompany(org.getId()));
-        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
+        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE
+                || org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
             model.addAttribute("companies", organizationService.getCompaniesByStore(org.getId()));
             model.addAttribute("offices", organizationService.getOfficesByStore(org.getId()));
         } else {
@@ -244,7 +245,8 @@ public class OrderController {
 
         if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
             model.addAttribute("offices", organizationService.getOfficesByCompany(org.getId()));
-        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
+        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE
+                || org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
             model.addAttribute("companies", organizationService.getCompaniesByStore(org.getId()));
             model.addAttribute("offices", organizationService.getOfficesByStore(org.getId()));
         } else {
@@ -305,8 +307,9 @@ public class OrderController {
             } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
                 // Offices see their linked peer offices
                 model.addAttribute("offices", organizationService.getLinkedOffices(org.getId()));
-            } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
-                // Stores see linked companies to assign to
+            } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE
+                    || org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+                // Stores and Clients see linked companies to assign to
                 model.addAttribute("companies", organizationService.getCompaniesByStore(org.getId()));
                 model.addAttribute("offices", organizationService.getOfficesByStore(org.getId()));
             } else {
@@ -328,7 +331,7 @@ public class OrderController {
         }
 
         // إضافة سلسلة الإسناد وصلاحيات إلغاء الإسناد
-        model.addAttribute("assignmentChain", orderService.getAssignmentChain(id));
+        model.addAttribute("assignmentChain", orderService.getAssignmentChainForViewer(id, org));
         model.addAttribute("canUnassignOrg", orderService.canUnassignOrganization(id, user));
         model.addAttribute("canUnassignCourier", order.getAssignedToCourier() != null
                 && order.getStatus() != OrderStatus.DELIVERED
@@ -631,7 +634,7 @@ public class OrderController {
             RedirectAttributes redirectAttributes) {
         try {
             List<Long> orderIdList = parseIds(orderIds);
-            
+
             if (orderIdList.isEmpty()) {
                 redirectAttributes.addFlashAttribute("error", "يرجى تحديد طلبات أولاً");
                 return "redirect:/business-days/" + businessDayId;
@@ -681,7 +684,8 @@ public class OrderController {
      */
     private List<Long> parseIds(String idsStr) {
         List<Long> ids = new java.util.ArrayList<>();
-        if (idsStr == null || idsStr.trim().isEmpty()) return ids;
+        if (idsStr == null || idsStr.trim().isEmpty())
+            return ids;
         for (String idStr : idsStr.split(",")) {
             try {
                 ids.add(Long.parseLong(idStr.trim()));
@@ -806,7 +810,7 @@ public class OrderController {
         // === حماية: التحقق من أن الأوردر يتبع لمنظمة المستخدم ===
         if (order != null && !order.getOwnerOrganization().getId().equals(org.getId())) {
             redirectAttributes.addFlashAttribute("error", "غير مصرح: لا يمكنك حذف طلب لمنظمة أخرى");
-            return "redirect:/orders";
+            return "redirect:/dashboard";
         }
 
         Long businessDayId = order != null && order.getBusinessDay() != null ? order.getBusinessDay().getId() : null;
@@ -819,12 +823,12 @@ public class OrderController {
                 // ownership/access)
                 return "redirect:/business-days/" + businessDayId;
             }
-            return "redirect:/orders";
+            return "redirect:/business-days/" + businessDayId;
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "فشل حذف الطلب: " + e.getMessage());
             // On error, redirect to generic orders page to avoid exposing other org's days
             // or if the user doesn't have access
-            return "redirect:/orders";
+            return "redirect:/business-days/" + businessDayId;
         }
     }
 

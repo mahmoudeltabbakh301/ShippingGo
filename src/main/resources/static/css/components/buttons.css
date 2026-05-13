@@ -61,40 +61,40 @@
 /* Success Button */
 .btn-success {
     background: var(--success);
-    color: white;
-    box-shadow: 0 1px 3px rgba(22, 163, 74, 0.2);
+    color: var(--text-inverse);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .btn-success:hover:not(:disabled) {
-    background: #15803d;
+    background: var(--success-500);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Danger Button */
 .btn-danger {
     background: var(--danger);
-    color: white;
-    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+    color: var(--text-inverse);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .btn-danger:hover:not(:disabled) {
-    background: #b91c1c;
+    background: var(--danger-500);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Warning Button */
 .btn-warning {
     background: var(--warning);
-    color: white;
-    box-shadow: 0 1px 3px rgba(202, 138, 4, 0.2);
+    color: var(--text-inverse);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .btn-warning:hover:not(:disabled) {
-    background: #a16207;
+    background: var(--warning-500);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(202, 138, 4, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Outline Variants */

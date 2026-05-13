@@ -1,6 +1,7 @@
 package com.shipment.shippinggo.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -39,6 +40,31 @@ public class JwtUtil {
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return buildToken(extraClaims, userDetails, jwtExpiration);
+    }
+
+    /**
+     * Generate a mobile token with 10-year expiration.
+     * Mobile sessions should persist until the user explicitly logs out.
+     */
+    public String generateMobileToken(UserDetails userDetails) {
+        return generateMobileToken(new HashMap<>(), userDetails);
+    }
+
+    public String generateMobileToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        long tenYears = 10L * 365 * 24 * 60 * 60 * 1000; // 10 years in milliseconds
+        return buildToken(extraClaims, userDetails, tenYears);
+    }
+
+    /**
+     * Extract username from an expired token (ignores expiration validation).
+     * Used for the refresh token flow on mobile.
+     */
+    public String extractUsernameIgnoringExpiration(String token) {
+        try {
+            return extractUsername(token);
+        } catch (ExpiredJwtException e) {
+            return e.getClaims().getSubject();
+        }
     }
 
     private String buildToken(Map<String, Object> extraClaims, UserDetails userDetails, long expiration) {

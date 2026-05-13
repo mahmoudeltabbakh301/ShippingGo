@@ -280,6 +280,10 @@ public class OrderService {
         return orderAssignmentService.getAssignmentChain(orderId);
     }
 
+    public List<OrderAssignment> getAssignmentChainForViewer(Long orderId, Organization viewerOrg) {
+        return orderAssignmentService.getAssignmentChainForViewer(orderId, viewerOrg);
+    }
+
     public boolean canUnassignOrganization(Long orderId, User user) {
         return orderAssignmentService.canUnassignOrganization(orderId, user);
     }

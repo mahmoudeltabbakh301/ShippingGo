@@ -15,6 +15,7 @@ import com.shipment.shippinggo.enums.Governorate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(com.shipment.shippinggo.listener.OrderCacheEvictionListener.class)
 public class CommissionSetting {
 
     @Id
@@ -30,6 +31,13 @@ public class CommissionSetting {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_organization_id")
     private Organization targetOrganization;
+
+    // أسماء المنظمات (تُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "source_organization_name")
+    private String sourceOrganizationName;
+
+    @Column(name = "target_organization_name")
+    private String targetOrganizationName;
 
     // المندوب (في حالة عمولة المندوب) - nullable للعلاقات بين المنظمات
     @ManyToOne(fetch = FetchType.LAZY)

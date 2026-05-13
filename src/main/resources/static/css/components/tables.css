@@ -75,25 +75,25 @@
 
 .badge-waiting {
     background: var(--warning-light);
-    color: #a16207;
+    color: var(--warning-text);
     border: 1px solid var(--warning-border);
 }
 
 .badge-transit {
     background: var(--info-light);
-    color: #1d4ed8;
+    color: var(--info-text);
     border: 1px solid var(--info-border);
 }
 
 .badge-delivered {
     background: var(--success-light);
-    color: #15803d;
+    color: var(--success-text);
     border: 1px solid var(--success-border);
 }
 
 .badge-cancelled {
     background: var(--danger-light);
-    color: #b91c1c;
+    color: var(--danger-text);
     border: 1px solid var(--danger-border);
 }
 
@@ -111,13 +111,13 @@
 
 .badge-accepted {
     background: var(--success-light);
-    color: #15803d;
+    color: var(--success-text);
     border: 1px solid var(--success-border);
 }
 
 .badge-rejected {
     background: var(--danger-light);
-    color: #b91c1c;
+    color: var(--danger-text);
     border: 1px solid var(--danger-border);
 }
 

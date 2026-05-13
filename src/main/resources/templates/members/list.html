@@ -60,7 +60,7 @@
                         <div class="form-group" style="min-width: 150px; margin-bottom: 0;">
                             <label class="form-label" th:text="#{members.list.invite_role_label}">الوظيفة</label>
                             <select name="role" class="form-control" required>
-                                <option value="COURIER" th:text="#{role.COURIER}">مندوب توصيل</option>
+                                <option value="COURIER" th:if="${currentOrgType != 'STORE'}" th:text="#{role.COURIER}">مندوب توصيل</option>
                                 <option value="DATA_ENTRY" th:text="#{role.DATA_ENTRY}">موظف إدخال بيانات</option>
                                 <option value="ACCOUNTANT" th:text="#{role.ACCOUNTANT}">محاسب</option>
                                 <option value="FOLLOW_UP" th:text="#{role.FOLLOW_UP}">متابعة</option>
@@ -153,7 +153,7 @@
                                         <div>
                                             <div style="font-weight: 600;" th:text="${m.user.fullName}"></div>
                                             <div style="font-size: 0.75rem; color: var(--text-secondary);"
-                                                th:text="${m.user.email}"></div>
+                                                th:text="${m.user.phone} ?: '-'"></div>
                                         </div>
                                     </div>
                                 </td>
@@ -168,7 +168,7 @@
                                             style="display: flex; gap: var(--space-2);">
                                             <select name="role" class="form-control form-control-sm"
                                                 style="width: auto;">
-                                                <option value="COURIER"
+                                                <option value="COURIER" th:if="${currentOrgType != 'STORE'}"
                                                     th:selected="${m.assignedRole.name() == 'COURIER'}"
                                                     th:text="#{role.COURIER}">مندوب توصيل</option>
                                                 <option value="DATA_ENTRY"

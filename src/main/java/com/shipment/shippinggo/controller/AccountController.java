@@ -66,7 +66,7 @@ public class AccountController {
         Pageable pageable = PageRequest.of(page, pageSize);
         Page<AccountBusinessDay> accountDaysPage = accountBusinessDayRepository
                 .findByOrganizationIdAndBusinessDayIsCustodyFalseOrderByBusinessDayDateDesc(org.getId(), pageable);
-                
+
         model.addAttribute("accountDays", accountDaysPage.getContent());
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", accountDaysPage.getTotalPages());
@@ -145,6 +145,19 @@ public class AccountController {
                 .sum();
         model.addAttribute("countIncomingTransactions", countIncomingTransactions);
 
+        // عمولة غير مسند
+        BigDecimal unassignedCommission = accountSummaries.stream()
+                .filter(s -> "unassigned".equals(s.getType()))
+                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        model.addAttribute("unassignedCommission", unassignedCommission);
+
+        long countUnassignedOrders = accountSummaries.stream()
+                .filter(s -> "unassigned".equals(s.getType()))
+                .mapToLong(AccountSummaryDTO::getTotalOrders)
+                .sum();
+        model.addAttribute("countUnassignedOrders", countUnassignedOrders);
+
         // الفرق الصافي = الوارد - الصادر (موجب يعني لصالحنا، سالب يعني علينا)
         BigDecimal commissionDifference = totalIncomingCommission.subtract(totalOutgoingCommission);
         model.addAttribute("commissionDifference", commissionDifference);
@@ -219,23 +232,27 @@ public class AccountController {
             List<Order> orders;
             AccountSummaryDTO summary;
             if (businessDayId != null) {
-                summary = accountService.getOrganizationAccountSummaryByBusinessDay(sourceOrg, targetOrg, businessDayId, direction);
-                orders = accountService.getOrdersAssignedToOrganizationByBusinessDay(sourceOrg, targetOrg, businessDayId, direction);
+                summary = accountService.getOrganizationAccountSummaryByBusinessDay(sourceOrg, targetOrg, businessDayId,
+                        direction);
+                orders = accountService.getOrdersAssignedToOrganizationByBusinessDay(sourceOrg, targetOrg,
+                        businessDayId, direction);
             } else {
                 summary = accountService.getOrganizationAccountSummary(sourceOrg, targetOrg, direction, null);
                 orders = accountService.getOrdersAssignedToOrganization(sourceOrg, targetOrg, direction);
             }
 
-            java.io.ByteArrayInputStream in = excelExportService.exportOrganizationAccountToExcel(orders, sourceOrg, targetOrg, direction, summary);
-            
+            java.io.ByteArrayInputStream in = excelExportService.exportOrganizationAccountToExcel(orders, sourceOrg,
+                    targetOrg, direction, summary);
+
             HttpHeaders headers = new HttpHeaders();
             String fileName = "organization-account-" + targetOrg.getName() + ".xlsx";
             headers.add("Content-Disposition", "attachment; filename=" + java.net.URLEncoder.encode(fileName, "UTF-8"));
-            
+
             return ResponseEntity
                     .ok()
                     .headers(headers)
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentType(MediaType
+                            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(new InputStreamResource(in));
         } catch (Exception e) {
             e.printStackTrace();
@@ -276,7 +293,7 @@ public class AccountController {
     }
 
     @GetMapping("/courier/{id}/export")
-    public ResponseEntity<InputStreamResource> exportCourierAccount(@CurrentOrganization Organization org, 
+    public ResponseEntity<InputStreamResource> exportCourierAccount(@CurrentOrganization Organization org,
             @AuthenticationPrincipal User user,
             @PathVariable Long id,
             @RequestParam(required = false) Long businessDayId) {
@@ -297,15 +314,16 @@ public class AccountController {
             }
 
             java.io.ByteArrayInputStream in = excelExportService.exportCourierAccountToExcel(orders, courier, summary);
-            
+
             HttpHeaders headers = new HttpHeaders();
             String fileName = "courier-account-" + courier.getFullName() + ".xlsx";
             headers.add("Content-Disposition", "attachment; filename=" + java.net.URLEncoder.encode(fileName, "UTF-8"));
-            
+
             return ResponseEntity
                     .ok()
                     .headers(headers)
-                    .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                    .contentType(MediaType
+                            .parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                     .body(new InputStreamResource(in));
         } catch (Exception e) {
             e.printStackTrace();
@@ -327,6 +345,10 @@ public class AccountController {
 
     @GetMapping("/settings")
     public String showSettings(@CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
+
+        if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            return "redirect:/dashboard";
+        }
 
         // إعدادات العمولات الحالية
         List<CommissionSetting> commissionSettings = accountService.getCommissionSettings(org);
@@ -368,6 +390,7 @@ public class AccountController {
 
             accountService.saveOrganizationCommission(sourceOrg, targetOrg, commissionType, commissionValue,
                     rejectionCommission, cancellationCommission, governorate);
+            accountService.clearDashboardCache();
             redirectAttributes.addFlashAttribute("success", "تم حفظ إعداد العمولة بنجاح");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
@@ -407,6 +430,7 @@ public class AccountController {
 
             accountService.saveCourierCommission(sourceOrg, courier, commissionType, commissionValue,
                     rejectionCommission, cancellationCommission);
+            accountService.clearDashboardCache();
             redirectAttributes.addFlashAttribute("success", "تم حفظ عمولة المندوب بنجاح");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
@@ -418,7 +442,7 @@ public class AccountController {
     @PostMapping("/update-rejection-payment")
     public String updateRejectionPayment(@CurrentOrganization Organization org, @AuthenticationPrincipal User user,
             @RequestParam Long orderId,
-            @RequestParam BigDecimal rejectionPayment,
+            @RequestParam(required = false) BigDecimal rejectionPayment,
             @RequestParam(required = false) Long businessDayId,
             @RequestParam(required = false) Long courierId,
             RedirectAttributes redirectAttributes) {
@@ -440,8 +464,15 @@ public class AccountController {
                 return "redirect:/accounts";
             }
 
+            if (rejectionPayment == null) {
+                rejectionPayment = BigDecimal.ZERO;
+            }
             order.setRejectionPayment(rejectionPayment);
             orderRepository.save(order);
+
+            // مسح الكاش لضمان ظهور المبلغ المحدث فوراً وعدم التأخير
+            accountService.clearDashboardCache();
+
             redirectAttributes.addFlashAttribute("success", "تم تحديث مبلغ الرفض بنجاح");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
@@ -486,7 +517,7 @@ public class AccountController {
 
             order.setManualCourierCommission(manualCourierCommission);
             orderRepository.save(order);
-            
+
             // تحديث المعاملات المالية المرتبطة ومسح الكاش
             accountService.updateManualCommissionTransactions(order);
             accountService.clearDashboardCache();
@@ -522,11 +553,69 @@ public class AccountController {
             }
 
             accountService.deleteCommissionSetting(settingId);
+            accountService.clearDashboardCache();
             redirectAttributes.addFlashAttribute("success", "تم حذف إعداد العمولة بنجاح");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
         }
 
         return "redirect:/accounts/settings";
+    }
+
+    /**
+     * حفظ عمولة غير مسند
+     */
+    @PostMapping("/settings/unassigned")
+    public String saveUnassignedCommission(@CurrentOrganization Organization sourceOrg,
+            @AuthenticationPrincipal User user,
+            @RequestParam CommissionType commissionType,
+            @RequestParam BigDecimal commissionValue,
+            @RequestParam(required = false) BigDecimal rejectionCommission,
+            @RequestParam(required = false) BigDecimal cancellationCommission,
+            @RequestParam(required = false) com.shipment.shippinggo.enums.Governorate governorate,
+            RedirectAttributes redirectAttributes) {
+        try {
+            accountService.saveUnassignedCommission(sourceOrg, commissionType, commissionValue,
+                    rejectionCommission, cancellationCommission, governorate);
+            accountService.clearDashboardCache();
+            redirectAttributes.addFlashAttribute("success", "تم حفظ عمولة غير مسند بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
+        }
+
+        return "redirect:/accounts/settings";
+    }
+
+    /**
+     * عرض تفاصيل الأوردرات غير المسندة
+     */
+    @GetMapping("/unassigned")
+    public String showUnassignedOrders(@CurrentOrganization Organization org, @AuthenticationPrincipal User user,
+            @RequestParam(required = false) Long businessDayId,
+            Model model) {
+
+        if (org == null) {
+            return "redirect:/accounts";
+        }
+
+        List<com.shipment.shippinggo.entity.Order> orders;
+        AccountSummaryDTO summary;
+
+        if (businessDayId != null) {
+            orders = orderRepository.findUnassignedOrdersByBusinessDay(org.getId(), businessDayId);
+        } else {
+            orders = orderRepository.findUnassignedOrdersByOrganization(org.getId());
+        }
+
+        // حساب الملخص عبر الـ service المحقون (بدلاً من إنشاء instance جديد)
+        summary = accountService.getUnassignedOrdersSummary(org, orders);
+
+        model.addAttribute("summary", summary);
+        model.addAttribute("orders", orders);
+        model.addAttribute("businessDayId", businessDayId);
+        model.addAttribute("organization", org);
+        model.addAttribute("pageTitle", "حساب: غير مسند");
+
+        return "accounts/unassigned-detail";
     }
 }

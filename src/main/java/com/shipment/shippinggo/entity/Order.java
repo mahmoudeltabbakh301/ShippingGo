@@ -2,6 +2,7 @@ package com.shipment.shippinggo.entity;
 
 import com.shipment.shippinggo.enums.OrderStatus;
 import jakarta.persistence.*;
+
 import lombok.*;
 
 import com.shipment.shippinggo.enums.Governorate;
@@ -10,6 +11,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import com.shipment.shippinggo.listener.OrderCacheEvictionListener;
 
 @Entity
 @Table(name = "orders", indexes = {
@@ -28,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EntityListeners(OrderCacheEvictionListener.class)
 public class Order {
 
     @Id
@@ -92,6 +96,15 @@ public class Order {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    // رقم الطلب في المنصة الخارجية (شوبيفاي، ويلت، إلخ)
+    @Column(name = "external_order_id")
+    private String externalOrderId;
+
+    // المنصة المصدر للطلب (null = مدخل يدوياً)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source_platform")
+    private com.shipment.shippinggo.enums.IntegrationPlatform sourcePlatform;
+
     // محافظة الاوردر
     @Enumerated(EnumType.STRING)
     private Governorate governorate;
@@ -129,6 +142,19 @@ public class Order {
     @JoinColumn(name = "assigned_to_organization_id")
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Organization assignedToOrganization;
+
+    // أسماء المنظمات (تُحفظ عند حذف المكتب الافتراضي)
+    @Column(name = "assigned_to_organization_name")
+    private String assignedToOrganizationName;
+
+    @Column(name = "owner_organization_name")
+    private String ownerOrganizationName;
+
+    @Column(name = "creator_organization_name")
+    private String creatorOrganizationName;
+
+    @Column(name = "custody_organization_name")
+    private String custodyOrganizationName;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_courier_id")
@@ -182,10 +208,9 @@ public class Order {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private Organization custodySetterOrganization;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
-    private Invoice invoice;
+    private java.util.List<Invoice> invoices;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

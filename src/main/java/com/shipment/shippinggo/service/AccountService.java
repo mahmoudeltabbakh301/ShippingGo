@@ -71,6 +71,18 @@ public class AccountService {
         commissionService.deleteCommissionSetting(id);
     }
 
+    public CommissionSetting saveUnassignedCommission(Organization sourceOrg,
+            CommissionType type, BigDecimal value, BigDecimal rejectionCommission, BigDecimal cancellationCommission,
+            com.shipment.shippinggo.enums.Governorate governorate) {
+        return commissionService.saveUnassignedCommission(sourceOrg, type, value, rejectionCommission,
+                cancellationCommission, governorate);
+    }
+
+    public java.util.Optional<CommissionSetting> getUnassignedCommission(Organization sourceOrg,
+            com.shipment.shippinggo.enums.Governorate governorate) {
+        return commissionService.getUnassignedCommission(sourceOrg, governorate);
+    }
+
     public void recordCommission(Order order, Organization organization, User courier, BigDecimal amount,
             String description) {
         commissionService.recordCommission(order, organization, courier, amount, description);
@@ -255,5 +267,10 @@ public class AccountService {
         Organization assigner = resolveAssigner(sourceOrg, targetOrg, direction);
         Organization assignee = resolveAssignee(sourceOrg, targetOrg, direction);
         return accountSummaryService.getDirectionalSummary(sourceOrg, assignee, assigner, businessDay);
+    }
+
+    public com.shipment.shippinggo.dto.AccountSummaryDTO getUnassignedOrdersSummary(Organization org,
+            java.util.List<Order> orders) {
+        return accountSummaryService.calculateUnassignedSummary(org, orders);
     }
 }

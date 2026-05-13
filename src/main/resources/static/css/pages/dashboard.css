@@ -57,7 +57,7 @@
 .dashboard-date .live-dot {
     width: 8px;
     height: 8px;
-    background: #22c55e;
+    background: var(--gray-900);
     border-radius: 50%;
     display: inline-block;
     animation: pulse-subtle 2s ease-in-out infinite;
@@ -205,26 +205,15 @@
 }
 
 .dashboard-stat-icon.icon-primary { background: var(--gray-950); color: var(--text-inverse); }
-.dashboard-stat-icon.icon-transit { background: #eff6ff; color: #2563eb; }
-.dashboard-stat-icon.icon-delivered { background: #f0fdf4; color: #16a34a; }
-.dashboard-stat-icon.icon-money { background: #fefce8; color: #ca8a04; }
-.dashboard-stat-icon.icon-refused { background: #fef2f2; color: #dc2626; }
-.dashboard-stat-icon.icon-cancelled { background: #fafafa; color: #737373; }
-.dashboard-stat-icon.icon-deferred { background: #f5f3ff; color: #7c3aed; }
-.dashboard-stat-icon.icon-waiting { background: #fff7ed; color: #ea580c; }
-.dashboard-stat-icon.icon-couriers { background: #ecfdf5; color: #059669; }
-.dashboard-stat-icon.icon-partial { background: #fdf4ff; color: #a855f7; }
-
-[data-theme="dark"] .dashboard-stat-icon.icon-primary { background: var(--gray-700); color: var(--text-primary); }
-[data-theme="dark"] .dashboard-stat-icon.icon-transit { background: #1e293b; color: #60a5fa; }
-[data-theme="dark"] .dashboard-stat-icon.icon-delivered { background: #052e16; color: #4ade80; }
-[data-theme="dark"] .dashboard-stat-icon.icon-money { background: #422006; color: #fbbf24; }
-[data-theme="dark"] .dashboard-stat-icon.icon-refused { background: #450a0a; color: #f87171; }
-[data-theme="dark"] .dashboard-stat-icon.icon-cancelled { background: var(--gray-300); color: var(--gray-600); }
-[data-theme="dark"] .dashboard-stat-icon.icon-deferred { background: #2e1065; color: #a78bfa; }
-[data-theme="dark"] .dashboard-stat-icon.icon-waiting { background: #431407; color: #fb923c; }
-[data-theme="dark"] .dashboard-stat-icon.icon-couriers { background: #022c22; color: #34d399; }
-[data-theme="dark"] .dashboard-stat-icon.icon-partial { background: #3b0764; color: #c084fc; }
+.dashboard-stat-icon.icon-transit { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-delivered { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-money { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-refused { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-cancelled { background: var(--gray-100); color: var(--gray-600); }
+.dashboard-stat-icon.icon-deferred { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-waiting { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-couriers { background: var(--gray-100); color: var(--gray-800); }
+.dashboard-stat-icon.icon-partial { background: var(--gray-100); color: var(--gray-800); }
 
 .dashboard-stat-content {
     flex: 1;
@@ -352,33 +341,18 @@
 }
 
 .leaderboard-rank.rank-1 {
-    background: #fef3c7;
-    color: #b45309;
+    background: var(--gray-900);
+    color: var(--text-inverse);
 }
 
 .leaderboard-rank.rank-2 {
-    background: #e5e7eb;
-    color: #4b5563;
+    background: var(--gray-800);
+    color: var(--text-inverse);
 }
 
 .leaderboard-rank.rank-3 {
-    background: #fed7aa;
-    color: #c2410c;
-}
-
-[data-theme="dark"] .leaderboard-rank.rank-1 {
-    background: #422006;
-    color: #fbbf24;
-}
-
-[data-theme="dark"] .leaderboard-rank.rank-2 {
-    background: #374151;
-    color: #d1d5db;
-}
-
-[data-theme="dark"] .leaderboard-rank.rank-3 {
-    background: #431407;
-    color: #fb923c;
+    background: var(--gray-700);
+    color: var(--text-inverse);
 }
 
 .leaderboard-info {
@@ -470,13 +444,13 @@
     border-radius: 50%;
 }
 
-.activity-status-dot.dot-waiting { background: #ea580c; }
-.activity-status-dot.dot-in-transit { background: #2563eb; }
-.activity-status-dot.dot-delivered { background: #16a34a; }
-.activity-status-dot.dot-refused { background: #dc2626; }
-.activity-status-dot.dot-cancelled { background: #737373; }
-.activity-status-dot.dot-deferred { background: #7c3aed; }
-.activity-status-dot.dot-partial { background: #a855f7; }
+.activity-status-dot.dot-waiting { background: var(--gray-900); }
+.activity-status-dot.dot-in-transit { background: var(--gray-800); }
+.activity-status-dot.dot-delivered { background: var(--gray-700); }
+.activity-status-dot.dot-refused { background: var(--gray-950); }
+.activity-status-dot.dot-cancelled { background: var(--gray-400); }
+.activity-status-dot.dot-deferred { background: var(--gray-600); }
+.activity-status-dot.dot-partial { background: var(--gray-500); }
 
 .activity-info {
     flex: 1;
@@ -514,21 +488,13 @@
     font-weight: 600;
 }
 
-.activity-badge.badge-waiting { background: #fff7ed; color: #c2410c; }
-.activity-badge.badge-transit { background: #eff6ff; color: #1d4ed8; }
-.activity-badge.badge-delivered { background: #f0fdf4; color: #15803d; }
-.activity-badge.badge-refused { background: #fef2f2; color: #b91c1c; }
-.activity-badge.badge-cancelled { background: #f5f5f5; color: #525252; }
-.activity-badge.badge-deferred { background: #f5f3ff; color: #6d28d9; }
-.activity-badge.badge-partial { background: #fdf4ff; color: #9333ea; }
-
-[data-theme="dark"] .activity-badge.badge-waiting { background: #431407; color: #fb923c; }
-[data-theme="dark"] .activity-badge.badge-transit { background: #1e293b; color: #60a5fa; }
-[data-theme="dark"] .activity-badge.badge-delivered { background: #052e16; color: #4ade80; }
-[data-theme="dark"] .activity-badge.badge-refused { background: #450a0a; color: #f87171; }
-[data-theme="dark"] .activity-badge.badge-cancelled { background: var(--gray-300); color: var(--gray-600); }
-[data-theme="dark"] .activity-badge.badge-deferred { background: #2e1065; color: #a78bfa; }
-[data-theme="dark"] .activity-badge.badge-partial { background: #3b0764; color: #c084fc; }
+.activity-badge.badge-waiting { background: var(--gray-100); color: var(--gray-800); }
+.activity-badge.badge-transit { background: var(--gray-100); color: var(--gray-800); }
+.activity-badge.badge-delivered { background: var(--gray-100); color: var(--gray-800); }
+.activity-badge.badge-refused { background: var(--gray-100); color: var(--gray-800); }
+.activity-badge.badge-cancelled { background: var(--gray-100); color: var(--gray-600); }
+.activity-badge.badge-deferred { background: var(--gray-100); color: var(--gray-800); }
+.activity-badge.badge-partial { background: var(--gray-100); color: var(--gray-800); }
 
 /* Empty State */
 .dashboard-empty {
@@ -564,11 +530,11 @@
 }
 
 .courier-orders-badge.delivered {
-    color: #16a34a;
+    color: var(--gray-800);
 }
 
 .courier-orders-badge.refused {
-    color: #dc2626;
+    color: var(--gray-600);
 }
 
 /* Counter Animation */

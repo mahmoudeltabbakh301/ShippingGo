@@ -60,7 +60,10 @@
                         <div class="form-group">
                             <label class="form-label form-label-required" for="username" th:text="#{auth.username.label}">اسم المستخدم</label>
                             <input type="text" id="username" th:field="*{username}" class="form-control"
-                                th:placeholder="#{auth.username.placeholder}" required>
+                                th:classappend="${#fields.hasErrors('username')} ? 'is-invalid' : ''"
+                                th:placeholder="#{auth.username.placeholder}" pattern="^[a-zA-Z0-9._-]+$"
+                                title="اسم المستخدم لا يجب أن يحتوي على مسافات أو رموز خاصة" required>
+                            <div th:if="${#fields.hasErrors('username')}" class="invalid-feedback" th:errors="*{username}"></div>
                         </div>
                     </div>
 
@@ -96,7 +99,9 @@
                             th:text="#{auth.password.label}">كلمة المرور</label>
                         <input type="password" id="password" th:field="*{password}" class="form-control"
                             th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
-                            th:placeholder="#{auth.password.placeholder}" required>
+                            th:placeholder="#{auth.password.placeholder}" minlength="8"
+                            title="كلمة المرور يجب أن تكون 8 أحرف على الأقل" required>
+                        <div th:if="${#fields.hasErrors('password')}" class="invalid-feedback" th:errors="*{password}"></div>
                     </div>
 
                     <!-- Organization Option -->

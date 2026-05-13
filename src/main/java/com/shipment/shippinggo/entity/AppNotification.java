@@ -9,7 +9,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "app_notifications")
+@Table(name = "app_notifications", indexes = {
+        @Index(name = "idx_notif_user_created", columnList = "user_id, created_at DESC"),
+        @Index(name = "idx_notif_user_read", columnList = "user_id, is_read")
+})
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,6 +35,13 @@ public class AppNotification {
 
     @Column(nullable = false)
     private String type;
+
+    // الرابط الذي ينتقل إليه المستخدم عند النقر على الإشعار
+    @Column(length = 500)
+    private String linkUrl;
+
+    // معرف الكائن المرجعي (مثل orderId) لربط الإشعار بكائن محدد
+    private Long referenceId;
 
     @Column(nullable = false)
     private boolean isRead = false;

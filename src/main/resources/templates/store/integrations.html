@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+    layout:decorate="~{layouts/main}" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{integrations.page_title}">الربط الخارجي - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/modals.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" th:text="#{integrations.title}">🔗 الربط الخارجي</h1>
+                    <p class="text-muted" th:text="#{integrations.subtitle}">قم بربط منظمتك مع منصات ومتاجر وأنظمة خارجية لتلقي الطلبات تلقائياً</p>
+                </div>
+
+                <div class="page-header-actions">
+                    <button class="btn btn-primary" onclick="openModal('addIntegrationModal')">
+                        <span th:text="#{integrations.btn_add}">➕ إضافة ربط جديد</span>
+                    </button>
+                    <a th:if="${isStore}" th:href="@{/store/integrations/routing}" class="btn btn-secondary">
+                        <span th:text="#{integrations.btn_routing}">🛣️ قواعد التوزيع التلقائي</span>
+                    </a>
+                </div>
+            </div>
+
+            <div th:if="${success}" class="alert alert-success">
+                <span class="alert-icon">✓</span>
+                <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span class="alert-icon">✕</span>
+                <span th:text="${error}"></span>
+            </div>
+
+            <!-- API Documentation Quick Reference -->
+            <div class="card" style="margin-bottom: 1.5rem; border-right: 4px solid var(--primary);">
+                <div class="card-header" style="cursor: pointer;" onclick="toggleApiDocs()">
+                    <h3 class="card-title" th:text="#{integrations.api_docs_title}">📖 مرجع سريع للـ API</h3>
+                    <span id="apiDocsToggle" style="font-size: 1.2rem;">▼</span>
+                </div>
+                <div id="apiDocsContent" style="display: none; padding: 1rem;">
+                    <table class="table" style="margin-bottom: 0;">
+                        <thead>
+                            <tr>
+                                <th th:text="#{integrations.api_method}">الطريقة</th>
+                                <th>Endpoint</th>
+                                <th th:text="#{integrations.api_description}">الوصف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-success">POST</span></td>
+                                <td><code>/api/webhooks/orders</code></td>
+                                <td th:text="#{integrations.api_create_order}">إرسال طلب جديد</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">POST</span></td>
+                                <td><code>/api/webhooks/orders/batch</code></td>
+                                <td th:text="#{integrations.api_create_batch}">إرسال طلبات متعددة</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">GET</span></td>
+                                <td><code>/api/webhooks/orders/{externalId}/status</code></td>
+                                <td th:text="#{integrations.api_track_order}">تتبع حالة الطلب</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-success">POST</span></td>
+                                <td><code>/api/webhooks/orders/{externalId}/cancel</code></td>
+                                <td th:text="#{integrations.api_cancel_order}">إلغاء الطلب</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">GET</span></td>
+                                <td><code>/api/webhooks/governorates</code></td>
+                                <td th:text="#{integrations.api_governorates}">قائمة المحافظات</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">GET</span></td>
+                                <td><code>/api/webhooks/statuses</code></td>
+                                <td th:text="#{integrations.api_statuses}">قائمة الحالات</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="alert alert-info" style="margin-top: 1rem;">
+                        <span th:text="#{integrations.api_auth_note}">جميع الطلبات تتطلب Header: X-Api-Key: {المفتاح}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Integrations -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title" th:text="#{integrations.linked_platforms}">المنصات المربوطة</h3>
+                </div>
+                
+                <div th:if="${integrations == null or integrations.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">🔌</div>
+                    <div class="table-empty-text" th:text="#{integrations.empty}">لا يوجد أي منصات مربوطة حالياً. اضغط على إضافة ربط جديد للبدء.</div>
+                </div>
+
+                <div class="table-container" style="border: none;" th:if="${integrations != null and !integrations.isEmpty()}">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{integrations.col_platform}">المنصة</th>
+                                <th>Webhook URL / API Key</th>
+                                <th th:text="#{integrations.col_callback}">Callback URL</th>
+                                <th th:text="#{integrations.col_last_webhook}">آخر طلب</th>
+                                <th th:text="#{integrations.col_status}">الحالة</th>
+                                <th th:text="#{integrations.col_actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="integration : ${integrations}">
+                                <td>
+                                    <div style="font-weight: 500;" th:text="${integration.platform.displayName}">اسم المنصة</div>
+                                    <small th:if="${integration.externalStoreUrl != null}" th:text="${integration.externalStoreUrl}" style="color:var(--text-muted);"></small>
+                                </td>
+                                <td>
+                                    <div style="margin-bottom: 0.5rem;">
+                                        <small class="text-muted">Webhook URL:</small><br>
+                                        <code style="background:var(--bg-secondary); padding:0.2rem 0.5rem; border-radius:4px; font-size:0.85em; user-select:all;" 
+                                              th:text="${@environment.getProperty('app.url', 'http://localhost:8080')} + '/api/webhooks/orders'"></code>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">API Key (Header: X-Api-Key):</small><br>
+                                        <code style="background:var(--bg-secondary); padding:0.2rem 0.5rem; border-radius:4px; font-size:0.85em; user-select:all;" 
+                                              th:text="${integration.webhookApiKey}"></code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div th:if="${integration.callbackUrl != null and !integration.callbackUrl.isEmpty()}">
+                                        <code style="background:var(--bg-secondary); padding:0.2rem 0.5rem; border-radius:4px; font-size:0.8em; word-break:break-all;"
+                                              th:text="${integration.callbackUrl}"></code>
+                                        <div style="margin-top: 0.3rem;">
+                                            <small class="text-muted">Secret:</small>
+                                            <code style="font-size:0.75em;" th:text="${integration.callbackSecret}"></code>
+                                        </div>
+                                    </div>
+                                    <span th:if="${integration.callbackUrl == null or integration.callbackUrl.isEmpty()}" class="text-muted" th:text="#{integrations.no_callback}">غير محدد</span>
+                                    <br>
+                                    <button class="btn btn-sm btn-secondary" style="margin-top: 0.3rem; font-size: 0.75rem;"
+                                            th:onclick="'openCallbackModal(' + ${integration.id} + ', \'' + (${integration.callbackUrl} != null ? ${integration.callbackUrl} : '') + '\')'"
+                                            th:text="#{integrations.btn_edit_callback}">تعديل</button>
+                                </td>
+                                <td>
+                                    <span th:if="${integration.lastWebhookReceivedAt != null}" 
+                                          th:text="${#temporals.format(integration.lastWebhookReceivedAt, 'yyyy-MM-dd HH:mm')}"></span>
+                                    <span th:if="${integration.lastWebhookReceivedAt == null}" class="text-muted" th:text="#{integrations.no_webhooks_yet}">لم يتم استقبال طلبات بعد</span>
+                                </td>
+                                <td>
+                                    <span th:if="${integration.active}" class="badge badge-success" th:text="#{integrations.status_active}">مفعل</span>
+                                    <span th:if="${!integration.active}" class="badge badge-danger" th:text="#{integrations.status_inactive}">معطل</span>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <!-- Copy Key -->
+                                        <button class="btn btn-sm btn-secondary" th:onclick="'copyToClipboard(\'' + ${integration.webhookApiKey} + '\')'" th:text="#{integrations.btn_copy_key}">نسخ المفتاح</button>
+                                        
+                                        <!-- Toggle Status -->
+                                        <form th:action="@{/store/integrations/{id}/toggle(id=${integration.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm" th:classappend="${integration.active ? 'btn-danger' : 'btn-success'}"
+                                                    th:text="${integration.active} ? #{integrations.btn_disable} : #{integrations.btn_enable}"></button>
+                                        </form>
+                                        
+                                        <!-- Regenerate Key -->
+                                        <form th:action="@{/store/integrations/{id}/regenerate-key(id=${integration.id})}" method="post" class="d-inline"
+                                              th:attr="onsubmit='return confirm(\'' + #{integrations.confirm_regenerate} + '\');'">
+                                            <button type="submit" class="btn btn-sm btn-secondary" th:text="#{integrations.btn_regenerate}">مفتاح جديد</button>
+                                        </form>
+
+                                        <!-- Delete -->
+                                        <form th:action="@{/store/integrations/{id}/delete(id=${integration.id})}" method="post" class="d-inline"
+                                              th:attr="onsubmit='return confirm(\'' + #{integrations.confirm_delete} + '\');'">
+                                            <button type="submit" class="table-action-btn danger">✕</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Add Integration Modal -->
+            <div id="addIntegrationModal" class="modal">
+                <div class="modal-content" style="max-width: 550px;">
+                    <div class="modal-header">
+                        <h2 th:text="#{integrations.modal_add_title}">إضافة ربط جديد</h2>
+                        <button class="modal-close" onclick="closeModal('addIntegrationModal')">&times;</button>
+                    </div>
+                    <form th:action="@{/store/integrations/create}" method="post">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label" for="platform" th:text="#{integrations.label_platform}">اختر المنصة</label>
+                                <select id="platform" name="platform" class="form-control" required>
+                                    <option value="" th:text="#{integrations.select_platform}">اختر المنصة...</option>
+                                    <option th:each="p : ${platforms}" th:value="${p}" th:text="${p.displayName}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="form-label" for="externalStoreUrl" th:text="#{integrations.label_external_url}">رابط الموقع (اختياري)</label>
+                                <input type="url" id="externalStoreUrl" name="externalStoreUrl" class="form-control" placeholder="https://example.com">
+                            </div>
+                            
+                            <!-- Callback URL (for non-store orgs) -->
+                            <div class="form-group" style="margin-top: 1rem;">
+                                <label class="form-label" for="callbackUrl" th:text="#{integrations.label_callback_url}">رابط Callback (لاستقبال تحديثات الحالات)</label>
+                                <input type="url" id="callbackUrl" name="callbackUrl" class="form-control" placeholder="https://yoursystem.com/webhook/status-update">
+                                <small class="text-muted" th:text="#{integrations.callback_hint}">سيتم إرسال تحديثات حالة الطلبات تلقائياً لهذا الرابط</small>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3" style="margin-top: 1rem;">
+                                <span th:text="#{integrations.create_hint}">سيتم إنشاء API Key فريد و Webhook URL يمكنك إضافته في النظام الخارجي لإرسال الطلبات مباشرة إلى ShippingGo.</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('addIntegrationModal')" th:text="#{btn.cancel}">إلغاء</button>
+                            <button type="submit" class="btn btn-primary" th:text="#{integrations.btn_create}">إضافة وتوليد المفتاح</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Edit Callback URL Modal -->
+            <div id="callbackModal" class="modal">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2 th:text="#{integrations.modal_callback_title}">تعديل رابط الـ Callback</h2>
+                        <button class="modal-close" onclick="closeModal('callbackModal')">&times;</button>
+                    </div>
+                    <form id="callbackForm" method="post">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label class="form-label" for="editCallbackUrl" th:text="#{integrations.label_callback_url}">رابط Callback</label>
+                                <input type="url" id="editCallbackUrl" name="callbackUrl" class="form-control" placeholder="https://yoursystem.com/webhook/status-update">
+                                <small class="text-muted" th:text="#{integrations.callback_hint}">سيتم إرسال تحديثات حالة الطلبات تلقائياً لهذا الرابط</small>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal('callbackModal')" th:text="#{btn.cancel}">إلغاء</button>
+                            <button type="submit" class="btn btn-primary" th:text="#{btn.save}">حفظ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Close logic for modals
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('mousedown', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                }
+            });
+        });
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('تم نسخ الـ API Key إلى الحافظة!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        function toggleApiDocs() {
+            var content = document.getElementById('apiDocsContent');
+            var toggle = document.getElementById('apiDocsToggle');
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                toggle.textContent = '▲';
+            } else {
+                content.style.display = 'none';
+                toggle.textContent = '▼';
+            }
+        }
+
+        function openCallbackModal(integrationId, currentUrl) {
+            document.getElementById('editCallbackUrl').value = currentUrl || '';
+            document.getElementById('callbackForm').action = '/store/integrations/' + integrationId + '/update-callback';
+            openModal('callbackModal');
+        }
+    </script>
+</body>
+</html>

@@ -43,7 +43,8 @@
                         th:text="#{network.list.btn_companies}">تصفح الشركات</a>
                     <a th:href="@{/network/offices}" class="btn btn-secondary"
                         th:text="#{network.list.btn_offices}">تصفح المكاتب</a>
-
+                    <a th:href="@{/network/stores}" class="btn btn-secondary"
+                        th:text="#{network.list.btn_stores}">تصفح المتاجر</a>
                 </div>
             </div>
 
@@ -207,10 +208,10 @@
                 </div>
             </div>
 
-            <!-- ============== OUTGOING/PENDING REQUESTS (Office Only) ============== -->
-            <div class="card" th:if="${organization.type.name() == 'OFFICE' and 
-                                          ((pendingLinkRequests != null and !pendingLinkRequests.isEmpty()) or 
-                                           (outgoingOfficeRequests != null and !outgoingOfficeRequests.isEmpty()))}">
+            <!-- ============== OUTGOING/PENDING REQUESTS ============== -->
+            <div class="card" th:if="${(pendingLinkRequests != null and !pendingLinkRequests.isEmpty()) or 
+                                       (outgoingOfficeRequests != null and !outgoingOfficeRequests.isEmpty()) or 
+                                       (outgoingStoreRequests != null and !outgoingStoreRequests.isEmpty())}">
                 <div class="card-header">
                     <h3 class="card-title" th:text="#{network.list.outgoing_requests}">📤 طلباتي المرسلة</h3>
                 </div>
@@ -236,6 +237,47 @@
                                         <div style="font-weight: 500;" th:text="${req.parentOrganization.name}">اسم
                                             الشركة</div>
                                         <small th:text="${req.parentOrganization.address}">العنوان</small>
+                                    </td>
+                                    <td th:text="${#temporals.format(req.requestedAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                    <td>
+                                        <span class="badge badge-pending" th:text="#{network.list.status_pending}">قيد
+                                            الانتظار</span>
+                                    </td>
+                                    <td>
+                                        <form th:action="@{/network/cancel-request}" method="post"
+                                            sec:authorize="hasRole('ADMIN')">
+                                            <input type="hidden" name="relationId" th:value="${req.id}">
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                th:text="#{network.btn.cancel}">إلغاء</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Pending Store Requests -->
+                <div th:if="${outgoingStoreRequests != null and !outgoingStoreRequests.isEmpty()}">
+                    <h4 class="px-4 pt-3 mb-2" style="font-size: 1rem; color: var(--text-secondary);"
+                        th:text="#{network.list.pending_store_requests}">طلبات الانضمام
+                        للمتاجر</h4>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th th:text="#{network.col.store_name}">اسم المتجر</th>
+                                    <th th:text="#{network.col.date}">تاريخ الطلب</th>
+                                    <th th:text="#{network.col.status}">الحالة</th>
+                                    <th th:text="#{network.col.actions}">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="req : ${outgoingStoreRequests}">
+                                    <td>
+                                        <div style="font-weight: 500;" th:text="${req.childOrganization.name}">اسم
+                                            المتجر</div>
+                                        <small th:text="${req.childOrganization.address}">العنوان</small>
                                     </td>
                                     <td th:text="${#temporals.format(req.requestedAt, 'yyyy-MM-dd HH:mm')}"></td>
                                     <td>
@@ -510,17 +552,16 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr th:each="store : ${joinedStores}">
+                                <tr th:each="relation : ${storeRelations}">
                                     <td>
-                                        <div th:text="${store.name}" style="font-weight: 500;"></div>
-                                        <small th:text="${store.phone}">010...</small>
+                                        <div th:text="${relation.childOrganization.name}" style="font-weight: 500;"></div>
+                                        <small th:text="${relation.childOrganization.phone}">010...</small>
                                     </td>
                                     <td>
                                         <form th:action="@{/network/remove}" method="post"
                                             sec:authorize="hasRole('ADMIN')"
                                             th:onsubmit="|return confirm('#{network.remove_confirm_relation}');|">
-                                            <input type="hidden" name="relationId"
-                                                th:value="${storeRelations.?[childOrganization.id == __${store.id}__][0].id}">
+                                            <input type="hidden" name="relationId" th:value="${relation.id}">
                                             <button type="submit" class="btn btn-sm btn-danger"
                                                 th:text="#{network.btn.remove}">إزالة</button>
                                         </form>
@@ -529,6 +570,47 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+
+            <!-- ============== STORE VIEW: Incoming Requests ============== -->
+            <div th:if="${organization.type.name() == 'STORE' and incomingStoreRequests != null and !incomingStoreRequests.isEmpty()}" class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📥 <span th:text="#{network.list.incoming_requests}">طلبات الانضمام الواردة</span></h3>
+                </div>
+                <div class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{network.col.company_name}">اسم الشركة / المكتب</th>
+                                <th th:text="#{network.col.date}">تاريخ الطلب</th>
+                                <th th:text="#{network.col.actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="req : ${incomingStoreRequests}">
+                                <td>
+                                    <div th:text="${req.parentOrganization.name}" style="font-weight: 500;"></div>
+                                    <small th:text="${req.parentOrganization.address}">العنوان</small>
+                                </td>
+                                <td th:text="${#temporals.format(req.requestedAt, 'yyyy-MM-dd HH:mm')}"></td>
+                                <td>
+                                    <div class="table-actions">
+                                        <form th:action="@{/network/requests/link/process}" method="post" class="d-inline">
+                                            <input type="hidden" name="relationId" th:value="${req.id}">
+                                            <input type="hidden" name="accept" value="true">
+                                            <button type="submit" class="table-action-btn success" th:title="#{network.btn.accept}">✓</button>
+                                        </form>
+                                        <form th:action="@{/network/requests/link/process}" method="post" class="d-inline">
+                                            <input type="hidden" name="relationId" th:value="${req.id}">
+                                            <input type="hidden" name="accept" value="false">
+                                            <button type="submit" class="table-action-btn danger" th:title="#{network.btn.reject}">✕</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 

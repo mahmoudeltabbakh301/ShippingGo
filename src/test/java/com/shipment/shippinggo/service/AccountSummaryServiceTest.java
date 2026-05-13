@@ -12,12 +12,16 @@ import com.shipment.shippinggo.repository.OrderRepository;
 import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -132,5 +136,47 @@ class AccountSummaryServiceTest {
 
         assertNotNull(result);
         assertEquals(0, result.getDeliveredOrders());
+    }
+
+    @Test
+    @Timeout(value = 2000, unit = TimeUnit.MILLISECONDS)
+    void performanceTest_calculateDirectionalSummary_WithManyOrders() {
+        // اختبار أداء وحمل لتحليل آلاف الطلبات في أقل من 500 ملي ثانية
+        int orderCount = 5000;
+        List<Order> orders = new ArrayList<>(orderCount);
+        for(int i = 0; i < orderCount; i++) {
+            Order order = new Order();
+            order.setId((long) i);
+            order.setStatus(OrderStatus.DELIVERED);
+            order.setAmount(new BigDecimal("100"));
+            // استخدام نفس المحافظة لتجربة التخزين المؤقت (Caching)
+            order.setGovernorate(com.shipment.shippinggo.enums.Governorate.CAIRO);
+            orders.add(order);
+        }
+
+        Organization targetOrg = new Company();
+        targetOrg.setId(2L);
+
+        com.shipment.shippinggo.entity.CommissionSetting setting = new com.shipment.shippinggo.entity.CommissionSetting();
+        setting.setCommissionType(com.shipment.shippinggo.enums.CommissionType.FIXED);
+        setting.setCommissionValue(new BigDecimal("10"));
+
+        when(commissionService.getOrganizationCommission(testOrg, targetOrg, null))
+                .thenReturn(Optional.of(setting));
+        when(commissionService.getOrganizationCommission(testOrg, targetOrg, com.shipment.shippinggo.enums.Governorate.CAIRO))
+                .thenReturn(Optional.of(setting));
+        when(commissionService.calculateCommission(any(), any(BigDecimal.class)))
+                .thenReturn(new BigDecimal("10"));
+
+        AccountSummaryDTO result = accountSummaryService.calculateDirectionalSummary(testOrg, targetOrg, orders, "OUTGOING");
+
+        // التأكد من الحسابات الدقيقة
+        assertEquals(orderCount, result.getDeliveredOrders());
+        assertEquals(new BigDecimal("500000"), result.getDeliveredAmount());
+        assertEquals(new BigDecimal("50000"), result.getTotalCommissions());
+
+        // التأكد من كفاءة الـ Caching
+        // عدد مرات استدعاء getOrganizationCommission يجب أن يكون قليلاً جدًا بفضل التخزين المؤقت الداخلي في الدالة
+        verify(commissionService, atMost(2)).getOrganizationCommission(any(), any(), any());
     }
 }

@@ -3,6 +3,7 @@ package com.shipment.shippinggo.controller;
 import com.shipment.shippinggo.entity.Company;
 import com.shipment.shippinggo.entity.Membership;
 import com.shipment.shippinggo.entity.Office;
+import com.shipment.shippinggo.entity.Store;
 import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.OrganizationRelation;
 import com.shipment.shippinggo.entity.User;
@@ -75,9 +76,19 @@ public class NetworkController {
                             RelationType.OFFICE_TO_COMPANY);
             model.addAttribute("companyRelations", companyRelations);
 
-            List<OrganizationRelation> incomingStoreRequests = organizationService
-                    .getIncomingStoreRequestsToOffice(org.getId());
+            List<OrganizationRelation> incomingStoreRequests = organizationRelationRepository
+                    .findByParentOrganizationAndStatusAndRelationType(org, RelationStatus.PENDING, RelationType.STORE_TO_OFFICE)
+                    .stream()
+                    .filter(r -> r.getInitiatedBy() == null || !r.getInitiatedBy().getId().equals(org.getId()))
+                    .collect(Collectors.toList());
             model.addAttribute("incomingStoreRequests", incomingStoreRequests);
+
+            List<OrganizationRelation> outgoingStoreRequests = organizationRelationRepository
+                    .findByParentOrganizationAndStatusAndRelationType(org, RelationStatus.PENDING, RelationType.STORE_TO_OFFICE)
+                    .stream()
+                    .filter(r -> r.getInitiatedBy() != null && r.getInitiatedBy().getId().equals(org.getId()))
+                    .collect(Collectors.toList());
+            model.addAttribute("outgoingStoreRequests", outgoingStoreRequests);
 
             List<OrganizationRelation> storeRelations = organizationRelationRepository
                     .findByParentOrganizationAndStatusAndRelationType(org, RelationStatus.ACCEPTED,
@@ -90,8 +101,16 @@ public class NetworkController {
             model.addAttribute("joinedCompanies", joinedCompanies);
 
             List<OrganizationRelation> pendingCompanyRequests = organizationRelationRepository
-                    .findByChildOrganizationAndStatus(org, RelationStatus.PENDING);
+                    .findByChildOrganizationAndStatus(org, RelationStatus.PENDING).stream()
+                    .filter(r -> r.getInitiatedBy() != null ? r.getInitiatedBy().getId().equals(org.getId()) : true)
+                    .collect(Collectors.toList());
             model.addAttribute("pendingLinkRequests", pendingCompanyRequests);
+
+            List<OrganizationRelation> incomingRequests = organizationRelationRepository
+                    .findByChildOrganizationAndStatus(org, RelationStatus.PENDING).stream()
+                    .filter(r -> r.getInitiatedBy() != null && !r.getInitiatedBy().getId().equals(org.getId()))
+                    .collect(Collectors.toList());
+            model.addAttribute("incomingStoreRequests", incomingRequests);
 
             List<OrganizationRelation> companyRelations = organizationRelationRepository
                     .findByChildOrganizationAndStatusAndRelationType(org, RelationStatus.ACCEPTED,
@@ -108,19 +127,40 @@ public class NetworkController {
 
             model.addAttribute("linkRequests", java.util.Collections.emptyList());
         } else {
-            List<OrganizationRelation> relations = organizationRelationRepository.findByParentOrganizationAndStatus(org,
+            List<OrganizationRelation> totalRelations = organizationRelationRepository.findByParentOrganizationAndStatus(org,
                     RelationStatus.ACCEPTED);
-            List<Office> joinedOffices = relations.stream()
-                    .map(OrganizationRelation::getChildOrganization)
-                    .filter(o -> o.getType() == OrganizationType.OFFICE)
-                    .map(o -> (Office) Hibernate.unproxy(o))
+            
+            // Offices
+            List<OrganizationRelation> officeRelations = totalRelations.stream()
+                    .filter(r -> r.getChildOrganization().getType() == OrganizationType.OFFICE)
+                    .collect(Collectors.toList());
+            List<Office> joinedOffices = officeRelations.stream()
+                    .map(r -> (Office) Hibernate.unproxy(r.getChildOrganization()))
                     .collect(Collectors.toList());
             model.addAttribute("joinedOffices", joinedOffices);
-            model.addAttribute("officeRelations", relations);
+            model.addAttribute("officeRelations", officeRelations);
+
+            // Stores
+            List<OrganizationRelation> storeRelations = totalRelations.stream()
+                    .filter(r -> r.getChildOrganization().getType() == OrganizationType.STORE)
+                    .collect(Collectors.toList());
+            List<Store> joinedStores = storeRelations.stream()
+                    .map(r -> (Store) Hibernate.unproxy(r.getChildOrganization()))
+                    .collect(Collectors.toList());
+            model.addAttribute("joinedStores", joinedStores);
+            model.addAttribute("storeRelations", storeRelations);
 
             List<OrganizationRelation> linkRequests = organizationRelationRepository
-                    .findByParentOrganizationAndStatus(org, RelationStatus.PENDING);
+                    .findByParentOrganizationAndStatus(org, RelationStatus.PENDING).stream()
+                    .filter(r -> r.getInitiatedBy() == null || !r.getInitiatedBy().getId().equals(org.getId()))
+                    .collect(Collectors.toList());
             model.addAttribute("linkRequests", linkRequests);
+
+            List<OrganizationRelation> outgoingLinkRequests = organizationRelationRepository
+                    .findByParentOrganizationAndStatus(org, RelationStatus.PENDING).stream()
+                    .filter(r -> r.getInitiatedBy() != null && r.getInitiatedBy().getId().equals(org.getId()))
+                    .collect(Collectors.toList());
+            model.addAttribute("outgoingStoreRequests", outgoingLinkRequests);
         }
 
         return "network/list";
@@ -232,6 +272,53 @@ public class NetworkController {
         return "network/offices";
     }
 
+    @GetMapping("/stores")
+    public String browseStores(@AuthenticationPrincipal User user,
+            @RequestParam(required = false) String query,
+            Model model) {
+        Organization org = organizationService.getOrganizationByUser(user);
+        if (org == null) {
+            return "redirect:/members/invitations";
+        }
+        model.addAttribute("organization", org);
+
+        List<com.shipment.shippinggo.entity.Store> allAvailable = java.util.Collections.emptyList();
+
+        if (query != null && !query.trim().isEmpty()) {
+            String q = query.trim().toLowerCase();
+            
+            Set<Long> excludedStoreIds = new java.util.HashSet<>();
+            if (org.getType() == OrganizationType.COMPANY || org.getType() == OrganizationType.OFFICE) {
+                List<com.shipment.shippinggo.entity.Store> linkedStores = (org.getType() == OrganizationType.COMPANY)
+                        ? organizationService.getStoresByCompany(org.getId())
+                        : organizationService.getStoresByOffice(org.getId());
+                
+                List<OrganizationRelation> pendingStoreRequests = organizationRelationRepository
+                        .findByParentOrganizationAndStatus(org, RelationStatus.PENDING).stream()
+                        .filter(r -> r.getChildOrganization().getType() == OrganizationType.STORE)
+                        .toList();
+
+                excludedStoreIds.addAll(linkedStores.stream().map(com.shipment.shippinggo.entity.Store::getId).collect(Collectors.toSet()));
+                excludedStoreIds.addAll(pendingStoreRequests.stream()
+                        .map(r -> r.getChildOrganization().getId()).toList());
+            } else if (org.getType() == OrganizationType.STORE) {
+                excludedStoreIds.add(org.getId());
+            }
+
+            allAvailable = organizationService.getAllStores().stream()
+                    .filter(s -> !excludedStoreIds.contains(s.getId()))
+                    .filter(s -> s.getName().toLowerCase().contains(q) || 
+                                 String.valueOf(s.getId()).equals(q) || 
+                                 (s.getPhone() != null && s.getPhone().contains(q)))
+                    .toList();
+                    
+            model.addAttribute("query", query);
+        }
+
+        model.addAttribute("allStores", allAvailable);
+        return "network/stores";
+    }
+
     @PostMapping("/join")
     public String joinCompany(@AuthenticationPrincipal User user,
             @RequestParam Long companyId,
@@ -262,6 +349,24 @@ public class NetworkController {
         try {
             organizationService.requestLinkToOffice(office, officeId);
             redirectAttributes.addFlashAttribute("success", "تم إرسال طلب الانضمام للمكتب بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/network";
+    }
+
+    @PostMapping("/join-store")
+    public String joinStore(@AuthenticationPrincipal User user,
+            @RequestParam Long storeId,
+            RedirectAttributes redirectAttributes) {
+        Organization requestingOrg = organizationService.getOrganizationByAdmin(user);
+        if (requestingOrg == null) {
+            return "redirect:/members/invitations";
+        }
+
+        try {
+            organizationService.requestLinkToStore(requestingOrg, storeId);
+            redirectAttributes.addFlashAttribute("success", "تم إرسال طلب الانضمام للمتجر بنجاح");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
         }

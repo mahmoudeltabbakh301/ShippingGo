@@ -35,8 +35,8 @@ public class ShipmentRequestController {
         java.time.LocalDate selectedDate = (date != null) ? date : java.time.LocalDate.now();
 
         List<OrderAssignment> assignments = orderService.getOrderAssignmentsByAssigneeAndDate(org.getId(), selectedDate);
-        List<Order> pending = assignments.stream().filter(a -> !a.isAccepted()).map(OrderAssignment::getOrder).toList();
-        List<Order> accepted = assignments.stream().filter(OrderAssignment::isAccepted).map(OrderAssignment::getOrder).toList();
+        List<OrderAssignment> pending = assignments.stream().filter(a -> !a.isAccepted()).toList();
+        List<OrderAssignment> accepted = assignments.stream().filter(OrderAssignment::isAccepted).toList();
 
         model.addAttribute("pendingRequests", pending);
         model.addAttribute("acceptedRequests", accepted);

@@ -23,7 +23,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         // Orders by Code
         Optional<Order> findByCode(String code);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
+        List<Order> findByIdIn(List<Long> ids);
+
         boolean existsByCode(String code);
+
+        // Orders by External Order ID (for B2B integrations)
+        Optional<Order> findByExternalOrderIdAndCreatorOrganizationId(String externalOrderId, Long creatorOrgId);
+
+        List<Order> findByExternalOrderId(String externalOrderId);
 
         // Orders by Creator
         @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
@@ -142,12 +150,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("fromDate") LocalDate fromDate,
                         @Param("toDate") LocalDate toDate);
 
-        List<Order> findByOwnerOrganizationIdAndStatusAndInvoiceIsNull(Long organizationId, OrderStatus status);
+        @Query("SELECT o FROM Order o WHERE o.ownerOrganization.id = :orgId AND o.status = :status AND o.invoices IS EMPTY")
+        List<Order> findByOwnerOrganizationIdAndStatusAndNoInvoices(@Param("orgId") Long organizationId, @Param("status") OrderStatus status);
 
         @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         List<Order> findByOwnerOrganizationIdOrderByCreatedAtDesc(Long organizationId);
 
-        List<Order> findByInvoiceId(Long invoiceId);
+        @Query("SELECT o FROM Order o JOIN o.invoices i WHERE i.id = :invoiceId")
+        List<Order> findByInvoiceId(@Param("invoiceId") Long invoiceId);
 
         // Orders assigned to Organization
         List<Order> findByAssignedToOrganization(Organization organization);
@@ -309,10 +319,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("businessDayId") Long businessDayId, @Param("status") OrderStatus status);
 
         // Find orders by assignee and business day
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.assignedToOrganization.id = :orgId AND o.businessDay.id = :businessDayId ORDER BY o.createdAt DESC")
         List<Order> findByAssignedToOrganizationIdAndBusinessDayId(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.assignedToCourier.id = :courierId AND o.businessDay.id = :businessDayId ORDER BY o.createdAt DESC")
         List<Order> findByAssignedToCourierIdAndBusinessDayId(@Param("courierId") Long courierId,
                         @Param("businessDayId") Long businessDayId);
@@ -440,6 +452,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         java.math.BigDecimal sumAmountByOwnerOrganizationIdAndBusinessDayIdAndStatus(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId, @Param("status") OrderStatus status);
 
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
         @Query("SELECT o FROM Order o WHERE o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId ORDER BY o.createdAt DESC")
         List<Order> findByOwnerOrganizationIdAndBusinessDayId(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId);
@@ -1007,5 +1020,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                 @Param("noGovernorate") Boolean noGovernorate,
                 @Param("incomingFromId") Long incomingFromId,
                 @Param("outgoingToId") Long outgoingToId);
+
+        // ===================== Unassigned Orders Queries (for Accounts) =====================
+
+        // أوردرات المنظمة في يوم عمل محدد وغير مسندة لأي منظمة أخرى
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
+        @Query("SELECT o FROM Order o WHERE o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId " +
+                        "AND NOT EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o AND oa.assignerOrganization.id = :orgId) " +
+                        "ORDER BY o.createdAt DESC")
+        List<Order> findUnassignedOrdersByBusinessDay(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        // أوردرات المنظمة غير المسندة (الكل)
+        @EntityGraph(attributePaths = {"ownerOrganization", "assignedToOrganization", "assignedToCourier", "businessDay"})
+        @Query("SELECT o FROM Order o WHERE o.ownerOrganization.id = :orgId " +
+                        "AND NOT EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o AND oa.assignerOrganization.id = :orgId) " +
+                        "ORDER BY o.createdAt DESC")
+        List<Order> findUnassignedOrdersByOrganization(@Param("orgId") Long orgId);
 
 }

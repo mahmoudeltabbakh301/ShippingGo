@@ -125,6 +125,20 @@
                             th:text="${#locale.language == 'en' ? order.status.englishName : order.status.arabicName}">الحالة</span>
                     </div>
 
+                    <!-- External Source Badge (for orders from external integrations) -->
+                    <div th:if="${order.sourcePlatform != null}" 
+                         style="margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); background: linear-gradient(to right, var(--primary-50), var(--bg-secondary)); border-radius: var(--radius-sm); border: 1px solid var(--primary-200); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: var(--space-2);">
+                            <span style="font-size: 1.1rem;">🔌</span>
+                            <span style="font-weight: 600; font-size: 0.85rem;" th:text="#{orders.view.source_platform}">المصدر:</span>
+                            <span class="badge badge-info" th:text="${order.sourcePlatform.displayName}">اسم المنصة</span>
+                        </div>
+                        <div th:if="${order.externalOrderId != null}" style="display: flex; align-items: center; gap: var(--space-2);">
+                            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);" th:text="#{orders.view.external_id}">الرقم الخارجي:</span>
+                            <code style="background: var(--bg-secondary); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em;" th:text="${order.externalOrderId}"></code>
+                        </div>
+                    </div>
+
                     <!-- ===== Edit Form (Admin, Manager, Data Entry) ===== -->
                     <form th:action="@{/orders/{id}/update-info(id=${order.id})}" method="post"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
@@ -419,8 +433,11 @@
                         </div>
                         <div class="detail-item">
                             <p class="detail-label-text" th:text="#{orders.view.current_courier}">المندوب الحالي</p>
-                            <p class="detail-value-text" th:if="${order.assignedToCourier != null}"
-                                th:text="${order.assignedToCourier.fullName}"></p>
+                            <p class="detail-value-text" th:if="${order.assignedToCourier != null}">
+                                <span th:text="${order.assignedToCourier.fullName}"></span>
+                                <span th:if="${order.assignedToCourier.isVirtual()}"
+                                    style="color: #e65100; font-size: 0.8em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                            </p>
                             <p class="detail-value-text" th:if="${order.assignedToCourier == null}"
                                 th:text="#{orders.view.unassigned}"></p>
                         </div>
@@ -597,7 +614,7 @@
 
                         <!-- Assign Courier (Admin, Manager and Data Entry) -->
                         <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
-                            th:if="${currentUserOrganization == null || currentUserOrganization.type.name() != 'STORE'}">
+                            th:if="${currentUserOrganization == null || (currentUserOrganization.type.name() != 'STORE' && currentUserOrganization.type.name() != 'CLIENT')}">
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                                 <h4 class="card-title" th:text="#{orders.view.assign_courier_title}"
@@ -612,7 +629,7 @@
                                         </option>
                                         <th:block th:if="${couriers != null}">
                                             <option th:each="c : ${couriers}" th:value="${c.id}"
-                                                th:text="${c.fullName}">
+                                                th:text="${c.fullName + (c.isVirtual() ? ' 🚫' : '')}">
                                             </option>
                                         </th:block>
                                     </select>
@@ -654,6 +671,19 @@
                             th:if="${order.businessDay.isCustody}">
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                                <h4 class="card-title" th:text="#{orders.view.remove_custody_title}"
+                                    style="margin: 0; font-size: 1rem;">📦 إزالة من عهدة المخزن</h4>
+                            </div>
+                            <form th:action="@{/orders/{id}/remove-custody(id=${order.id})}" method="post"
+                                th:onsubmit="|return confirm('#{orders.view.remove_custody_confirm}');|">
+                                <input type="hidden" name="businessDayId"
+                                    th:value="${businessDayId ?: order.businessDay?.id}">
+                                <button type="submit" class="btn btn-secondary" style="width: 100%;"
+                                    th:text="#{orders.btn.remove_custody}">إزالة من العهدة</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
                           <!-- Delete Order (Admin and Manager) -->
                 <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
                     style="border: 1px solid var(--danger-border);">
@@ -762,7 +792,7 @@
                                     <td
                                         th:text="${#locale.language == 'en' ? h.newStatus.englishName : h.newStatus.arabicName}">
                                     </td>
-                                    <td th:text="${h.changedBy.fullName}"></td>
+                                    <td th:text="${h.changedBy?.fullName ?: '-'}"></td>
                                     <td th:text="${h.notes ?: '-'}"></td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(history)}">

@@ -24,27 +24,33 @@ public class OrganizationService {
     private final CompanyRepository companyRepository;
     private final OfficeRepository officeRepository;
     private final StoreRepository storeRepository;
+    private final ClientOrgRepository clientOrgRepository;
     private final MembershipRepository membershipRepository;
     private final OrganizationRelationRepository organizationRelationRepository;
     private final UserRepository userRepository;
     private final VirtualOfficeRepository virtualOfficeRepository;
+    private final NotificationService notificationService;
 
     public OrganizationService(OrganizationRepository organizationRepository,
             CompanyRepository companyRepository,
             OfficeRepository officeRepository,
             StoreRepository storeRepository,
+            ClientOrgRepository clientOrgRepository,
             MembershipRepository membershipRepository,
             UserRepository userRepository,
             OrganizationRelationRepository organizationRelationRepository,
-            VirtualOfficeRepository virtualOfficeRepository) {
+            VirtualOfficeRepository virtualOfficeRepository,
+            NotificationService notificationService) {
         this.organizationRepository = organizationRepository;
         this.companyRepository = companyRepository;
         this.officeRepository = officeRepository;
         this.storeRepository = storeRepository;
+        this.clientOrgRepository = clientOrgRepository;
         this.membershipRepository = membershipRepository;
         this.userRepository = userRepository;
         this.organizationRelationRepository = organizationRelationRepository;
         this.virtualOfficeRepository = virtualOfficeRepository;
+        this.notificationService = notificationService;
     }
 
     public Organization findById(Long id) {
@@ -196,6 +202,7 @@ public class OrganizationService {
                 .childOrganization(requester)
                 .status(RelationStatus.PENDING)
                 .relationType(relType)
+                .initiatedBy(requester)
                 .build();
 
         organizationRelationRepository.save(relation);
@@ -239,6 +246,42 @@ public class OrganizationService {
                                 : requestingOrg)
                 .status(RelationStatus.PENDING)
                 .relationType(relType)
+                .initiatedBy(requestingOrg)
+                .build();
+
+        organizationRelationRepository.save(relation);
+    }
+
+    // تقديم طلب شراكة للارتباط بمتجر (من قِبل شركة أو مكتب)
+    @Transactional
+    public void requestLinkToStore(Organization requestingOrg, Long targetStoreId) {
+        Organization targetStore = organizationRepository.findById(targetStoreId)
+                .orElseThrow(() -> new ResourceNotFoundException("Store not found"));
+
+        if (targetStore.getType() != com.shipment.shippinggo.enums.OrganizationType.STORE) {
+            throw new BusinessLogicException("Target organization must be a store");
+        }
+
+        if (requestingOrg.getType() != com.shipment.shippinggo.enums.OrganizationType.OFFICE &&
+                requestingOrg.getType() != com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
+            throw new BusinessLogicException("Only offices and companies can request links to stores");
+        }
+
+        com.shipment.shippinggo.enums.RelationType relType = (requestingOrg
+                .getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY)
+                        ? com.shipment.shippinggo.enums.RelationType.STORE_TO_COMPANY
+                        : com.shipment.shippinggo.enums.RelationType.STORE_TO_OFFICE;
+
+        if (organizationRelationRepository.existsByParentOrganizationAndChildOrganization(requestingOrg, targetStore)) {
+            throw new DuplicateResourceException("Relation already exists");
+        }
+
+        OrganizationRelation relation = OrganizationRelation.builder()
+                .parentOrganization(requestingOrg)
+                .childOrganization(targetStore)
+                .status(RelationStatus.PENDING)
+                .relationType(relType)
+                .initiatedBy(requestingOrg)
                 .build();
 
         organizationRelationRepository.save(relation);
@@ -347,7 +390,9 @@ public class OrganizationService {
                         .map(o -> (Organization) o)
                         .orElseGet(() -> storeRepository.findByAdminId(admin.getId()).stream().findFirst()
                                 .map(s -> (Organization) s)
-                                .orElse(null)));
+                                .orElseGet(() -> clientOrgRepository.findByAdminId(admin.getId()).stream().findFirst()
+                                        .map(c -> (Organization) c)
+                                        .orElse(null))));
     }
 
     // الحصول على المنظمة المرتبطة بالمستخدم سواء كان مديرها أو عضواً فيها
@@ -393,7 +438,11 @@ public class OrganizationService {
                 .invitedBy(invitedBy)
                 .build();
 
-        return membershipRepository.save(membership);
+        Membership savedMembership = membershipRepository.save(membership);
+
+        notificationService.sendInvitationNotification(targetUser, org, role.name());
+
+        return savedMembership;
     }
 
     public User findUserByEmailOrUsername(String identifier) {
@@ -401,9 +450,10 @@ public class OrganizationService {
             return null;
         }
         String trimmed = identifier.trim();
-        // Try email first, then username
-        return userRepository.findByEmail(trimmed)
-                .orElseGet(() -> userRepository.findByUsername(trimmed).orElse(null));
+        // Try phone first, then email, then username
+        return userRepository.findByPhone(trimmed)
+                .orElseGet(() -> userRepository.findByEmail(trimmed)
+                .orElseGet(() -> userRepository.findByUsername(trimmed).orElse(null)));
     }
 
     public List<Membership> getPendingMemberships(Long organizationId) {
@@ -438,6 +488,11 @@ public class OrganizationService {
             throw new BusinessLogicException("هذه الدعوة تم الرد عليها مسبقاً");
         }
 
+        // === معالجة دعوة العميل ===
+        if (membership.isClientInvitation()) {
+            return acceptClientInvitation(membership, user);
+        }
+
         membership.setStatus(MembershipStatus.ACCEPTED);
         membership.setProcessedAt(LocalDateTime.now());
         membership.setProcessedBy(user);
@@ -446,7 +501,60 @@ public class OrganizationService {
         user.setRole(membership.getAssignedRole());
         userRepository.save(user);
 
+        // إشعار المنظمة بقبول الدعوة
+        notificationService.sendInvitationResponseNotification(membership.getOrganization(), user, true);
+
         return membershipRepository.save(membership);
+    }
+
+    // === معالجة قبول دعوة العميل: إنشاء منظمة عميل تلقائياً وربطها ===
+    @Transactional
+    private Membership acceptClientInvitation(Membership membership, User user) {
+        Organization invitingOrg = membership.getOrganization();
+
+        // التأكد من عدم وجود منظمة للمستخدم بالفعل
+        Organization existingOrg = getOrganizationByAdmin(user);
+        if (existingOrg != null) {
+            throw new BusinessLogicException("لديك منظمة بالفعل ولا يمكنك قبول دعوة العميل");
+        }
+
+        // إنشاء منظمة العميل تلقائياً
+        String clientOrgName = "العميل " + user.getFullName();
+        ClientOrg clientOrg = ClientOrg.builder()
+                .name(clientOrgName)
+                .address(invitingOrg.getAddress())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .admin(user)
+                .build();
+        clientOrg.setGovernorate(user.getGovernorate());
+        clientOrg = clientOrgRepository.save(clientOrg);
+
+        // تحديد نوع العلاقة بناءً على نوع المنظمة المُرسلة
+        com.shipment.shippinggo.enums.RelationType relType = 
+                (invitingOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY)
+                        ? com.shipment.shippinggo.enums.RelationType.CLIENT_TO_COMPANY
+                        : com.shipment.shippinggo.enums.RelationType.CLIENT_TO_OFFICE;
+
+        // إنشاء الارتباط التلقائي بين العميل والمنظمة
+        OrganizationRelation relation = OrganizationRelation.builder()
+                .parentOrganization(invitingOrg)   // المنظمة المُرسلة هي الأعلى
+                .childOrganization(clientOrg)        // منظمة العميل هي التابعة
+                .status(RelationStatus.ACCEPTED)     // مقبولة تلقائياً
+                .relationType(relType)
+                .initiatedBy(invitingOrg)
+                .processedAt(LocalDateTime.now())
+                .build();
+        organizationRelationRepository.save(relation);
+
+        // تحديث دور المستخدم ليصبح أدمن
+        user.setRole(Role.ADMIN);
+        userRepository.save(user);
+
+        // حذف الـ Membership (لأن العميل أصبح أدمن منظمته وليس عضواً)
+        membershipRepository.delete(membership);
+
+        return membership;
     }
 
     // رفض المستخدم للدعوة الموجهة إليه للانضمام
@@ -462,6 +570,9 @@ public class OrganizationService {
         if (membership.getStatus() != MembershipStatus.PENDING) {
             throw new BusinessLogicException("هذه الدعوة تم الرد عليها مسبقاً");
         }
+
+        // إشعار المنظمة برفض الدعوة
+        notificationService.sendInvitationResponseNotification(membership.getOrganization(), user, false);
 
         membershipRepository.delete(membership);
     }
@@ -530,7 +641,7 @@ public class OrganizationService {
         java.util.List<Organization> linked = new java.util.ArrayList<>();
 
         if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
-            // للشركات: جلب المكاتب والمتاجر المرتبطة
+            // للشركات: جلب المكاتب والمتاجر والعملاء المرتبطين
             List<Office> offices = getOfficesByCompany(org.getId());
             linked.addAll(offices);
             // جلب المتاجر المرتبطة بالشركة
@@ -541,20 +652,43 @@ public class OrganizationService {
                     .map(OrganizationRelation::getChildOrganization)
                     .filter(o -> o.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE)
                     .toList());
+            // جلب العملاء المرتبطين بالشركة
+            List<OrganizationRelation> clientRelations = organizationRelationRepository
+                    .findByParentOrganizationAndStatusAndRelationType(
+                            org, RelationStatus.ACCEPTED, com.shipment.shippinggo.enums.RelationType.CLIENT_TO_COMPANY);
+            linked.addAll(clientRelations.stream()
+                    .map(OrganizationRelation::getChildOrganization)
+                    .filter(o -> o.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT)
+                    .toList());
         } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
             // للمتاجر: جلب الشركات والمكاتب المرتبطة
             List<Company> companies = getCompaniesByStore(org.getId());
             linked.addAll(companies);
             List<Office> offices = getOfficesByStore(org.getId());
             linked.addAll(offices);
+        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            // للعملاء: جلب المنظمة المرتبطة فقط
+            List<OrganizationRelation> relations = organizationRelationRepository
+                    .findByChildOrganizationAndStatus(org, RelationStatus.ACCEPTED);
+            linked.addAll(relations.stream()
+                    .map(OrganizationRelation::getParentOrganization)
+                    .toList());
         } else {
-            // للمكاتب: جلب الشركات المرتبطة والمكاتب الأخرى والمتاجر
+            // للمكاتب: جلب الشركات المرتبطة والمكاتب الأخرى والمتاجر والعملاء
             List<Company> companies = getCompaniesByOffice(org.getId());
             linked.addAll(companies);
             List<Office> offices = getLinkedOffices(org.getId());
             linked.addAll(offices);
             List<Store> stores = getStoresByOffice(org.getId());
             linked.addAll(stores);
+            // جلب العملاء المرتبطين بالمكتب
+            List<OrganizationRelation> clientRelations = organizationRelationRepository
+                    .findByParentOrganizationAndStatusAndRelationType(
+                            org, RelationStatus.ACCEPTED, com.shipment.shippinggo.enums.RelationType.CLIENT_TO_OFFICE);
+            linked.addAll(clientRelations.stream()
+                    .map(OrganizationRelation::getChildOrganization)
+                    .filter(o -> o.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT)
+                    .toList());
         }
 
         linked.addAll(virtualOfficeRepository.findByParentOrganizationId(org.getId()));
@@ -640,6 +774,226 @@ public class OrganizationService {
 
         public double getDistance() {
             return distance;
+        }
+    }
+
+    // === Virtual Courier Management ===
+
+    /**
+     * إنشاء مندوب افتراضي تابع للمنظمة.
+     * المندوب الافتراضي هو User حقيقي بعلامة virtual=true مع Membership بدور
+     * COURIER.
+     */
+    @Transactional
+    @LogSensitiveOperation(action = "CREATE_VIRTUAL_COURIER", entityName = "User", logArguments = true)
+    public User createVirtualCourier(Organization org, String name, User createdBy) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new BusinessLogicException("اسم المندوب الافتراضي مطلوب");
+        }
+
+        String uniqueSuffix = System.currentTimeMillis() + "" + (int) (Math.random() * 1000);
+
+        User virtualCourier = User.builder()
+                .username("vc_" + uniqueSuffix)
+                .email("vc_" + uniqueSuffix + "@shippinggo.virtual")
+                .password("VIRTUAL_NO_LOGIN_" + uniqueSuffix) // لا يمكن تسجيل الدخول
+                .fullName(name.trim())
+                .phone("VC" + uniqueSuffix)
+                .role(com.shipment.shippinggo.enums.Role.COURIER)
+                .enabled(true)
+                .isVirtual(true)
+                .parentOrganizationId(org.getId())
+                .build();
+
+        virtualCourier = userRepository.save(virtualCourier);
+
+        // إنشاء Membership تلقائياً بدور COURIER وحالة ACCEPTED
+        Membership membership = Membership.builder()
+                .user(virtualCourier)
+                .organization(org)
+                .assignedRole(com.shipment.shippinggo.enums.Role.COURIER)
+                .status(MembershipStatus.ACCEPTED)
+                .invitedBy(createdBy)
+                .processedBy(createdBy)
+                .processedAt(java.time.LocalDateTime.now())
+                .build();
+
+        membershipRepository.save(membership);
+
+        return virtualCourier;
+    }
+
+    /**
+     * جلب المناديب الافتراضيين التابعين لمنظمة معينة.
+     */
+    public List<User> getVirtualCouriers(Organization org) {
+        return userRepository.findByIsVirtualTrueAndEnabledTrueAndParentOrganizationId(org.getId());
+    }
+
+    /**
+     * تعديل اسم مندوب افتراضي.
+     */
+    @Transactional
+    @LogSensitiveOperation(action = "UPDATE_VIRTUAL_COURIER", entityName = "User", logArguments = true)
+    public void updateVirtualCourier(Long userId, String newName, Organization org) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("المندوب الافتراضي غير موجود"));
+
+        if (!user.isVirtual() || !org.getId().equals(user.getParentOrganizationId())) {
+            throw new UnauthorizedAccessException("هذا المندوب لا يتبع منظمتك");
+        }
+
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new BusinessLogicException("اسم المندوب الافتراضي مطلوب");
+        }
+
+        user.setFullName(newName.trim());
+        userRepository.save(user);
+    }
+
+    /**
+     * حذف مندوب افتراضي (تعطيل الحساب).
+     */
+    @Transactional
+    @LogSensitiveOperation(action = "DELETE_VIRTUAL_COURIER", entityName = "User", logArguments = true)
+    public void deleteVirtualCourier(Long userId, Organization org) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("المندوب الافتراضي غير موجود"));
+
+        if (!user.isVirtual() || !org.getId().equals(user.getParentOrganizationId())) {
+            throw new UnauthorizedAccessException("هذا المندوب لا يتبع منظمتك");
+        }
+
+        // تعطيل الحساب بدلاً من الحذف حتى تبقى السجلات التاريخية
+        user.setEnabled(false);
+        userRepository.save(user);
+
+        // حذف العضوية
+        membershipRepository.findByUserAndOrganization(user, org)
+                .ifPresent(membershipRepository::delete);
+    }
+
+    // === Client Management Methods ===
+
+    /**
+     * دعوة عميل جديد عن طريق رقم الهاتف أو اسم المستخدم.
+     * المنظمة (شركة/مكتب) هي اللي بتبعت الدعوة.
+     */
+    @Transactional
+    @LogSensitiveOperation(action = "INVITE_CLIENT", entityName = "Membership", logArguments = true)
+    public Membership inviteClient(Organization org, String phoneOrUsername, User invitedBy) {
+        // التأكد من أن المنظمة المُرسلة شركة أو مكتب
+        if (org.getType() != com.shipment.shippinggo.enums.OrganizationType.COMPANY
+                && org.getType() != com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
+            throw new BusinessLogicException("فقط الشركات والمكاتب يمكنها دعوة عملاء");
+        }
+
+        // البحث عن المستخدم بالهاتف أو اسم المستخدم
+        User targetUser = findUserByEmailOrUsername(phoneOrUsername);
+        if (targetUser == null) {
+            throw new ResourceNotFoundException("لم يتم العثور على مستخدم بهذا الرقم أو اسم المستخدم");
+        }
+
+        // التأكد من أن المستخدم ليس لديه منظمة بالفعل
+        Organization existingOrg = getOrganizationByUser(targetUser);
+        if (existingOrg != null) {
+            throw new BusinessLogicException("هذا المستخدم لديه منظمة بالفعل (" + existingOrg.getName() + ") ولا يمكن دعوته كعميل");
+        }
+
+        // التأكد من عدم وجود دعوة مسبقة
+        if (membershipRepository.existsByUserAndOrganization(targetUser, org)) {
+            throw new DuplicateResourceException("يوجد دعوة مسبقة لهذا المستخدم");
+        }
+
+        // إنشاء دعوة عميل
+        Membership membership = Membership.builder()
+                .user(targetUser)
+                .organization(org)
+                .assignedRole(Role.ADMIN) // العميل سيكون أدمن منظمته
+                .status(MembershipStatus.PENDING)
+                .invitedBy(invitedBy)
+                .clientInvitation(true) // علامة دعوة عميل
+                .build();
+
+        Membership saved = membershipRepository.save(membership);
+
+        // إرسال إشعار للمستخدم مع رابط مباشر لصفحة الدعوات
+        notificationService.sendClientInvitationNotification(targetUser, org);
+
+        return saved;
+    }
+
+    /**
+     * جلب قائمة العملاء المرتبطين بمنظمة معينة.
+     */
+    public List<ClientOrg> getClientsByOrganization(Long organizationId) {
+        Organization org = organizationRepository.findById(organizationId).orElse(null);
+        if (org == null) return List.of();
+
+        com.shipment.shippinggo.enums.RelationType relType = 
+                (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY)
+                        ? com.shipment.shippinggo.enums.RelationType.CLIENT_TO_COMPANY
+                        : com.shipment.shippinggo.enums.RelationType.CLIENT_TO_OFFICE;
+
+        List<OrganizationRelation> relations = organizationRelationRepository
+                .findByParentOrganizationAndStatusAndRelationType(
+                        org, RelationStatus.ACCEPTED, relType);
+
+        return relations.stream()
+                .map(OrganizationRelation::getChildOrganization)
+                .filter(o -> o.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT)
+                .map(o -> (ClientOrg) Hibernate.unproxy(o))
+                .toList();
+    }
+
+    /**
+     * جلب الدعوات المعلقة للعملاء.
+     */
+    public List<Membership> getPendingClientInvitations(Long organizationId) {
+        Organization org = organizationRepository.findById(organizationId).orElse(null);
+        if (org == null) return List.of();
+        return membershipRepository.findByOrganizationIdAndStatus(organizationId, MembershipStatus.PENDING)
+                .stream()
+                .filter(Membership::isClientInvitation)
+                .toList();
+    }
+
+    /**
+     * إزالة ارتباط العميل من المنظمة.
+     */
+    @Transactional
+    @LogSensitiveOperation(action = "REMOVE_CLIENT", entityName = "ClientOrg", logArguments = true)
+    public void removeClient(Long clientOrgId, Organization org) {
+        Organization clientOrg = organizationRepository.findById(clientOrgId)
+                .orElseThrow(() -> new ResourceNotFoundException("العميل غير موجود"));
+
+        if (clientOrg.getType() != com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            throw new BusinessLogicException("هذه المنظمة ليست عميلاً");
+        }
+
+        // حذف الارتباط مع هذه المنظمة
+        List<OrganizationRelation> relations = organizationRelationRepository
+                .findByChildOrganizationAndStatus(clientOrg, RelationStatus.ACCEPTED);
+        relations.stream()
+                .filter(r -> r.getParentOrganization().getId().equals(org.getId()))
+                .forEach(organizationRelationRepository::delete);
+
+        // إعادة دور المستخدم لـ MEMBER وفصله عن منظمة العميل
+        User clientAdmin = clientOrg.getAdmin();
+        if (clientAdmin != null) {
+            clientAdmin.setRole(Role.MEMBER);
+            userRepository.save(clientAdmin);
+        }
+
+        // فصل المستخدم عن منظمة العميل وتعطيلها بدلاً من حذفها
+        // (لا يمكن حذفها بسبب وجود أوردرات ومعاملات مرتبطة بها)
+        // بهذا الشكل getOrganizationByAdmin لن يجدها ويمكن دعوة المستخدم مرة أخرى
+        List<OrganizationRelation> remainingRelations = organizationRelationRepository
+                .findByChildOrganizationAndStatus(clientOrg, RelationStatus.ACCEPTED);
+        if (remainingRelations.isEmpty()) {
+            clientOrg.setAdmin(null);
+            clientOrg.setActive(false);
+            organizationRepository.save(clientOrg);
         }
     }
 }

@@ -31,6 +31,7 @@ public class OrderAssignmentService {
     private final OrderStatusService orderStatusService;
     private final NotificationService notificationService;
     private final OrderInquiryRepository orderInquiryRepository;
+    private final ClientOrgRepository clientOrgRepository;
 
     public OrderAssignmentService(OrderRepository orderRepository,
             OrderAssignmentRepository orderAssignmentRepository,
@@ -45,7 +46,8 @@ public class OrderAssignmentService {
             BusinessDayService businessDayService,
             @org.springframework.context.annotation.Lazy OrderStatusService orderStatusService,
             NotificationService notificationService,
-            OrderInquiryRepository orderInquiryRepository) {
+            OrderInquiryRepository orderInquiryRepository,
+            ClientOrgRepository clientOrgRepository) {
         this.orderRepository = orderRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.membershipRepository = membershipRepository;
@@ -60,6 +62,7 @@ public class OrderAssignmentService {
         this.orderStatusService = orderStatusService;
         this.notificationService = notificationService;
         this.orderInquiryRepository = orderInquiryRepository;
+        this.clientOrgRepository = clientOrgRepository;
     }
 
     // إسناد طلب محدد إلى مكتب مستلم (منظمة وجهة)، مع التأكد من وجود علاقة عمل
@@ -172,9 +175,7 @@ public class OrderAssignmentService {
         orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
                 assignmentNote);
 
-        notificationService.sendNotificationToOrganization(targetOrg, "طلب جديد مسند",
-                "تم إسناد طلب جديد رقم " + order.getCode() + " لمكتبكم.",
-                java.util.Map.of("orderCode", order.getCode(), "type", "ORG_ASSIGNMENT"), "ORG_ASSIGNMENT");
+        notificationService.sendSingleOrgAssignmentNotification(targetOrg, order);
 
         return orderRepository.save(order);
     }
@@ -281,7 +282,7 @@ public class OrderAssignmentService {
             order.setAssignmentAcceptedAt(null);
             order.setStatus(OrderStatus.WAITING);
 
-            String assignmentNote = String.format("تم इسناد الطلب متعدد إلى مكتب '%s'", targetOrg.getName());
+            String assignmentNote = String.format("تم اسناد الطلب متعدد إلى مكتب '%s'", targetOrg.getName());
             orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
                     assignmentNote);
         }
@@ -289,10 +290,7 @@ public class OrderAssignmentService {
         if (!orders.isEmpty()) {
             orderRepository.saveAll(orders);
 
-            notificationService.sendNotificationToOrganization(targetOrg, "طلبات جديدة مسندة",
-                    "تم إسناد " + orders.size() + " طلب جديد لمكتبكم.",
-                    java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_ORG_ASSIGNMENT"),
-                    "BULK_ORG_ASSIGNMENT");
+            notificationService.sendBulkOrgAssignmentNotification(targetOrg, orders.size());
         }
     }
 
@@ -315,8 +313,8 @@ public class OrderAssignmentService {
             return false;
         }
 
-        // المتاجر تسند لجميع المنظمات
-        if (unproxiedParent instanceof Store) {
+        // المتاجر والعملاء يسندون لجميع المنظمات
+        if (unproxiedParent instanceof Store || unproxiedParent instanceof ClientOrg) {
             return true;
         }
 
@@ -382,7 +380,9 @@ public class OrderAssignmentService {
                                 .map(vo -> (Organization) vo)
                                 .orElseGet(() -> storeRepository.findByAdminId(user.getId()).stream().findFirst()
                                         .map(s -> (Organization) s)
-                                        .orElse(null))));
+                                        .orElseGet(() -> clientOrgRepository.findByAdminId(user.getId()).stream().findFirst()
+                                                .map(c -> (Organization) c)
+                                                .orElse(null)))));
 
         if (org == null) {
             org = membershipRepository.findByUserAndStatus(user,
@@ -645,10 +645,7 @@ public class OrderAssignmentService {
         if (!orders.isEmpty()) {
             orderRepository.saveAll(orders);
 
-            notificationService.sendNotificationToUser(courier, "طلبات جديدة مسندة",
-                    "تم إسناد " + orders.size() + " طلب جديد إليك للتوصيل.",
-                    java.util.Map.of("count", String.valueOf(orders.size()), "type", "BULK_COURIER_ASSIGNMENT"),
-                    "BULK_COURIER_ASSIGNMENT");
+            notificationService.sendBulkOrderAssignmentNotification(courier, orders.size());
         }
     }
 
@@ -718,11 +715,14 @@ public class OrderAssignmentService {
         Organization ownerOrg = order.getOwnerOrganization();
         Organization removerOrg = resolveUserOrganization(removedBy);
         boolean isOwner = isUserMemberOfOrganization(removedBy, ownerOrg);
-        boolean isAssigner = lastAssignmentOpt.isPresent() && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssignerOrganization());
-        boolean isAssignee = lastAssignmentOpt.isPresent() && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssigneeOrganization());
+        boolean isAssigner = lastAssignmentOpt.isPresent()
+                && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssignerOrganization());
+        boolean isAssignee = lastAssignmentOpt.isPresent()
+                && isUserMemberOfOrganization(removedBy, lastAssignmentOpt.get().getAssigneeOrganization());
 
         if (!isOwner && !isAssigner && !isAssignee) {
-            throw new UnauthorizedAccessException("غير مصرح: فقط المؤسسة المالكة أو المسندة أو المسند إليها يمكنها إلغاء إسناد الطلب.");
+            throw new UnauthorizedAccessException(
+                    "غير مصرح: فقط المؤسسة المالكة أو المسندة أو المسند إليها يمكنها إلغاء إسناد الطلب.");
         }
 
         OrderStatus previousStatus = order.getStatus();
@@ -774,7 +774,8 @@ public class OrderAssignmentService {
      */
     public boolean canUnassignOrganization(Long orderId, User user) {
         Order order = orderRepository.findById(orderId).orElse(null);
-        if (order == null || order.getAssignedToOrganization() == null) return false;
+        if (order == null || order.getAssignedToOrganization() == null)
+            return false;
 
         // لا يمكن إلغاء الإسناد في حالات نهائية
         if (order.getStatus() == OrderStatus.DELIVERED ||
@@ -793,11 +794,12 @@ public class OrderAssignmentService {
 
         Organization ownerOrg = order.getOwnerOrganization();
         boolean isOwner = isUserMemberOfOrganization(user, ownerOrg);
-        
+
         boolean isAssigner = false;
         boolean isAssignee = false;
 
-        // المنظمة المسندة (assigner) أو المسند إليها (assignee) للإسناد الأخير يمكنها الإلغاء
+        // المنظمة المسندة (assigner) أو المسند إليها (assignee) للإسناد الأخير يمكنها
+        // الإلغاء
         if (lastAssignmentOpt.isPresent()) {
             isAssigner = isUserMemberOfOrganization(user, lastAssignmentOpt.get().getAssignerOrganization());
             isAssignee = isUserMemberOfOrganization(user, lastAssignmentOpt.get().getAssigneeOrganization());
@@ -807,10 +809,28 @@ public class OrderAssignmentService {
     }
 
     /**
-     * جلب سلسلة الإسناد كاملة لأوردر معين.
+     * جلب سلسلة الإسناد كاملة لأوردر معين (للاستخدام الداخلي فقط).
      */
     public List<OrderAssignment> getAssignmentChain(Long orderId) {
         return orderAssignmentRepository.findByOrderIdOrderByLevelAsc(orderId);
+    }
+
+    /**
+     * جلب سلسلة الإسناد المفلترة لأوردر معين حسب المنظمة المشاهدة.
+     * كل طرف يرى فقط الإسنادات التي يكون فيها مُرسِل (assigner) أو مُستقبِل (assignee).
+     * هذا يحمي خصوصية العلاقات التجارية بين الأطراف الأخرى في السلسلة.
+     */
+    public List<OrderAssignment> getAssignmentChainForViewer(Long orderId, Organization viewerOrg) {
+        if (viewerOrg == null) {
+            return java.util.Collections.emptyList();
+        }
+        List<OrderAssignment> fullChain = orderAssignmentRepository.findByOrderIdOrderByLevelAsc(orderId);
+        Long viewerOrgId = viewerOrg.getId();
+        return fullChain.stream()
+                .filter(assignment ->
+                        assignment.getAssignerOrganization().getId().equals(viewerOrgId) ||
+                        assignment.getAssigneeOrganization().getId().equals(viewerOrgId))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     // قبول المستلم (المكتب) للطلب المُسند إليه
@@ -928,7 +948,8 @@ public class OrderAssignmentService {
 
         if (companyRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
                 officeRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
-                storeRepository.existsByAdminIdAndId(user.getId(), org.getId())) {
+                storeRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
+                clientOrgRepository.existsByAdminIdAndId(user.getId(), org.getId())) {
             return true;
         }
         return membershipRepository.existsByUserAndOrganizationAndStatus(
@@ -964,7 +985,8 @@ public class OrderAssignmentService {
             if (orderAssignmentRepository.existsInChain(order.getId(), userOrg.getId())) {
                 return true;
             }
-            // التحقق من وجود استعلام - المستخدم يمكنه رؤية الأوردر إذا كان لديه استعلام وارد
+            // التحقق من وجود استعلام - المستخدم يمكنه رؤية الأوردر إذا كان لديه استعلام
+            // وارد
             if (orderInquiryRepository.existsByOrderIdAndReceiverOrganizationId(order.getId(), userOrg.getId())) {
                 return true;
             }

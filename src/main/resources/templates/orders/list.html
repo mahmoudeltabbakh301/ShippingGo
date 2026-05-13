@@ -210,9 +210,11 @@
                                         </span>
                                     </th:block>
                                 </td>
-                                <td
-                                    th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
-                                    -</td>
+                                <td>
+                                    <span th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">-</span>
+                                    <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
+                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي">🚫</span>
+                                </td>
                                 <td th:text="${#temporals.format(order.createdAt, 'MM/dd')}">التاريخ</td>
                                 <td>
                                     <a th:href="@{/orders/{id}(id=${order.id})}" class="table-action-btn"

@@ -141,9 +141,18 @@
                         <span th:unless="${targetUser.governorate != null}">-</span>
                     </div>
 
-                    <div class="info-item" th:if="${organization != null}">
+                    <div class="info-item" th:if="${organization != null}" style="grid-column: 1 / -1;">
                         <label>المنظمة التابع لها</label>
-                        <span th:text="${organization.name}">-</span>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-top: 0.5rem;">
+                            <img th:if="${organization.logoUrl}" 
+                                 th:src="@{'/uploads/' + ${organization.logoUrl}}" 
+                                 alt="Organization Logo"
+                                 style="width: 40px; height: 40px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border-color);">
+                            <div th:unless="${organization.logoUrl}" 
+                                 style="width: 40px; height: 40px; border-radius: 8px; background: linear-gradient(135deg, #374151, #111827); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800;"
+                                 th:text="${#strings.substring(organization.name, 0, 1)}">M</div>
+                            <span th:text="${organization.name}">-</span>
+                        </div>
                     </div>
                     
                     <div class="info-item">

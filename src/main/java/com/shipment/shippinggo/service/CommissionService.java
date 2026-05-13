@@ -139,6 +139,58 @@ public class CommissionService {
         commissionSettingRepository.deleteById(id);
     }
 
+    // حفظ أو تحديث إعدادات عمولة "غير مسند" (أوردرات المنظمة غير المسندة لأي منظمة)
+    public CommissionSetting saveUnassignedCommission(Organization sourceOrg,
+            CommissionType type, BigDecimal value, BigDecimal rejectionCommission, BigDecimal cancellationCommission,
+            Governorate governorate) {
+
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
+
+        Optional<CommissionSetting> existing;
+        if (governorate != null) {
+            existing = commissionSettingRepository
+                    .findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorate(sourceOrg, governorate);
+        } else {
+            existing = commissionSettingRepository
+                    .findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorateIsNull(sourceOrg);
+        }
+
+        CommissionSetting setting;
+        if (existing.isPresent()) {
+            setting = existing.get();
+            setting.setCommissionType(type);
+            setting.setCommissionValue(value);
+            setting.setRejectionCommission(rejectionCommission);
+            setting.setCancellationCommission(cancellationCommission);
+        } else {
+            setting = CommissionSetting.builder()
+                    .sourceOrganization(sourceOrg)
+                    .targetOrganization(null)
+                    .courier(null)
+                    .governorate(governorate)
+                    .commissionType(type)
+                    .commissionValue(value)
+                    .rejectionCommission(rejectionCommission)
+                    .cancellationCommission(cancellationCommission)
+                    .build();
+        }
+        return commissionSettingRepository.save(setting);
+    }
+
+    // جلب إعدادات عمولة "غير مسند" (مع fallback للافتراضي إذا لم توجد عمولة للمحافظة)
+    public Optional<CommissionSetting> getUnassignedCommission(Organization sourceOrg, Governorate governorate) {
+        sourceOrg = resolveEffectiveOrganization(sourceOrg);
+        if (governorate != null) {
+            Optional<CommissionSetting> govSetting = commissionSettingRepository
+                    .findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorate(sourceOrg, governorate);
+            if (govSetting.isPresent()) {
+                return govSetting;
+            }
+        }
+        return commissionSettingRepository
+                .findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorateIsNull(sourceOrg);
+    }
+
     // تسجيل المعاملة المالية (العمولة) في حساب المنظمة أو المندوب
     public void recordCommission(Order order, Organization organization, User courier, BigDecimal amount,
             String description) {
@@ -178,7 +230,11 @@ public class CommissionService {
         if (courier != null && sourceOrg != null) {
             setting = getCourierCommission(sourceOrg, courier);
         } else if (sourceOrg != null && targetOrg != null) {
-            setting = getOrganizationCommission(sourceOrg, targetOrg, order.getGovernorate());
+            if (sourceOrg.getType() == OrganizationType.CLIENT) {
+                setting = getOrganizationCommission(targetOrg, sourceOrg, order.getGovernorate());
+            } else {
+                setting = getOrganizationCommission(sourceOrg, targetOrg, order.getGovernorate());
+            }
         } else {
             return BigDecimal.ZERO;
         }
@@ -266,8 +322,12 @@ public class CommissionService {
                             "عمولة استلام أوردر من " + assignedOrg.getName() + " (فردية)");
                 }
             } else {
-                Optional<CommissionSetting> orgSetting = getOrganizationCommission(ownerOrg, assignedOrg,
-                        order.getGovernorate());
+                Optional<CommissionSetting> orgSetting;
+                if (ownerOrg.getType() == OrganizationType.CLIENT) {
+                    orgSetting = getOrganizationCommission(assignedOrg, ownerOrg, order.getGovernorate());
+                } else {
+                    orgSetting = getOrganizationCommission(ownerOrg, assignedOrg, order.getGovernorate());
+                }
                 if (orgSetting.isPresent()) {
                     BigDecimal commission = calculateCommission(orgSetting.get(), orderAmount);
                     if (commission.compareTo(BigDecimal.ZERO) > 0) {
@@ -308,8 +368,12 @@ public class CommissionService {
         Organization courierOrg = assignedOrg != null ? assignedOrg : ownerOrg;
 
         if (ownerOrg != null && assignedOrg != null && !ownerOrg.getId().equals(assignedOrg.getId())) {
-            Optional<CommissionSetting> orgSetting = getOrganizationCommission(ownerOrg, assignedOrg,
-                    order.getGovernorate());
+            Optional<CommissionSetting> orgSetting;
+            if (ownerOrg.getType() == OrganizationType.CLIENT) {
+                orgSetting = getOrganizationCommission(assignedOrg, ownerOrg, order.getGovernorate());
+            } else {
+                orgSetting = getOrganizationCommission(ownerOrg, assignedOrg, order.getGovernorate());
+            }
             if (orgSetting.isPresent()) {
                 CommissionSetting setting = orgSetting.get();
                 BigDecimal rejectionCommission = setting.getRejectionCommission();
@@ -333,13 +397,8 @@ public class CommissionService {
                 CommissionSetting setting = courierSetting.get();
                 BigDecimal rejectionCommission = setting.getRejectionCommission();
 
-                if (rejectionPayment != null && rejectionPayment.compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal commission = calculateCommission(setting, rejectionPayment);
-                    if (commission.compareTo(BigDecimal.ZERO) > 0) {
-                        recordCommission(order, courierOrg, courier, commission,
-                                "عمولة رفض مع دفع");
-                    }
-                } else if (rejectionCommission != null && rejectionCommission.compareTo(BigDecimal.ZERO) > 0) {
+                // المندوب يأخذ عمولة الرفض المحددة له دائماً سواء تم الدفع أو لم يتم
+                if (rejectionCommission != null && rejectionCommission.compareTo(BigDecimal.ZERO) > 0) {
                     recordCommission(order, courierOrg, courier, rejectionCommission,
                             "عمولة رفض");
                 }
@@ -355,8 +414,12 @@ public class CommissionService {
         Organization courierOrg = assignedOrg != null ? assignedOrg : ownerOrg;
 
         if (ownerOrg != null && assignedOrg != null && !ownerOrg.getId().equals(assignedOrg.getId())) {
-            Optional<CommissionSetting> orgSetting = getOrganizationCommission(ownerOrg, assignedOrg,
-                    order.getGovernorate());
+            Optional<CommissionSetting> orgSetting;
+            if (ownerOrg.getType() == OrganizationType.CLIENT) {
+                orgSetting = getOrganizationCommission(assignedOrg, ownerOrg, order.getGovernorate());
+            } else {
+                orgSetting = getOrganizationCommission(ownerOrg, assignedOrg, order.getGovernorate());
+            }
             if (orgSetting.isPresent()) {
                 CommissionSetting setting = orgSetting.get();
                 BigDecimal cancellationCommission = setting.getCancellationCommission();
@@ -392,14 +455,23 @@ public class CommissionService {
         BigDecimal rejectionCommission = BigDecimal.ZERO;
 
         Map<Governorate, Optional<CommissionSetting>> settingsCache = new HashMap<>();
-        Optional<CommissionSetting> defaultSetting = getOrganizationCommission(commissionSource, commissionTarget,
-                null);
+        Optional<CommissionSetting> defaultSetting;
+        if (commissionSource != null && commissionSource.getType() == OrganizationType.CLIENT) {
+            defaultSetting = getOrganizationCommission(commissionTarget, commissionSource, null);
+        } else {
+            defaultSetting = getOrganizationCommission(commissionSource, commissionTarget, null);
+        }
 
         for (Order order : orders) {
             Optional<CommissionSetting> setting;
             if (order.getGovernorate() != null) {
-                setting = settingsCache.computeIfAbsent(order.getGovernorate(),
-                        g -> getOrganizationCommission(commissionSource, commissionTarget, g));
+                if (commissionSource != null && commissionSource.getType() == OrganizationType.CLIENT) {
+                    setting = settingsCache.computeIfAbsent(order.getGovernorate(),
+                            g -> getOrganizationCommission(commissionTarget, commissionSource, g));
+                } else {
+                    setting = settingsCache.computeIfAbsent(order.getGovernorate(),
+                            g -> getOrganizationCommission(commissionSource, commissionTarget, g));
+                }
                 if (setting.isEmpty()) {
                     setting = defaultSetting;
                 }

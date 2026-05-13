@@ -33,4 +33,12 @@ public interface CommissionSettingRepository extends JpaRepository<CommissionSet
 
         // جميع إعدادات العمولات للمنظمات
         List<CommissionSetting> findBySourceOrganizationAndTargetOrganizationIsNotNull(Organization organization);
+
+        // عمولة غير مسند (بدون منظمة مستهدفة وبدون مندوب) - افتراضي
+        Optional<CommissionSetting> findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorateIsNull(
+                        Organization sourceOrganization);
+
+        // عمولة غير مسند مع محافظة محددة
+        Optional<CommissionSetting> findBySourceOrganizationAndTargetOrganizationIsNullAndCourierIsNullAndGovernorate(
+                        Organization sourceOrganization, com.shipment.shippinggo.enums.Governorate governorate);
 }

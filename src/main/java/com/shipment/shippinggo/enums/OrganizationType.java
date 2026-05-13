@@ -4,7 +4,8 @@ public enum OrganizationType {
     COMPANY("شركة شحن"),
     OFFICE("مكتب شحن"),
     VIRTUAL_OFFICE("مكتب افتراضي"),
-    STORE("متجر");
+    STORE("متجر"),
+    CLIENT("عميل");
 
     private final String arabicName;
 

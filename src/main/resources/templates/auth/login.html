@@ -60,9 +60,12 @@
                     </div>
 
                     <div class="form-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
-                            <label class="form-label" for="password" th:text="#{auth.password.label}" style="margin-bottom: 0;">كلمة المرور</label>
-                            <a th:href="@{/forgot-password}" style="font-size: 0.85rem;" th:text="#{auth.forgot_password.link}">نسيت كلمة المرور؟</a>
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2);">
+                            <label class="form-label" for="password" th:text="#{auth.password.label}"
+                                style="margin-bottom: 0;">كلمة المرور</label>
+                            <a th:href="@{/forgot-password}" style="font-size: 0.85rem;"
+                                th:text="#{auth.forgot_password.link}">نسيت كلمة المرور؟</a>
                         </div>
                         <input type="password" id="password" name="password" class="form-control"
                             th:placeholder="#{auth.password.placeholder}" required>
@@ -79,6 +82,14 @@
                     <a th:href="@{/register}" th:text="#{auth.register.link}">إنشاء حساب جديد</a>
 
                     <div
+                        style="margin-top: var(--space-4); border-top: 1px solid var(--border-color); padding-top: var(--space-3); text-align: center; width: 100%;">
+                        <a th:href="@{/downloads}"
+                            style="font-weight: 600; font-size: 1.05rem; display: block; padding: var(--space-2) 0;">
+                            تحميل التطبيق من هنا
+                        </a>
+                    </div>
+
+                    <div
                         style="margin-top: var(--space-4); display: flex; justify-content: center; gap: var(--space-4);">
                         <a th:href="${#locale.language == 'ar' ? '?lang=en' : '?lang=ar'}"
                             th:text="${#locale.language == 'ar' ? 'English' : 'العربية'}">EN</a>
@@ -88,6 +99,21 @@
         </div>
     </div>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>
+        // التقاط بيانات تسجيل الدخول لتطبيق الديسكتوب لدعم وضع الأوفلاين
+        document.querySelector('.auth-form').addEventListener('submit', function(e) {
+            if (window.electronAPI && window.electronAPI.saveLoginCredentials) {
+                e.preventDefault(); // إيقاف الإرسال مؤقتاً
+                var form = this;
+                var u = document.getElementById('username').value;
+                var p = document.getElementById('password').value;
+                // نرسلها للديسكتوب في الخلفية ثم نكمل الإرسال
+                window.electronAPI.saveLoginCredentials(u, p).finally(function() {
+                    form.submit();
+                });
+            }
+        });
+    </script>
 </body>
 
 </html>

@@ -4,10 +4,53 @@
 
 <!-- Sidebar Fragment -->
 <aside th:fragment="sidebar" class="sidebar">
-    <div class="sidebar-header">
-        <div class="sidebar-logo">
-            <img th:src="@{/img/logo.jpg}" alt="ShippingGo Logo" class="sidebar-logo-img">
+    <div class="sidebar-header" style="display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+        <div class="sidebar-actions"
+            style="width: 100%; display: flex; justify-content: flex-end; padding-left: 0.5rem;">
+            <!-- Notification Bell with Dropdown -->
+            <div class="notification-bell-wrapper" id="notificationBellWrapper">
+                <button class="notification-bell-btn" id="notificationBellBtn" type="button" title="الإشعارات"
+                    onclick="toggleNotificationDropdown(event)">
+                    <span class="nav-link-icon" style="font-size: 1.2rem;">🔔</span>
+                    <span class="notification-badge" id="notificationBadge"
+                        th:if="${unreadNotificationsCount != null && unreadNotificationsCount > 0}"
+                        th:text="${unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}">0</span>
+                </button>
+                <!-- Notification Dropdown -->
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-dropdown-header">
+                        <h4 th:text="#{notifications.title}">الإشعارات</h4>
+                        <button type="button" class="notification-mark-all-btn" onclick="markAllNotificationsRead()">
+                            <span th:text="#{mark-all-read}">
+                                تعليم الكل كمقروء</span>
+                        </button>
+                    </div>
+                    <div class="notification-dropdown-body" id="notificationDropdownBody">
+                        <div class="notification-loading">
+                            <span th:text="#{notifications.loading}">جاري التحميل...</span>
+                        </div>
+                    </div>
+                    <div class="notification-dropdown-footer">
+                        <a th:href="@{/dashboard/notifications}" class="notification-view-all">
+                            <span th:text="#{notifications.view_all}">إظهار المزيد</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="sidebar-logo" style="width: 100%; display: flex; justify-content: center;">
+            <!-- Organization logo if available -->
+            <img th:if="${orgLogoUrl != null}" th:src="@{'/uploads/' + ${orgLogoUrl}}" alt="Organization Logo"
+                class="sidebar-logo-img org-logo">
+            <!-- Fallback: first letter of org name -->
+            <div th:if="${orgLogoUrl == null && currentOrgName != null}" class="sidebar-logo-placeholder"
+                th:text="${#strings.substring(currentOrgName, 0, 1)}">M</div>
+            <!-- Default ShippingGo logo for unaffiliated users -->
+            <img th:if="${orgLogoUrl == null && currentOrgName == null}" th:src="@{/img/logo.jpg}" alt="ShippingGo Logo"
+                class="sidebar-logo-img">
+        </div>
+
     </div>
 
     <nav class="sidebar-nav">
@@ -68,7 +111,8 @@
                 </li>
                 <!-- Requests link removed as it is merged into Network -->
 
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    th:if="${currentOrgType != 'CLIENT'}">
                     <a th:href="@{/network}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/network')} ? 'active' : ''">
                         <span class="nav-link-icon">🏢</span>
@@ -76,7 +120,7 @@
                     </a>
                 </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'WAREHOUSE_MANAGER')"
-                    th:if="${currentOrgType != 'STORE'}">
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
                     <a th:href="@{/shipment-requests}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/shipment-requests')} ? 'active' : ''">
                         <span class="nav-link-icon">🔄</span>
@@ -84,7 +128,7 @@
                     </a>
                 </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
-                    th:if="${currentOrgType != 'STORE'}">
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
                     <a th:href="@{/org/shipment-requests}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/org/shipment-requests')} ? 'active' : ''">
                         <span class="nav-link-icon">📥</span>
@@ -92,18 +136,36 @@
                     </a>
                 </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
-                    th:if="${currentOrgType != 'STORE'}">
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
                     <a th:href="@{/virtual-offices}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/virtual-offices')} ? 'active' : ''">
                         <span class="nav-link-icon">🏢</span>
                         <span th:text="#{virtual_offices.title}">المكاتب الافتراضية</span>
                     </a>
                 </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
+                    <a th:href="@{/virtual-couriers}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/virtual-couriers')} ? 'active' : ''">
+                        <span class="nav-link-icon">🚚</span>
+                        <span th:text="#{virtual_couriers.sidebar_title}">المناديب الافتراضيون</span>
+                    </a>
+                </li>
+                <!-- رابط العملاء - فقط للشركات والمكاتب -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    th:if="${currentOrgType == 'COMPANY' or currentOrgType == 'OFFICE'}">
+                    <a th:href="@{/clients}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/clients')} ? 'active' : ''">
+                        <span class="nav-link-icon">🤝</span>
+                        <span th:text="#{clients.title}">العملاء </span>
+                    </a>
+                </li>
             </ul>
         </div>
 
         <!-- Management -->
-        <div class="nav-section" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT', 'FOLLOW_UP', 'SUPER_ADMIN')">
+        <div class="nav-section"
+            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT', 'FOLLOW_UP', 'SUPER_ADMIN')">
             <div class="nav-section-title" th:text="#{nav.management}">الإدارة</div>
             <ul class="nav-list">
 
@@ -114,7 +176,8 @@
                         <span th:text="#{nav.accounts}">الحسابات</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    th:if="${currentOrgType != 'CLIENT'}">
                     <a th:href="@{/members}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/members')} ? 'active' : ''">
                         <span class="nav-link-icon">👥</span>
@@ -123,7 +186,8 @@
                             th:text="${pendingMembersCount}">0</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP')">
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP')"
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
                     <a th:href="@{/dashboard/map}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/dashboard/map')} ? 'active' : ''">
                         <span class="nav-link-icon">🗺️</span>
@@ -144,7 +208,15 @@
                         <span th:text="#{nav.invoices}">الفواتير</span>
                     </a>
                 </li>
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')">
+                <!--         <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <a th:href="@{/store/integrations}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/store')} ? 'active' : ''">
+                        <span class="nav-link-icon">🔌</span>
+                        <span th:text="#{nav.integrations}">الربط الخارجي</span>
+                    </a>
+    </li> -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')"
+                    th:if="${currentOrgType != 'CLIENT'}">
                     <a th:href="@{/audit-logs}" class="nav-link"
                         th:classappend="${#strings.startsWith(currentUri, '/audit-logs')} ? 'active' : ''">
                         <span class="nav-link-icon">🛡️</span>
@@ -238,6 +310,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Load notification JS with sidebar -->
+    <script th:src="@{/js/notifications.js}"></script>
 </aside>
 
 </html>

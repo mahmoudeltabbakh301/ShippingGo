@@ -29,6 +29,7 @@ public class OrderCreationService {
     private final StoreRepository storeRepository;
     private final MembershipRepository membershipRepository;
     private final VirtualOfficeRepository virtualOfficeRepository;
+    private final com.shipment.shippinggo.repository.ClientOrgRepository clientOrgRepository;
     private final OrderAssignmentService orderAssignmentService;
     private final OrderStatusService orderStatusService;
 
@@ -44,6 +45,7 @@ public class OrderCreationService {
             StoreRepository storeRepository,
             MembershipRepository membershipRepository,
             VirtualOfficeRepository virtualOfficeRepository,
+            com.shipment.shippinggo.repository.ClientOrgRepository clientOrgRepository,
             OrderAssignmentService orderAssignmentService,
             OrderStatusService orderStatusService) {
         this.orderRepository = orderRepository;
@@ -58,6 +60,7 @@ public class OrderCreationService {
         this.storeRepository = storeRepository;
         this.membershipRepository = membershipRepository;
         this.virtualOfficeRepository = virtualOfficeRepository;
+        this.clientOrgRepository = clientOrgRepository;
         this.orderAssignmentService = orderAssignmentService;
         this.orderStatusService = orderStatusService;
     }
@@ -370,7 +373,9 @@ public class OrderCreationService {
                                 .map(vo -> (Organization) vo)
                                 .orElseGet(() -> storeRepository.findByAdminId(user.getId()).stream().findFirst()
                                         .map(s -> (Organization) s)
-                                        .orElse(null))));
+                                        .orElseGet(() -> clientOrgRepository.findByAdminId(user.getId()).stream().findFirst()
+                                                .map(c -> (Organization) c)
+                                                .orElse(null)))));
 
         if (org == null) {
             org = membershipRepository.findByUserAndStatus(user,

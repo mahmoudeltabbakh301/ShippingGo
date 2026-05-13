@@ -131,13 +131,13 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="order : ${pendingRequests}">
+                            <tr th:each="assignment : ${pendingRequests}" th:with="order=${assignment.order}">
                                 <td>
                                     <input type="checkbox" name="selectedIds" th:value="${order.id}" form="bulkForm"
                                         class="request-checkbox" onchange="updateBulkButton()">
                                 </td>
                                 <td th:text="${order.code}">-</td>
-                                <td th:text="${order.ownerOrganization?.name}">-</td>
+                                <td th:text="${assignment.assignerOrganization?.name}">-</td>
                                 <td th:text="${order.recipientName}">-</td>
                                 <td th:text="${order.recipientPhone}">-</td>
                                 <td th:text="${order.recipientAddress}">-</td>
@@ -218,9 +218,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr th:each="order : ${acceptedRequests}">
+                            <tr th:each="assignment : ${acceptedRequests}" th:with="order=${assignment.order}">
                                 <td th:text="${order.code}">-</td>
-                                <td th:text="${order.ownerOrganization?.name}">-</td>
+                                <td th:text="${assignment.assignerOrganization?.name}">-</td>
                                 <td th:text="${order.recipientName}">-</td>
                                 <td th:text="${order.recipientPhone}">-</td>
                                 <td th:text="${order.recipientAddress}">-</td>

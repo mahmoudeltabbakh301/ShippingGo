@@ -232,7 +232,8 @@ public class BusinessDayController {
         // كمان نضيف الشركات والمكاتب للإسناد الجماعي
         if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.COMPANY) {
             model.addAttribute("offices", organizationService.getOfficesByCompany(org.getId()));
-        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE) {
+        } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.STORE
+                || org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
             model.addAttribute("companies", organizationService.getCompaniesByStore(org.getId()));
             model.addAttribute("offices", organizationService.getOfficesByStore(org.getId()));
         } else if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
@@ -276,9 +277,13 @@ public class BusinessDayController {
             model.addAttribute("pendingMemberships", organizationService.getPendingMemberships(org.getId()));
         }
 
-        // عدد الاستعلامات الواردة لعرضها على زر الاستعلامات
-        long inquiryCount = orderInquiryService.getInquiryCount(org.getId(), id);
-        model.addAttribute("inquiryCount", inquiryCount);
+        // عدد الاستعلامات الواردة لعرضها على زر الاستعلامات (لا يظهر للعملاء)
+        if (org.getType() != com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            long inquiryCount = orderInquiryService.getInquiryCount(org.getId(), id);
+            model.addAttribute("inquiryCount", inquiryCount);
+        } else {
+            model.addAttribute("inquiryCount", 0L);
+        }
 
         return "business-days/view";
     }

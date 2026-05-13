@@ -1,5 +1,6 @@
 package com.shipment.shippinggo.service;
 
+import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,7 +19,14 @@ public class CustomUserDetailsService implements UserDetailsService {
     // تحميل بيانات المستخدم بواسطة اسم المستخدم للتحقق من بيانات الدخول
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+
+        // منع المناديب الافتراضيين من تسجيل الدخول
+        if (user.isVirtual()) {
+            throw new UsernameNotFoundException("Virtual couriers cannot login");
+        }
+
+        return user;
     }
 }

@@ -132,4 +132,39 @@ public class ProfileController {
         }
         return "redirect:/profile";
     }
+
+    @PostMapping("/upload-logo")
+    public String uploadLogo(@AuthenticationPrincipal User user,
+            @RequestParam("logoFile") MultipartFile file,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Organization org = organizationService.getOrganizationByUser(user);
+            if (org == null) {
+                throw new RuntimeException("لا توجد منظمة مرتبطة بحسابك");
+            }
+            if (!org.getAdmin().getId().equals(user.getId())) {
+                throw new RuntimeException("فقط مدير المنظمة يمكنه تغيير اللوجو");
+            }
+
+            // Validate file size (max 2MB)
+            if (file.getSize() > 2 * 1024 * 1024) {
+                throw new RuntimeException("حجم الملف يجب أن لا يتجاوز 2 ميجابايت");
+            }
+
+            // Validate file type
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new RuntimeException("يجب أن يكون الملف صورة (PNG, JPG, SVG)");
+            }
+
+            String filename = storageService.store(file);
+            org.setLogoUrl(filename);
+            organizationService.saveOrganization(org);
+            redirectAttributes.addFlashAttribute("success", "تم تحديث لوجو المنظمة بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "فشل رفع اللوجو: " + e.getMessage());
+        }
+        return "redirect:/profile";
+    }
 }
+

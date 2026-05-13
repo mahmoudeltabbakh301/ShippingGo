@@ -27,6 +27,10 @@ public class OrganizationRelation {
     @JoinColumn(name = "child_organization_id", nullable = false)
     private Organization childOrganization; // Office being requested
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "initiated_by_id")
+    private Organization initiatedBy; // Organization that initiated the request
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

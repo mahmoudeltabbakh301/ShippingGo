@@ -100,6 +100,20 @@
                 <div class="card">
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
+                            style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
+                            📦</div>
+                        <div>
+                            <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">عمولة غير مسند
+                                (<span th:text="${countUnassignedOrders}">0</span>)</p>
+                            <h4 style="margin: 0; color: #f59e0b;"
+                                th:text="${unassignedCommission != null ? #numbers.formatDecimal(unassignedCommission, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
+                                0.00 ج.م</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: var(--space-3);">
+                        <div
                             th:style="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;' : 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;'}">
                             💵</div>
                         <div>
@@ -224,6 +238,93 @@
                 <div th:if="${accountSummaries == null || accountSummaries.?[type == 'organization'].isEmpty()}"
                     class="text-center" style="padding: 2rem;">
                     <p class="text-muted" th:text="#{accounts.day.org_accounts_empty}">لا توجد حسابات للمنظمات في هذا اليوم.</p>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">
+
+                <!-- قسم غير مسند -->
+                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);">📦 أوردرات غير مسندة (<span
+                        th:text="${accountSummaries != null ? accountSummaries.?[type == 'unassigned'].size() : 0}">0</span>)
+                </h4>
+                <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'unassigned'].isEmpty()}"
+                    class="table-container" style="border: none; margin-bottom: 2rem;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>النوع</th>
+                                <th th:text="#{accounts.day.col_total_orders}">إجمالي الأوردرات</th>
+                                <th th:text="#{accounts.day.col_delivered}">المسلمة</th>
+                                <th th:text="#{accounts.day.col_refused}">المرفوضة</th>
+                                <th th:text="#{accounts.day.col_delivered_amount}">المبلغ المسلم</th>
+                                <th th:text="#{accounts.day.col_returned_amount}">مبلغ الرفض</th>
+                                <th th:text="#{accounts.day.col_delivery_commission}">عمولة التوصيل</th>
+                                <th th:text="#{accounts.day.col_rejection_commission}">عمولة الرفض</th>
+                                <th th:text="#{accounts.day.col_cancellation_commission}">عمولة الإلغاء</th>
+                                <th th:text="#{accounts.day.col_total_commission}">إجمالي العمولة</th>
+                                <th th:text="#{accounts.day.col_net}">الصافي</th>
+                                <th th:text="#{accounts.index.col_actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="account : ${accountSummaries}" th:if="${account.type == 'unassigned'}">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                        <span>📦</span>
+                                        <span th:text="${account.name}">غير مسند</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: #f59e0b; color: #000;">غير مسند</span>
+                                </td>
+                                <td th:text="${account.totalOrders}">0</td>
+                                <td>
+                                    <span style="color: var(--success-400);"
+                                        th:text="${account.deliveredOrders}">0</span>
+                                </td>
+                                <td>
+                                    <span style="color: var(--danger-400);" th:text="${account.refusedOrders}">0</span>
+                                </td>
+                                <td style="color: var(--success-400);"
+                                    th:text="${#numbers.formatDecimal(account.deliveredAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--danger-400);"
+                                    th:text="${#numbers.formatDecimal(account.returnedAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--warning-400);"
+                                    th:text="${#numbers.formatDecimal(account.deliveryCommission, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--danger-400);"
+                                    th:text="${#numbers.formatDecimal(account.rejectionCommission, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--danger-400);"
+                                    th:text="${account.cancellationCommission != null ? #numbers.formatDecimal(account.cancellationCommission, 1, 2) : '0.00'} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--warning-400); font-weight: 600;"
+                                    th:text="${#numbers.formatDecimal(account.totalCommission, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م
+                                </td>
+                                <td style="color: var(--primary-400); font-weight: 600;"
+                                    th:text="${#numbers.formatDecimal(account.netAmount, 1, 2)} + ' ' + #{business_days.view.currency}">
+                                    0.00 ج.م</td>
+                                <td>
+                                    <a th:href="@{/accounts/unassigned(businessDayId=${accountDay.businessDay.id})}"
+                                        class="btn btn-sm btn-primary" th:text="#{accounts.day.btn_details}">عرض
+                                        التفاصيل</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div th:if="${accountSummaries == null || accountSummaries.?[type == 'unassigned'].isEmpty()}"
+                    class="text-center" style="padding: 1rem;">
+                    <p class="text-muted">لا توجد أوردرات غير مسندة في هذا اليوم.</p>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">

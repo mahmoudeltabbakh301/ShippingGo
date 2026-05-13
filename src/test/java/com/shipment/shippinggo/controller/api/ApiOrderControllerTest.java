@@ -1,5 +1,6 @@
 package com.shipment.shippinggo.controller.api;
 
+import com.shipment.shippinggo.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shipment.shippinggo.dto.OrderDto;
 import com.shipment.shippinggo.entity.Company;
@@ -35,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class ApiOrderControllerTest {
 
+    @org.springframework.boot.test.mock.mockito.MockBean
+    private UserRepository userRepository;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,6 +56,9 @@ class ApiOrderControllerTest {
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthFilter;
+
+    @MockBean
+    private com.shipment.shippinggo.service.NotificationService notificationService;
 
     private User testUser;
     private Organization testOrg;

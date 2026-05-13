@@ -72,33 +72,7 @@ public class OrgShipmentRequestController {
                     .build());
         }
 
-        // 2. Fetch Pending Orders (Assigned but not accepted)
-        List<com.shipment.shippinggo.entity.Order> pendingOrders = orderService.getPendingAssignmentsByDate(org.getId(),
-                selectedDate);
-        for (com.shipment.shippinggo.entity.Order order : pendingOrders) {
-            // Map OrderStatus.WAITING (or whatever status it has) to equivalent
-            // For display, we can use the order status, but DTO expects
-            // ShipmentRequestStatus
-            // We can map loosely or just use the status field for display logic
-            ShipmentRequestStatus displayStatus = ShipmentRequestStatus.PENDING; // Default for pending assignment
-
-            allRequests.add(com.shipment.shippinggo.dto.IncomingAssignmentDTO.builder()
-                    .id(order.getId())
-                    .referenceId(order.getId())
-                    .type("ORDER")
-                    .recipientName(order.getRecipientName())
-                    .recipientPhone(order.getRecipientPhone())
-                    .recipientAddress(order.getRecipientAddress())
-                    .contentDescription(order.getNotes()) // Use notes as description
-                    .estimatedAmount(order.getAmount())
-                    .status(displayStatus)
-                    .createdAt(order.getCreatedAt())
-                    .code(order.getCode())
-                    .companyName(order.getCompanyName())
-                    .senderName(order.getOwnerOrganization().getName()) // Sender is the owner org
-                    .senderPhone(order.getOwnerOrganization().getPhone())
-                    .build());
-        }
+        // Removed fetching pendingOrders (Assigned Orders) as this page is now exclusively for Client ShipmentRequests
 
         // Sort by date desc
         allRequests.sort((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()));

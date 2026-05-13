@@ -44,7 +44,7 @@
         }
 
         .profile-card {
-            background: white;
+            background: var(--surface-card);
             border-radius: var(--border-radius-lg);
             padding: 2rem;
             box-shadow: var(--shadow-sm);
@@ -191,9 +191,7 @@
                                             th:selected="${user.governorate == gov}">
                                         </option>
                                     </select>
-                                    <small class="text-muted" th:text="#{profile.hint_gov}">لا يمكن تغيير المحافظة بعد
-                                        التسجيل (تواصل مع
-                                        الدعم)</small>
+                                    <small class="text-muted" th:text="#{profile.hint_gov}">لا يمكن تغيير المحافظة بعد التسجيل (تواصل مع الدعم)</small>
                                 </div>
                             </div>
                             <div class="form-actions" style="margin-top: 1.5rem; text-align: left;">
@@ -212,6 +210,46 @@
                                 th:text="#{profile.section_org}">ملف المنظمة
                             </h3>
                             <span class="badge badge-primary" th:text="#{org.type. + ${organization.type}}">Type</span>
+                        </div>
+
+                        <!-- Organization Logo Upload Section -->
+                        <div class="org-logo-section" style="margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
+                            <label class="form-label" style="font-weight: 600; margin-bottom: 1rem; display: block;">🏷️ لوجو المنظمة</label>
+                            <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                                <!-- Logo Preview -->
+                                <div id="logoPreviewContainer" style="width: 100px; height: 100px; border-radius: var(--border-radius-lg, 12px); border: 2px dashed var(--border-color); display: flex; align-items: center; justify-content: center; overflow: hidden; background: var(--bg-secondary, #f8f9fa); transition: all 0.3s ease;">
+                                    <img th:if="${organization.logoUrl}" 
+                                         th:src="@{'/uploads/' + ${organization.logoUrl}}" 
+                                         id="logoPreviewImg"
+                                         alt="Organization Logo"
+                                         style="width: 100%; height: 100%; object-fit: contain;">
+                                    <div th:unless="${organization.logoUrl}" 
+                                         id="logoPlaceholder"
+                                         style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; color: white; background: linear-gradient(135deg, #374151, #111827); border-radius: inherit;"
+                                         th:text="${#strings.substring(organization.name, 0, 1)}">M</div>
+                                </div>
+                                <!-- Upload Controls -->
+                                <div style="flex: 1; min-width: 200px;">
+                                    <form th:action="@{/profile/upload-logo}" method="post" enctype="multipart/form-data" id="logoUploadForm">
+                                        <input type="file" name="logoFile" id="logoFileInput" class="form-control" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" 
+                                               style="display: none;" onchange="previewLogo(this)">
+                                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                            <button type="button" class="btn btn-outline" 
+                                                    onclick="document.getElementById('logoFileInput').click()"
+                                                    style="display: inline-flex; align-items: center; gap: 6px;">
+                                                <span>🖼️</span>
+                                                <span th:text="${organization.logoUrl != null ? 'تغيير اللوجو' : 'إضافة لوجو'}">إضافة لوجو</span>
+                                            </button>
+                                            <button type="submit" id="logoSubmitBtn" class="btn btn-primary" style="display: none;">
+                                                حفظ اللوجو
+                                            </button>
+                                        </div>
+                                    </form>
+                                    <small style="display: block; margin-top: 0.5rem; color: var(--text-secondary, #6b7280); font-size: 0.8rem;">
+                                        PNG, JPG أو SVG — حد أقصى 2 ميجابايت
+                                    </small>
+                                </div>
+                            </div>
                         </div>
 
                         <form th:action="@{/profile/update-organization}" method="post">
@@ -403,6 +441,46 @@
                 );
             };
         })();
+    </script>
+    <script>
+        // Logo preview before upload
+        function previewLogo(input) {
+            if (input.files && input.files[0]) {
+                var file = input.files[0];
+
+                // Validate file size (2MB max)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('حجم الملف يجب أن لا يتجاوز 2 ميجابايت');
+                    input.value = '';
+                    return;
+                }
+
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var container = document.getElementById('logoPreviewContainer');
+                    // Remove placeholder if exists
+                    var placeholder = document.getElementById('logoPlaceholder');
+                    if (placeholder) placeholder.remove();
+
+                    // Show or create preview image
+                    var img = document.getElementById('logoPreviewImg');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.id = 'logoPreviewImg';
+                        img.alt = 'Logo Preview';
+                        img.style.cssText = 'width: 100%; height: 100%; object-fit: contain;';
+                        container.appendChild(img);
+                    }
+                    img.src = e.target.result;
+                    container.style.borderStyle = 'solid';
+                    container.style.borderColor = 'var(--primary-color, #2563eb)';
+
+                    // Show submit button
+                    document.getElementById('logoSubmitBtn').style.display = 'inline-flex';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
     </script>
 </body>
 

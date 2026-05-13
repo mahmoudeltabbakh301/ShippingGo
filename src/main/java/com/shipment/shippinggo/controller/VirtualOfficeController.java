@@ -5,6 +5,7 @@ import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.enums.OrganizationType;
 import com.shipment.shippinggo.service.OrganizationService;
+import com.shipment.shippinggo.service.VirtualOfficeService;
 import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,6 +29,9 @@ public class VirtualOfficeController {
 
     @Autowired
     private com.shipment.shippinggo.service.AccountService accountService;
+
+    @Autowired
+    private VirtualOfficeService virtualOfficeService;
 
     @GetMapping
     public String listVirtualOffices(Model model, @AuthenticationPrincipal User currentUser) {
@@ -91,6 +95,7 @@ public class VirtualOfficeController {
     }
 
     @PostMapping("/delete/{id}")
+    @Transactional
     public String deleteVirtualOffice(@PathVariable Long id,
             @AuthenticationPrincipal User currentUser,
             RedirectAttributes redirectAttributes) {
@@ -101,8 +106,8 @@ public class VirtualOfficeController {
         VirtualOffice vo = virtualOfficeRepository.findById(id).orElse(null);
 
         if (vo != null && currentOrg != null && vo.getParentOrganization().getId().equals(currentOrg.getId())) {
-            virtualOfficeRepository.delete(vo);
-            redirectAttributes.addFlashAttribute("successMessage", "تم حذف المكتب الافتراضي بنجاح");
+            virtualOfficeService.safeDeleteVirtualOffice(vo);
+            redirectAttributes.addFlashAttribute("successMessage", "تم حذف المكتب الافتراضي بنجاح. البيانات التاريخية محفوظة.");
         }
 
         return "redirect:/virtual-offices";

@@ -24,14 +24,26 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class OrganizationServiceTest {
 
-    @Mock private OrganizationRepository organizationRepository;
-    @Mock private CompanyRepository companyRepository;
-    @Mock private OfficeRepository officeRepository;
-    @Mock private StoreRepository storeRepository;
-    @Mock private MembershipRepository membershipRepository;
-    @Mock private OrganizationRelationRepository organizationRelationRepository;
-    @Mock private UserRepository userRepository;
-    @Mock private VirtualOfficeRepository virtualOfficeRepository;
+    @Mock
+    private OrganizationRepository organizationRepository;
+    @Mock
+    private CompanyRepository companyRepository;
+    @Mock
+    private OfficeRepository officeRepository;
+    @Mock
+    private StoreRepository storeRepository;
+    @Mock
+    private MembershipRepository membershipRepository;
+    @Mock
+    private OrganizationRelationRepository organizationRelationRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private VirtualOfficeRepository virtualOfficeRepository;
+    @Mock
+    private ClientOrgRepository clientOrgRepository;
+    @Mock
+    private NotificationService notificationService;
 
     private OrganizationService organizationService;
     private User adminUser;
@@ -39,8 +51,8 @@ class OrganizationServiceTest {
     @BeforeEach
     void setUp() {
         organizationService = new OrganizationService(organizationRepository, companyRepository,
-                officeRepository, storeRepository, membershipRepository, userRepository,
-                organizationRelationRepository, virtualOfficeRepository);
+                officeRepository, storeRepository, clientOrgRepository, membershipRepository, userRepository,
+                organizationRelationRepository, virtualOfficeRepository, notificationService);
 
         adminUser = new User();
         adminUser.setId(1L);

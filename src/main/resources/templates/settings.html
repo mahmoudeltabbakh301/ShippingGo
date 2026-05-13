@@ -38,7 +38,7 @@
         }
 
         .settings-item {
-            background: white;
+            background: var(--surface-card);
             border-radius: var(--border-radius-lg);
             padding: 1.25rem 1.5rem;
             box-shadow: var(--shadow-sm);
@@ -230,12 +230,12 @@
 
                 <!-- 5. Logout -->
                 <div class="settings-item cursor-pointer"
-                    style="border-color: var(--danger); background-color: rgba(220, 38, 38, 0.05); align-items: center; justify-content: center; padding: 1rem;"
+                    style="border-color: red !important; background-color: #ffffff !important; align-items: center; justify-content: center; padding: 1rem;"
                     onclick="document.getElementById('logout-form').submit();">
                     <form id="logout-form" th:action="@{/logout}" method="post"
                         style="margin: 0; width: 100%; text-align: center;">
                         <button type="submit"
-                            style="background: none; border: none; color: var(--danger); font-weight: 700; font-size: 1.125rem; cursor: pointer; padding: 0.5rem; width: 100%;"
+                            style="background: none; border: none; color: red !important; font-weight: 700; font-size: 1.125rem; cursor: pointer; padding: 0.5rem; width: 100%;"
                             th:text="#{settings.btn_logout}">تسجيل الخروج</button>
                     </form>
                 </div>

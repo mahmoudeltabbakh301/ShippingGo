@@ -56,6 +56,12 @@ public class User implements UserDetails {
 
     private String profilePicture;
 
+    @Column(name = "is_virtual", nullable = false, columnDefinition = "boolean default false")
+    private boolean isVirtual = false;
+
+    @Column(name = "parent_organization_id")
+    private Long parentOrganizationId;
+
     @Column(name = "fcm_token")
     private String fcmToken;
 

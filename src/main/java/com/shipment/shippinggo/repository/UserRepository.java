@@ -18,7 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByPhone(String phone);
 
+    Optional<User> findByPhone(String phone);
+
     java.util.List<User> findByRole(com.shipment.shippinggo.enums.Role role);
     
     Optional<User> findByVerificationToken(String verificationToken);
+
+    java.util.List<User> findByIsVirtualTrueAndEnabledTrueAndParentOrganizationId(Long parentOrganizationId);
 }
