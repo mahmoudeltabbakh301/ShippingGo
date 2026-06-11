@@ -1,0 +1,56 @@
+<!-- Subscription Warning Banner Fragment -->
+<div th:fragment="subscription-banner"
+     th:if="${subscriptionRemainingDays != null && subscriptionRemainingDays <= 5 && subscriptionStatusName != null && (subscriptionStatusName == 'TRIAL' || subscriptionStatusName == 'ACTIVE')}">
+
+    <div th:classappend="${subscriptionRemainingDays <= 1 ? 'sub-banner sub-banner-critical' : (subscriptionRemainingDays <= 3 ? 'sub-banner sub-banner-warning' : 'sub-banner sub-banner-info')}">
+        <span th:if="${subscriptionStatusName == 'TRIAL'}">
+            ⏳ تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء الفترة التجريبية المجانية.
+            <a th:href="@{/payment/subscribe}" style="color: inherit; font-weight: 700; text-decoration: underline;">اشترك الآن</a>
+        </span>
+        <span th:if="${subscriptionStatusName == 'ACTIVE'}">
+            ⏳ تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء اشتراكك.
+            <a th:href="@{/payment/subscribe}" style="color: inherit; font-weight: 700; text-decoration: underline;">جدد الآن</a>
+        </span>
+    </div>
+
+    <style>
+        .sub-banner {
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .sub-banner-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .sub-banner-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .sub-banner-critical {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse-banner 2s infinite;
+        }
+        @keyframes pulse-banner {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        [data-theme="dark"] .sub-banner-info {
+            background: #1e3a5f;
+            color: #93c5fd;
+        }
+        [data-theme="dark"] .sub-banner-warning {
+            background: #78350f;
+            color: #fde68a;
+        }
+        [data-theme="dark"] .sub-banner-critical {
+            background: #7f1d1d;
+            color: #fca5a5;
+        }
+    </style>
+</div>

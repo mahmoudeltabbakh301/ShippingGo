@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سجل المدفوعات - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .revenue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .revenue-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-5);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .revenue-card:hover { transform: translateY(-2px); }
+        .revenue-card-icon { font-size: 2rem; margin-bottom: var(--space-2); }
+        .revenue-card-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
+        .revenue-card-label { font-size: 0.875rem; color: var(--text-muted); margin-top: var(--space-1); }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">💳 سجل المدفوعات</h1>
+                    <p class="page-subtitle">عرض جميع المعاملات المالية على المنصة</p>
+                </div>
+            </div>
+
+            <!-- Revenue Stats -->
+            <div class="revenue-grid">
+                <div class="revenue-card">
+                    <div class="revenue-card-icon">💰</div>
+                    <div class="revenue-card-value" th:text="${totalRevenue != null ? totalRevenue : 0}">0</div>
+                    <div class="revenue-card-label">إجمالي الإيرادات (جنيه)</div>
+                </div>
+                <div class="revenue-card">
+                    <div class="revenue-card-icon">📅</div>
+                    <div class="revenue-card-value" th:text="${monthlyRevenue != null ? monthlyRevenue : 0}">0</div>
+                    <div class="revenue-card-label">إيرادات هذا الشهر (جنيه)</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 style="margin: 0; font-size: 1.1rem;">📋 جميع المعاملات</h2>
+                </div>
+
+                <div class="table-empty" style="padding: var(--space-6);">
+                    <div class="table-empty-icon">💳</div>
+                    <div class="table-empty-text">ستظهر هنا جميع المعاملات المالية بعد بدء استقبال المدفوعات عبر Paymob</div>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: var(--space-2);">
+                        تأكد من إعداد مفاتيح Paymob من
+                        <a th:href="@{/super-admin/settings}" style="text-decoration: none; font-weight: 600;">إعدادات المنصة</a>
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

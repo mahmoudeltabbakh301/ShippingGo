@@ -35,11 +35,12 @@
             <!-- Page Header -->
             <div class="page-header">
                 <h1 class="page-title">
-                    🚚 <span th:text="${courier.fullName}">اسم المندوب</span>
+                    🚚 <span th:text="${courierDisplayName != null ? courierDisplayName : courier.fullName}">اسم المندوب</span>
                 </h1>
                 <div class="page-actions" style="display: flex; gap: var(--space-2);">
-                    <a th:href="@{/accounts/courier/{id}/export(id=${courier.id}, businessDayId=${businessDayId})}" 
-                        class="btn btn-primary" style="background-color: #217346; border-color: #217346;" title="تصدير للـ Excel">
+                    <a th:href="@{/accounts/courier/{id}/export(id=${courier.id}, businessDayId=${businessDayId})}"
+                        class="btn btn-primary" style="background-color: #217346; border-color: #217346;"
+                        title="تصدير للـ Excel">
                         📊 تصدير إكسيل
                     </a>
                     <a th:if="${businessDayId != null}" th:href="@{/accounts/day/{id}(id=${businessDayId})}"
@@ -161,7 +162,7 @@
                                     0.00 ج.م</td>
                                 <td>
                                     <span class="badge"
-                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-success' : (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-success' : (order.status.name() == 'PENDING' ? 'badge-pending' : (order.status.name() == 'CANCELLED' ? 'badge-warning' : (order.status.name() == 'REFUSED' ? 'badge-danger' : (order.status.name() == 'DEFERRED' ? 'badge-pending' : 'badge-active')))))}"
+                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-partial' : (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : (order.status.name() == 'REFUSED' ? 'badge-refused' : (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : (order.status.name() == 'DEFERRED' ? 'badge-deferred' : 'badge-waiting')))))}"
                                         th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
                                 </td>
                                 <td

@@ -56,7 +56,7 @@ public class OrderInquiry {
     private User sentBy;
 
     // ملاحظة اختيارية
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String note;
 
     @Column(nullable = false, updatable = false)

@@ -29,6 +29,8 @@ class AccountServiceTest {
     private AccountSummaryService accountSummaryService;
     @Mock
     private BusinessDayRepository businessDayRepository;
+    @Mock
+    private TargetService targetService;
 
     private AccountService accountService;
     private Organization sourceOrg;
@@ -37,7 +39,7 @@ class AccountServiceTest {
     @BeforeEach
     void setUp() {
         accountService = new AccountService(commissionService, transactionService,
-                accountSummaryService, businessDayRepository);
+                accountSummaryService, businessDayRepository, targetService);
 
         sourceOrg = new Company();
         sourceOrg.setId(1L);

@@ -175,13 +175,16 @@
                                     0.00 ج.م</td>
                                 <td>
                                     <span class="badge"
-                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-success' : (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-success' : (order.status.name() == 'PENDING' ? 'badge-pending' : (order.status.name() == 'CANCELLED' ?
-                                         'badge-warning' : (order.status.name() == 'REFUSED' ? 'badge-danger' : (order.status.name() == 'DEFERRED' ? 'badge-pending' : 'badge-active')))))}"
+                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-partial' : (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : (order.status.name() == 'REFUSED' ?
+                                         'badge-refused' : (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : (order.status.name() == 'DEFERRED' ? 'badge-deferred' : 'badge-waiting')))))}"
                                         th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
                                 </td>
-                                <td
-                                    th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
-                                    مندوب</td>
+                                <td>
+                                    <span
+                                        th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
+                                    <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
+                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                                </td>
 
                                 <td>
                                     <span th:if="${order.rejectionPayment != null && order.rejectionPayment > 0}"

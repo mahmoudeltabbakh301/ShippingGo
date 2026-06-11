@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{pricing.title} + ' - ShippingGo'">قوائم الأسعار - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">💲 <span th:text="#{pricing.title}">قوائم أسعار الشحن</span></h1>
+                    <p class="text-muted" th:text="#{pricing.subtitle}">إدارة أسعار الشحن للعملاء الخارجيين</p>
+                </div>
+            </div>
+
+            <!-- Create New Price List -->
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <h3 th:text="#{pricing.create_list}">إنشاء قائمة أسعار جديدة</h3>
+                <form th:action="@{/settings/pricing/list/create}" method="post"
+                    style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 200px;">
+                        <label th:text="#{pricing.list_name}">اسم القائمة</label>
+                        <input type="text" name="name" class="form-control" required
+                            th:placeholder="#{pricing.list_name_placeholder}">
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; padding-bottom: 4px;">
+                        <input type="checkbox" name="isDefault" id="isDefault" value="true">
+                        <label for="isDefault" th:text="#{pricing.is_default}">قائمة افتراضية</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" th:text="#{pricing.btn_create}">إنشاء</button>
+                </form>
+            </div>
+
+            <!-- Price Lists -->
+            <div class="card">
+                <div th:if="${priceLists == null or priceLists.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    <p th:text="#{pricing.no_lists}">لا توجد قوائم أسعار بعد</p>
+                    <p th:text="#{pricing.no_lists_desc}">أنشئ قائمة أسعار لتحديد أسعار الشحن لكل محافظة</p>
+                </div>
+                <div th:if="${priceLists != null and !priceLists.isEmpty()}" class="table-container"
+                    style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th th:text="#{pricing.list_name}">اسم القائمة</th>
+                                <th>الحالة</th>
+                                <th th:text="#{pricing.detail.col_actions}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="pl : ${priceLists}">
+                                <td>
+                                    <span th:text="${pl.name}" style="font-weight: 600;"></span>
+                                    <span th:if="${pl.isDefault()}"
+                                        style="background: rgba(76,175,80,0.15); color: #388e3c; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; margin-inline-start: 8px;"
+                                        th:text="#{pricing.badge_default}">افتراضية</span>
+                                </td>
+                                <td>
+                                    <span th:if="${pl.active}"
+                                        style="color: #388e3c;" th:text="#{pricing.badge_active}">نشطة</span>
+                                    <span th:unless="${pl.active}"
+                                        style="color: #999;" th:text="#{pricing.badge_inactive}">غير نشطة</span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 6px;">
+                                        <a th:href="@{/settings/pricing/list/{id}(id=${pl.id})}"
+                                            class="btn btn-sm btn-primary" th:text="#{pricing.btn_edit}">تعديل</a>
+                                        <form th:action="@{/settings/pricing/list/{id}/delete(id=${pl.id})}"
+                                            method="post" style="display: inline;"
+                                            th:attr="onsubmit=|return confirm('#{pricing.confirm_delete_list}')|">
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                th:text="#{pricing.btn_delete}">حذف</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+
+</html>

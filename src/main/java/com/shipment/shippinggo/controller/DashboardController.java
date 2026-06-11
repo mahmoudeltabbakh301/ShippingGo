@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.LocalDate;
@@ -45,7 +46,9 @@ public class DashboardController {
     }
 
     @GetMapping
-    public String dashboard(@AuthenticationPrincipal User user, Model model) {
+    public String dashboard(@AuthenticationPrincipal User user,
+            @RequestParam(value = "businessDayId", required = false) Long businessDayId,
+            Model model) {
         model.addAttribute("user", user);
 
         if (user.getRole() == Role.SUPER_ADMIN) {
@@ -71,8 +74,20 @@ public class DashboardController {
         model.addAttribute("organizationInactive", !org.isActive());
         model.addAttribute("today", java.time.LocalDate.now());
 
-        // Get active business day
-        com.shipment.shippinggo.entity.BusinessDay businessDay = businessDayService.getTodayBusinessDay(org.getId());
+        // Load all business days for the dropdown selector
+        List<com.shipment.shippinggo.entity.BusinessDay> businessDays = businessDayService.getBusinessDaysForUser(org.getId(), user);
+        model.addAttribute("businessDays", businessDays);
+
+        // Determine selected business day
+        com.shipment.shippinggo.entity.BusinessDay businessDay;
+        if (businessDayId != null) {
+            businessDay = businessDayService.getById(businessDayId);
+        } else {
+            businessDay = businessDayService.getTodayBusinessDay(org.getId());
+        }
+
+        model.addAttribute("selectedBusinessDay", businessDay);
+        model.addAttribute("selectedBusinessDayId", businessDay != null ? businessDay.getId() : null);
 
         com.shipment.shippinggo.dto.AdminDashboardStats stats;
         if (businessDay == null) {
@@ -83,7 +98,17 @@ public class DashboardController {
             stats = adminDashboardService.getDashboardStatsForBusinessDay(org, businessDay.getId());
         }
 
+        java.util.Map<Long, String> courierDisplayNames = organizationService.buildCourierDisplayNameMap(org);
+        if (stats != null && stats.getCourierPerformances() != null) {
+            for (com.shipment.shippinggo.dto.AdminDashboardStats.CourierPerformance perf : stats.getCourierPerformances()) {
+                String dName = courierDisplayNames.get(perf.getCourierId());
+                if (dName != null) {
+                    perf.setCourierName(dName);
+                }
+            }
+        }
         model.addAttribute("stats", stats);
+        model.addAttribute("courierDisplayNames", courierDisplayNames);
 
         // Prepare chart data (JSON for JavaScript)
         model.addAttribute("chartLabels", new String[]{"تم التسليم", "في الطريق", "انتظار", "مرفوض", "ملغي", "مؤجل", "استلام جزئي"});
@@ -198,6 +223,7 @@ public class DashboardController {
 
         // المناديب
         model.addAttribute("couriers", organizationService.getCouriers(org));
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
 
         // المنظمات المرتبطة
         java.util.List<Organization> linkedOrgs = organizationService.getLinkedOrganizations(org);
@@ -220,6 +246,7 @@ public class DashboardController {
         model.addAttribute("organization", org);
         java.util.List<User> couriers = organizationService.getCouriers(org);
         model.addAttribute("couriers", couriers);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
 
         return "dashboard/map";
     }

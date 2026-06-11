@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${pageTitle} + ' - ' + #{app.title}">تفاصيل التارجت - ShippingGo</title>
+    <!-- Early theme apply to prevent flash -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <style>
+        .progress-container {
+            background-color: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            height: 12px;
+            overflow: hidden;
+            margin: var(--space-4) 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .progress-bar.achieved {
+            background: linear-gradient(90deg, #22c55e, #15803d);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            padding: var(--space-4);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background-color: var(--primary);
+        }
+
+        .stat-card.success::before {
+            background-color: var(--success);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: var(--font-sm);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: var(--font-2xl);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .target-header {
+            background: linear-gradient(135deg, var(--primary-500), var(--primary));
+            color: white;
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            box-shadow: var(--shadow-md);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div class="header-content">
+                    <h1 class="page-title" th:text="${pageTitle}">تفاصيل التارجت</h1>
+                    <div class="page-subtitle" th:text="'الفترة من: ' + ${#temporals.format(periodStart, 'yyyy-MM-dd')} + ' إلى ' + ${#temporals.format(periodEnd, 'yyyy-MM-dd')}"></div>
+                </div>
+                <div class="header-actions">
+                    <a th:href="@{/accounts/rewards}" class="btn btn-secondary">العودة</a>
+                </div>
+            </div>
+
+            <div class="target-header">
+                <h2 style="margin: 0 0 var(--space-2) 0; color: white;" th:text="${setting.courier != null ? 'تارجت المندوب: ' + setting.courier?.fullName : 'تارجت المنظمة: ' + setting.targetOrganization?.name}"></h2>
+                <div style="color: rgba(255,255,255,0.9);">
+                    المكافأة: <strong th:text="${setting.rewardType?.name() == 'FIXED' ? setting.rewardValue + ' (مبلغ ثابت)' : setting.rewardValue + '% (نسبة مئوية)'}"></strong>
+                </div>
+                <div style="color: rgba(255,255,255,0.9); margin-top: 5px;" th:if="${progress >= 100}">
+                    ✅ قيمة المكافأة المستحقة: <strong th:text="${rewardAmount} + ' ج.م'"></strong>
+                </div>
+                <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 0.9em;" th:if="${progress < 100}">
+                    (قيمة المكافأة المحسوبة حتى الآن: <span th:text="${setting.rewardType?.name() == 'FIXED' ? setting.rewardValue : (totalDelivered * setting.rewardValue / 100.0)}"></span> ج.م تضاف فور تحقيق الهدف)
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-bar" th:classappend="${progress >= 100} ? 'achieved' : ''" th:style="'width: ' + ${progress} + '%'">
+                        <span th:if="${progress > 5}" th:text="${progress} + '%'"></span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: var(--font-sm); color: rgba(255,255,255,0.9);">
+                    <span>المُسلم: <strong th:text="${totalDelivered}"></strong> ج.م</span>
+                    <span>الهدف: <strong th:text="${setting.targetAmount}"></strong> ج.م</span>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card" th:classappend="${progress >= 100} ? 'success' : ''">
+                    <span class="stat-label">المبلغ المسلم هذا الشهر</span>
+                    <span class="stat-value" th:text="${totalDelivered} + ' ج.م'"></span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">المبلغ المتبقي للهدف</span>
+                    <span class="stat-value" th:text="${(setting.targetAmount - totalDelivered > 0 ? setting.targetAmount - totalDelivered : 0)} + ' ج.م'"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">تفاصيل التسليمات اليومية</h3>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>إجمالي المبلغ المسلم</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${#lists.isEmpty(dailyStats)}">
+                                    <td colspan="2" class="text-center" style="padding: 2rem;">لا توجد تسليمات في هذه الفترة</td>
+                                </tr>
+                                <tr th:each="stat : ${dailyStats}">
+                                    <td th:text="${#temporals.format(stat.date, 'yyyy-MM-dd')}"></td>
+                                    <td><strong th:text="${stat.amount} + ' ج.م'" style="color: var(--success);"></strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+</body>
+</html>

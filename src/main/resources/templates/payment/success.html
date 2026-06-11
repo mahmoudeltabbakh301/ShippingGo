@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تم الدفع بنجاح - ShippingGo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            padding: var(--space-4);
+        }
+        .result-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            max-width: 480px;
+            width: 100%;
+            padding: var(--space-8);
+            text-align: center;
+        }
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: var(--space-4);
+            animation: bounceIn 0.5s ease;
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #16a34a;
+            margin-bottom: var(--space-2);
+        }
+        .result-text {
+            color: var(--text-muted);
+            margin-bottom: var(--space-6);
+            line-height: 1.6;
+        }
+        .btn-dashboard {
+            display: inline-block;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            color: white;
+            text-decoration: none;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 1rem;
+            transition: transform 0.2s;
+        }
+        .btn-dashboard:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="result-card">
+        <div class="result-icon">✅</div>
+        <h1 class="result-title">تم الدفع بنجاح!</h1>
+        <p class="result-text">
+            تم تفعيل اشتراكك بنجاح. يمكنك الآن الاستمتاع بجميع مميزات ShippingGo.
+        </p>
+        <a th:href="@{/dashboard}" class="btn-dashboard">
+            🏠 الذهاب للوحة التحكم
+        </a>
+    </div>
+</body>
+</html>

@@ -1,25 +1,44 @@
 package com.shipment.shippinggo.service;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.messaging.*;
-import com.shipment.shippinggo.dto.NotificationDto;
-import com.shipment.shippinggo.entity.*;
-import com.shipment.shippinggo.enums.MembershipStatus;
-import com.shipment.shippinggo.repository.AppNotificationRepository;
-import com.shipment.shippinggo.repository.MembershipRepository;
-import com.shipment.shippinggo.repository.OrderAssignmentRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
-import org.springframework.context.i18n.LocaleContextHolder;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.AndroidNotification;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
+import com.google.firebase.messaging.ApsAlert;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.Message;
+import com.shipment.shippinggo.dto.NotificationDto;
+import com.shipment.shippinggo.entity.AppNotification;
+import com.shipment.shippinggo.entity.Membership;
+import com.shipment.shippinggo.entity.Order;
+import com.shipment.shippinggo.entity.OrderAssignment;
+import com.shipment.shippinggo.entity.Organization;
+import com.shipment.shippinggo.entity.User;
+import com.shipment.shippinggo.enums.MembershipStatus;
+import com.shipment.shippinggo.repository.AppNotificationRepository;
+import com.shipment.shippinggo.repository.MembershipRepository;
+import com.shipment.shippinggo.repository.OrderAssignmentRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -56,11 +75,13 @@ public class NotificationService {
         }
 
         if (user == null || user.getFcmToken() == null || user.getFcmToken().isEmpty()) {
+            System.out.println("[FCM] Skipping push: user=" + (user != null ? user.getId() : "null")
+                    + ", fcmToken=" + (user != null ? (user.getFcmToken() != null ? "present" : "null") : "N/A"));
             return;
         }
 
         if (!isFirebaseAvailable()) {
-            System.out.println("Firebase is not initialized. Skipping notification to user " + user.getId());
+            System.out.println("[FCM] Firebase is not initialized. Skipping notification to user " + user.getId());
             return;
         }
 
@@ -71,18 +92,51 @@ public class NotificationService {
             if (referenceId != null)
                 enrichedData.put("referenceId", referenceId.toString());
 
+            // Include title/body in data for Flutter foreground handler
+            enrichedData.put("title", title);
+            enrichedData.put("body", body);
+
             Message message = Message.builder()
                     .setToken(user.getFcmToken())
-                    .setNotification(Notification.builder()
+                    // Set Notification object to show system tray notification on Android
+                    .setNotification(com.google.firebase.messaging.Notification.builder()
                             .setTitle(title)
                             .setBody(body)
                             .build())
+                    // For iOS: APNs config to ensure notification shows when app is killed
+                    .setApnsConfig(ApnsConfig.builder()
+                            .setAps(Aps.builder()
+                                    .setAlert(ApsAlert.builder()
+                                            .setTitle(title)
+                                            .setBody(body)
+                                            .build())
+                                    .setSound("default")
+                                    .build())
+                            .build())
+                    // For Android: Use High Priority data message to trigger Flutter background handler natively.
+                    // The Flutter background handler now uses fullScreenIntent to force the screen to wake up.
+                    .setAndroidConfig(AndroidConfig.builder()
+                            .setPriority(AndroidConfig.Priority.HIGH)
+                            .setNotification(AndroidNotification.builder()
+                                    .setChannelId("shippinggo_channel_v2")
+                                    .build())
+                            .build())
+                    // Data payload — for Flutter handler in foreground/background
                     .putAllData(enrichedData)
                     .build();
 
-            FirebaseMessaging.getInstance().send(message);
+            String messageId = FirebaseMessaging.getInstance().send(message);
+            System.out.println("[FCM] Notification sent successfully to user " + user.getId()
+                    + ", messageId=" + messageId);
         } catch (FirebaseMessagingException e) {
-            System.err.println("Error sending FCM message to user " + user.getId() + ": " + e.getMessage());
+            System.err.println("[FCM] Error sending to user " + user.getId()
+                    + ": " + e.getMessagingErrorCode() + " - " + e.getMessage());
+            // If token is invalid, clear it so we don't keep trying
+            if (e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.UNREGISTERED
+                    || e.getMessagingErrorCode() == com.google.firebase.messaging.MessagingErrorCode.INVALID_ARGUMENT) {
+                System.out.println("[FCM] Clearing invalid FCM token for user " + user.getId());
+                user.setFcmToken(null);
+            }
         }
     }
 
@@ -293,6 +347,16 @@ public class NotificationService {
         sendNotificationToOrganization(org, title, body,
                 Map.of("type", "INVITATION_RESPONSE", "accepted", String.valueOf(accepted)),
                 "INVITATION_RESPONSE", "/members", null);
+    }
+
+    // ==================== System Notifications ====================
+
+    /**
+     * إرسال إشعار نظامي (من المنصة للمستخدم)
+     */
+    public void sendSystemNotification(User user, String title, String body) {
+        sendNotificationToUser(user, title, body,
+                Map.of("type", "SYSTEM"), "SYSTEM", "/payment/subscribe", null);
     }
 
     // ==================== Query Methods ====================

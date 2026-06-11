@@ -3,6 +3,7 @@ package com.shipment.shippinggo.entity;
 import com.shipment.shippinggo.enums.OrganizationType;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "virtual_offices")
@@ -14,6 +15,7 @@ public class VirtualOffice extends Organization {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_organization_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Organization parentOrganization; // The real organization that created this virtual office
 
     @Builder

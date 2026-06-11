@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرسائل والإشعارات - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <style>
+        .broadcast-form { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6); }
+        .broadcast-form-title { font-size: 1.1rem; font-weight: 700; margin-bottom: var(--space-4); }
+        .form-group { margin-bottom: var(--space-3); }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: var(--space-1); color: var(--text-primary); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); outline: none; }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3); }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+        .maintenance-card { background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-5); display: flex; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+        .maintenance-card.active { border-color: #ef4444; background: rgba(239, 68, 68, 0.03); }
+        .maintenance-status { font-size: 1rem; font-weight: 700; }
+        .maintenance-status .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-inline-end: var(--space-2); }
+        .maintenance-status .dot.on { background: #ef4444; }
+        .maintenance-status .dot.off { background: #22c55e; }
+        .broadcast-list { display: flex; flex-direction: column; gap: var(--space-3); }
+        .broadcast-item { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+        .broadcast-meta { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
+        .broadcast-badge { display: inline-block; padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+        .badge-announcement { background: #dbeafe; color: #1d4ed8; }
+        .badge-maintenance { background: #fef3c7; color: #92400e; }
+        .badge-promotion { background: #dcfce7; color: #166534; }
+        .badge-target { background: var(--bg-secondary); color: var(--text-muted); }
+        .org-select-group { display: none; }
+        .org-select-group.visible { display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">📢 الرسائل والإشعارات</h1>
+                    <p class="page-subtitle">إرسال إشعارات وإدارة وضع الصيانة</p>
+                </div>
+            </div>
+
+            <!-- وضع الصيانة -->
+            <div class="maintenance-card" th:classappend="${maintenanceMode ? 'active' : ''}">
+                <div style="flex: 1;">
+                    <div class="maintenance-status">
+                        <span class="dot" th:classappend="${maintenanceMode ? 'on' : 'off'}"></span>
+                        <span th:text="${maintenanceMode ? '🔧 وضع الصيانة مفعل' : '✅ المنصة تعمل بشكل طبيعي'}"></span>
+                    </div>
+                </div>
+                <form th:action="@{/super-admin/maintenance/toggle}" method="post" style="display: flex; gap: var(--space-2); align-items: center;">
+                    <input type="hidden" name="enabled" th:value="${!maintenanceMode}">
+                    <input type="text" name="message" class="form-input" placeholder="رسالة الصيانة (اختياري)" style="width: 250px;" th:if="${!maintenanceMode}">
+                    <button type="submit" class="btn" th:classappend="${maintenanceMode ? 'btn-success' : 'btn-danger'}"
+                            th:text="${maintenanceMode ? '🟢 إلغاء الصيانة' : '🔴 تفعيل الصيانة'}"></button>
+                </form>
+            </div>
+
+            <!-- فورم إرسال رسالة -->
+            <div class="broadcast-form">
+                <div class="broadcast-form-title">✉️ إرسال رسالة جديدة</div>
+                <form th:action="@{/super-admin/broadcasts/send}" method="post">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">النوع</label>
+                            <select class="form-select" name="type" required>
+                                <option th:each="t : ${broadcastTypes}" th:value="${t}" th:text="${t.arabicName}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">الهدف</label>
+                            <select class="form-select" name="targetType" id="targetTypeSelect" required onchange="toggleOrgSelect()">
+                                <option th:each="t : ${targetTypes}" th:value="${t}" th:text="${t.arabicName}"></option>
+                            </select>
+                        </div>
+                        <div class="form-group org-select-group" id="orgSelectGroup">
+                            <label class="form-label">المنظمة</label>
+                            <select class="form-select" name="targetOrgId">
+                                <option value="">-- اختر المنظمة --</option>
+                                <option th:each="org : ${organizations}" th:value="${org.id}" th:text="${org.name}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العنوان</label>
+                        <input class="form-input" type="text" name="title" required placeholder="عنوان الرسالة">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">المحتوى</label>
+                        <textarea class="form-textarea" name="body" required placeholder="نص الرسالة..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">📤 إرسال الرسالة</button>
+                </form>
+            </div>
+
+            <!-- قائمة الرسائل -->
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: var(--space-3);">📋 سجل الرسائل</h2>
+            <div class="broadcast-list">
+                <div th:if="${#lists.isEmpty(broadcasts)}" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
+                    لا توجد رسائل مرسلة بعد
+                </div>
+                <div th:each="b : ${broadcasts}" class="broadcast-item">
+                    <div style="flex: 1;">
+                        <div style="font-weight: 700; margin-bottom: var(--space-1);" th:text="${b.title}"></div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: var(--space-2);" th:text="${b.body}"></div>
+                        <div class="broadcast-meta">
+                            <span class="broadcast-badge"
+                                  th:classappend="${b.type.name() == 'ANNOUNCEMENT' ? 'badge-announcement' : (b.type.name() == 'MAINTENANCE' ? 'badge-maintenance' : 'badge-promotion')}"
+                                  th:text="${b.type.arabicName}"></span>
+                            <span class="broadcast-badge badge-target" th:text="${b.targetType.arabicName}"></span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">
+                                بواسطة <span th:text="${b.sentBy.fullName}"></span> •
+                                <span th:text="${#temporals.format(b.sentAt, 'yyyy/MM/dd HH:mm')}"></span>
+                            </span>
+                        </div>
+                    </div>
+                    <form th:action="@{'/super-admin/broadcasts/' + ${b.id} + '/delete'}" method="post" th:if="${b.active}">
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد؟')">🗑️</button>
+                    </form>
+                    <span th:if="${!b.active}" style="color: var(--text-muted); font-size: 0.8rem;">محذوفة</span>
+                </div>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>
+        function toggleOrgSelect() {
+            var sel = document.getElementById('targetTypeSelect');
+            var orgGroup = document.getElementById('orgSelectGroup');
+            orgGroup.classList.toggle('visible', sel.value === 'SPECIFIC_ORG');
+        }
+    </script>
+</body>
+</html>

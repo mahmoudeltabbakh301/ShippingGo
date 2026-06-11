@@ -131,7 +131,27 @@ public class ApiReportController {
         Organization org = organizationService.getOrganizationByUser(user);
         if (org == null) return ResponseEntity.badRequest().build();
 
-        return ResponseEntity.ok(reportingService.getCourierPerformanceComparison(org, businessDayId));
+        PerformanceComparison comparison = reportingService.getCourierPerformanceComparison(org, businessDayId);
+        java.util.Map<Long, String> displayNames = organizationService.buildCourierDisplayNameMap(org);
+        
+        if (comparison != null && comparison.getEntries() != null) {
+            for (PerformanceComparison.PerformanceEntry entry : comparison.getEntries()) {
+                String dName = displayNames.get(entry.getEntityId());
+                if (dName != null) {
+                    entry.setEntityName(dName);
+                }
+            }
+            if (comparison.getTopPerformer() != null) {
+                String dName = displayNames.get(comparison.getTopPerformer().getEntityId());
+                if (dName != null) comparison.getTopPerformer().setEntityName(dName);
+            }
+            if (comparison.getWorstPerformer() != null) {
+                String dName = displayNames.get(comparison.getWorstPerformer().getEntityId());
+                if (dName != null) comparison.getWorstPerformer().setEntityName(dName);
+            }
+        }
+
+        return ResponseEntity.ok(comparison);
     }
 
     // =====================================================================

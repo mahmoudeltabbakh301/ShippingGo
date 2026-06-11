@@ -91,4 +91,13 @@ public class AccountSummaryDTO {
 
     // عدد الأوردرات المؤجلة
     private long deferredOrders;
+
+    // --- Target (Rewards) fields ---
+    @Builder.Default
+    private BigDecimal targetAmount = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal targetReward = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal targetProgress = BigDecimal.ZERO;
+    private boolean targetAchieved;
 }

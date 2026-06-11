@@ -417,38 +417,62 @@ public class ReportingService {
                 .filter(s -> "INCOMING".equals(s.getDirection())).collect(Collectors.toList());
         List<AccountSummaryDTO> courierSummaries = accountSummaries.stream()
                 .filter(s -> "courier".equals(s.getType())).collect(Collectors.toList());
+        List<AccountSummaryDTO> unassignedSummaries = accountSummaries.stream()
+                .filter(s -> "UNASSIGNED".equals(s.getDirection())).collect(Collectors.toList());
 
-        // عمولات صادرة (منظمات)
-        BigDecimal outOrgComm = outgoingOrgs.stream()
-                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+        // === عمولات صادرة (منظمات) - مفصّلة ===
+        BigDecimal outDeliveryComm = outgoingOrgs.stream()
+                .map(s -> s.getDeliveryCommission() != null ? s.getDeliveryCommission() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        // عمولات مناديب
-        BigDecimal courierComm = courierSummaries.stream()
-                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+        BigDecimal outRejectionComm = outgoingOrgs.stream()
+                .map(s -> s.getRejectionCommission() != null ? s.getRejectionCommission() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        BigDecimal totalOutgoing = outOrgComm.add(courierComm);
-
-        // عمولات واردة (منظمات)
-        BigDecimal inOrgComm = incomingOrgs.stream()
-                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+        BigDecimal outCancellationComm = outgoingOrgs.stream()
+                .map(s -> s.getCancellationCommission() != null ? s.getCancellationCommission() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal outOrgComm = outDeliveryComm.add(outRejectionComm).add(outCancellationComm);
 
-        // المبالغ المحصّلة من الصادر
-        BigDecimal outDelivered = outgoingOrgs.stream()
-                .map(s -> s.getDeliveredAmount() != null ? s.getDeliveredAmount() : BigDecimal.ZERO)
+        // === عمولات واردة (منظمات) - مفصّلة ===
+        BigDecimal inDeliveryComm = incomingOrgs.stream()
+                .map(s -> s.getDeliveryCommission() != null ? s.getDeliveryCommission() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal courierDelivered = courierSummaries.stream()
-                .map(s -> s.getDeliveredAmount() != null ? s.getDeliveredAmount() : BigDecimal.ZERO)
+        BigDecimal inRejectionComm = incomingOrgs.stream()
+                .map(s -> s.getRejectionCommission() != null ? s.getRejectionCommission() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal inCancellationComm = incomingOrgs.stream()
+                .map(s -> s.getCancellationCommission() != null ? s.getCancellationCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal inOrgComm = inDeliveryComm.add(inRejectionComm).add(inCancellationComm);
 
-        // صافي الصادر = المحصّل - العمولات الصادرة
-        BigDecimal netOut = outDelivered.add(courierDelivered).subtract(totalOutgoing);
-        // صافي الوارد = العمولات الواردة
-        BigDecimal netIn = inOrgComm;
-        // الصافي الكلي = صافي الوارد - صافي الصادر (عمولات واردة هي مكسب)
-        BigDecimal netProfit = netIn.subtract(totalOutgoing.subtract(inOrgComm));
+        // === عمولات مناديب - مفصّلة ===
+        BigDecimal cDeliveryComm = courierSummaries.stream()
+                .map(s -> s.getDeliveryCommission() != null ? s.getDeliveryCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cRejectionComm = courierSummaries.stream()
+                .map(s -> s.getRejectionCommission() != null ? s.getRejectionCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal cCancellationComm = courierSummaries.stream()
+                .map(s -> s.getCancellationCommission() != null ? s.getCancellationCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal courierComm = cDeliveryComm.add(cRejectionComm).add(cCancellationComm);
+
+        // === عمولات غير مسندة - مفصّلة ===
+        BigDecimal uDeliveryComm = unassignedSummaries.stream()
+                .map(s -> s.getDeliveryCommission() != null ? s.getDeliveryCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal uRejectionComm = unassignedSummaries.stream()
+                .map(s -> s.getRejectionCommission() != null ? s.getRejectionCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal uCancellationComm = unassignedSummaries.stream()
+                .map(s -> s.getCancellationCommission() != null ? s.getCancellationCommission() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal unassignedComm = uDeliveryComm.add(uRejectionComm).add(uCancellationComm);
+
+        // === حساب صافي ربح المنظمة ===
+        // إجمالي إيرادات العمولات = عمولات الصادر + عمولات الوارد + عمولات غير مسندة
+        BigDecimal totalCommissionRevenue = outOrgComm.add(inOrgComm).add(unassignedComm);
+        // صافي الربح = إجمالي إيرادات العمولات − عمولات المناديب
+        BigDecimal netProfit = totalCommissionRevenue.subtract(courierComm);
 
         // إحصائيات عامة من كل الأوردرات
         long totalOrders = accountSummaries.stream().mapToLong(AccountSummaryDTO::getTotalOrders).sum();
@@ -473,19 +497,37 @@ public class ReportingService {
                 .deliveredOrders(deliveredOrders)
                 .refusedOrders(refusedOrders)
                 .cancelledOrders(cancelledOrders)
+                // عمولات الصادر
                 .outgoingOrgCommissions(outOrgComm)
-                .courierCommissions(courierComm)
-                .totalOutgoingCommissions(totalOutgoing)
+                .outgoingDeliveryComm(outDeliveryComm)
+                .outgoingRejectionComm(outRejectionComm)
+                .outgoingCancellationComm(outCancellationComm)
+                // عمولات الوارد
                 .incomingOrgCommissions(inOrgComm)
+                .incomingDeliveryComm(inDeliveryComm)
+                .incomingRejectionComm(inRejectionComm)
+                .incomingCancellationComm(inCancellationComm)
+                // عمولات المناديب
+                .courierCommissions(courierComm)
+                .courierDeliveryComm(cDeliveryComm)
+                .courierRejectionComm(cRejectionComm)
+                .courierCancellationComm(cCancellationComm)
+                // عمولات غير مسندة
+                .unassignedCommissions(unassignedComm)
+                .unassignedDeliveryComm(uDeliveryComm)
+                .unassignedRejectionComm(uRejectionComm)
+                .unassignedCancellationComm(uCancellationComm)
+                // الإجماليات والصافي
+                .totalCommissionRevenue(totalCommissionRevenue)
+                .totalOutgoingCommissions(outOrgComm)
                 .totalIncomingCommissions(inOrgComm)
-                .netOutgoing(netOut)
-                .netIncoming(netIn)
                 .netProfit(netProfit)
                 .outgoingOrgDetails(outDetails)
                 .incomingOrgDetails(inDetails)
                 .courierDetails(courierDetails)
                 .build();
     }
+
 
     private FinancialSummaryReport.EntityFinancialDetail toEntityDetail(AccountSummaryDTO s) {
         return FinancialSummaryReport.EntityFinancialDetail.builder()

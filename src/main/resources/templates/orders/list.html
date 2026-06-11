@@ -170,10 +170,12 @@
 
                                 <td>
                                     <span class="badge"
-                                        th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                                        th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                                          (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-partial' :
                                                           (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
-                                                          (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
-                                                          (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                                                          (order.status.name() == 'REFUSED' ? 'badge-refused' :
+                                                          (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 
+                                                          (order.status.name() == 'DEFERRED' ? 'badge-deferred' : 'badge-waiting')))))}"
                                         th:text="${#locale.language == 'en' ? order.status.englishName : order.status.arabicName}">الحالة</span>
                                 </td>
                                 <td style="direction: ltr; text-align: right;">

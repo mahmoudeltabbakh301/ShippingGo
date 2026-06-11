@@ -1,0 +1,428 @@
+{
+  "CAIRO": {
+    "arabicName": "القاهرة",
+    "districts": [
+      {"name": "مدينة نصر", "nameEn": "Nasr City"},
+      {"name": "مصر الجديدة", "nameEn": "Heliopolis"},
+      {"name": "المعادي", "nameEn": "Maadi"},
+      {"name": "التجمع الخامس", "nameEn": "5th Settlement"},
+      {"name": "القاهرة الجديدة", "nameEn": "New Cairo"},
+      {"name": "العاصمة الإدارية", "nameEn": "New Administrative Capital"},
+      {"name": "الشروق", "nameEn": "El Shorouk"},
+      {"name": "بدر", "nameEn": "Badr City"},
+      {"name": "العبور", "nameEn": "Obour City"},
+      {"name": "وسط البلد", "nameEn": "Downtown"},
+      {"name": "شبرا", "nameEn": "Shobra"},
+      {"name": "حلوان", "nameEn": "Helwan"},
+      {"name": "المقطم", "nameEn": "Mokattam"},
+      {"name": "عين شمس", "nameEn": "Ain Shams"},
+      {"name": "المطرية", "nameEn": "El Matareya"},
+      {"name": "السلام", "nameEn": "El Salam"},
+      {"name": "النزهة", "nameEn": "El Nozha"},
+      {"name": "المرج", "nameEn": "El Marg"},
+      {"name": "السيدة زينب", "nameEn": "Sayeda Zeinab"},
+      {"name": "الدرب الأحمر", "nameEn": "El Darb El Ahmar"},
+      {"name": "15 مايو", "nameEn": "15 May"},
+      {"name": "منشأة ناصر", "nameEn": "Manshiyat Naser"},
+      {"name": "التبين", "nameEn": "El Tebbin"},
+      {"name": "دار السلام", "nameEn": "Dar El Salam"},
+      {"name": "البساتين", "nameEn": "El Basatin"},
+      {"name": "الخليفة", "nameEn": "El Khalifa"},
+      {"name": "الموسكي", "nameEn": "El Mosky"},
+      {"name": "الأزبكية", "nameEn": "Azbakeya"},
+      {"name": "عابدين", "nameEn": "Abdeen"},
+      {"name": "بولاق", "nameEn": "Bulaq"},
+      {"name": "الزيتون", "nameEn": "El Zeitoun"},
+      {"name": "حدائق القبة", "nameEn": "Hadayek El Qobba"},
+      {"name": "الزاوية الحمراء", "nameEn": "El Zawya El Hamra"},
+      {"name": "روض الفرج", "nameEn": "Rod El Farag"},
+      {"name": "الساحل", "nameEn": "El Sahel"},
+      {"name": "شبرا الخيمة", "nameEn": "Shobra El Kheima"}
+    ]
+  },
+  "GIZA": {
+    "arabicName": "الجيزة",
+    "districts": [
+      {"name": "الجيزة", "nameEn": "Giza"},
+      {"name": "الدقي", "nameEn": "Dokki"},
+      {"name": "العجوزة", "nameEn": "Agouza"},
+      {"name": "المهندسين", "nameEn": "Mohandessin"},
+      {"name": "الهرم", "nameEn": "Haram"},
+      {"name": "فيصل", "nameEn": "Faisal"},
+      {"name": "6 أكتوبر", "nameEn": "6th of October"},
+      {"name": "الشيخ زايد", "nameEn": "Sheikh Zayed"},
+      {"name": "حدائق الأهرام", "nameEn": "Hadayek El Ahram"},
+      {"name": "أبو النمرس", "nameEn": "Abu El Nomros"},
+      {"name": "العياط", "nameEn": "El Ayat"},
+      {"name": "البدرشين", "nameEn": "El Badrasheen"},
+      {"name": "الصف", "nameEn": "El Saf"},
+      {"name": "أطفيح", "nameEn": "Atfih"},
+      {"name": "الواحات البحرية", "nameEn": "Bahariya Oasis"},
+      {"name": "كرداسة", "nameEn": "Kerdasa"},
+      {"name": "أوسيم", "nameEn": "Oseem"},
+      {"name": "منشأة القناطر", "nameEn": "Manshiyet El Qanater"},
+      {"name": "الحوامدية", "nameEn": "El Hawamdeya"}
+    ]
+  },
+  "ALEXANDRIA": {
+    "arabicName": "الإسكندرية",
+    "districts": [
+      {"name": "وسط الإسكندرية", "nameEn": "Downtown Alexandria"},
+      {"name": "المنتزه", "nameEn": "El Montazah"},
+      {"name": "شرق", "nameEn": "Sharq"},
+      {"name": "غرب", "nameEn": "Gharb"},
+      {"name": "العجمي", "nameEn": "El Agamy"},
+      {"name": "الدخيلة", "nameEn": "El Dekhela"},
+      {"name": "العامرية", "nameEn": "El Amereya"},
+      {"name": "برج العرب", "nameEn": "Borg El Arab"},
+      {"name": "سموحة", "nameEn": "Smouha"},
+      {"name": "سيدي جابر", "nameEn": "Sidi Gaber"},
+      {"name": "محرم بك", "nameEn": "Moharam Bek"},
+      {"name": "كرموز", "nameEn": "Karmouz"},
+      {"name": "المنشية", "nameEn": "El Mansheyya"},
+      {"name": "اللبان", "nameEn": "El Labban"},
+      {"name": "أبو قير", "nameEn": "Abu Qir"},
+      {"name": "سيدي بشر", "nameEn": "Sidi Bishr"},
+      {"name": "ستانلي", "nameEn": "Stanley"},
+      {"name": "كليوباترا", "nameEn": "Cleopatra"},
+      {"name": "الإبراهيمية", "nameEn": "El Ibrahimeya"},
+      {"name": "بحري", "nameEn": "Bahary"}
+    ]
+  },
+  "DAKHALIA": {
+    "arabicName": "الدقهلية",
+    "districts": [
+      {"name": "المنصورة", "nameEn": "Mansoura"},
+      {"name": "طلخا", "nameEn": "Talkha"},
+      {"name": "ميت غمر", "nameEn": "Mit Ghamr"},
+      {"name": "دكرنس", "nameEn": "Dekernes"},
+      {"name": "أجا", "nameEn": "Aga"},
+      {"name": "منية النصر", "nameEn": "Minyat El Nasr"},
+      {"name": "السنبلاوين", "nameEn": "El Sinbellawin"},
+      {"name": "الكردي", "nameEn": "El Kordi"},
+      {"name": "بني عبيد", "nameEn": "Bani Ubaid"},
+      {"name": "المنزلة", "nameEn": "El Manzala"},
+      {"name": "تمي الأمديد", "nameEn": "Tami El Amdid"},
+      {"name": "الجمالية", "nameEn": "El Gamaliya"},
+      {"name": "شربين", "nameEn": "Sherbin"},
+      {"name": "بلقاس", "nameEn": "Belqas"},
+      {"name": "نبروه", "nameEn": "Nabaroh"}
+    ]
+  },
+  "SHARQIA": {
+    "arabicName": "الشرقية",
+    "districts": [
+      {"name": "الزقازيق", "nameEn": "Zagazig"},
+      {"name": "العاشر من رمضان", "nameEn": "10th of Ramadan"},
+      {"name": "منيا القمح", "nameEn": "Minya El Qamh"},
+      {"name": "بلبيس", "nameEn": "Bilbeis"},
+      {"name": "أبو حماد", "nameEn": "Abu Hammad"},
+      {"name": "أبو كبير", "nameEn": "Abu Kebir"},
+      {"name": "فاقوس", "nameEn": "Faqous"},
+      {"name": "الحسينية", "nameEn": "El Huseiniya"},
+      {"name": "ديرب نجم", "nameEn": "Diarb Negm"},
+      {"name": "كفر صقر", "nameEn": "Kafr Saqr"},
+      {"name": "أولاد صقر", "nameEn": "Awlad Saqr"},
+      {"name": "الإبراهيمية", "nameEn": "El Ibrahimiya"},
+      {"name": "مشتول السوق", "nameEn": "Mashtool El Souk"},
+      {"name": "القرين", "nameEn": "El Qorain"},
+      {"name": "ههيا", "nameEn": "Hehia"},
+      {"name": "القنايات", "nameEn": "El Qanayat"}
+    ]
+  },
+  "GHARBIA": {
+    "arabicName": "الغربية",
+    "districts": [
+      {"name": "طنطا", "nameEn": "Tanta"},
+      {"name": "المحلة الكبرى", "nameEn": "El Mahalla El Kubra"},
+      {"name": "كفر الزيات", "nameEn": "Kafr El Zayat"},
+      {"name": "زفتى", "nameEn": "Zefta"},
+      {"name": "السنطة", "nameEn": "El Santa"},
+      {"name": "قطور", "nameEn": "Qutor"},
+      {"name": "بسيون", "nameEn": "Basyoun"},
+      {"name": "سمنود", "nameEn": "Samanoud"}
+    ]
+  },
+  "QALUBIA": {
+    "arabicName": "القليوبية",
+    "districts": [
+      {"name": "بنها", "nameEn": "Banha"},
+      {"name": "قليوب", "nameEn": "Qalyub"},
+      {"name": "شبين القناطر", "nameEn": "Shebin El Qanater"},
+      {"name": "القناطر الخيرية", "nameEn": "El Qanater El Khairiya"},
+      {"name": "الخانكة", "nameEn": "El Khanka"},
+      {"name": "كفر شكر", "nameEn": "Kafr Shokr"},
+      {"name": "طوخ", "nameEn": "Toukh"},
+      {"name": "قها", "nameEn": "Qaha"},
+      {"name": "العبور", "nameEn": "Obour"}
+    ]
+  },
+  "MENOFIA": {
+    "arabicName": "المنوفية",
+    "districts": [
+      {"name": "شبين الكوم", "nameEn": "Shebin El Kom"},
+      {"name": "منوف", "nameEn": "Menouf"},
+      {"name": "أشمون", "nameEn": "Ashmoun"},
+      {"name": "الباجور", "nameEn": "El Bagour"},
+      {"name": "قويسنا", "nameEn": "Quesna"},
+      {"name": "بركة السبع", "nameEn": "Birket El Sab"},
+      {"name": "تلا", "nameEn": "Tala"},
+      {"name": "الشهداء", "nameEn": "El Shohada"},
+      {"name": "السادات", "nameEn": "Sadat City"}
+    ]
+  },
+  "BEHEIRA": {
+    "arabicName": "البحيرة",
+    "districts": [
+      {"name": "دمنهور", "nameEn": "Damanhour"},
+      {"name": "كفر الدوار", "nameEn": "Kafr El Dawar"},
+      {"name": "رشيد", "nameEn": "Rashid"},
+      {"name": "إدكو", "nameEn": "Edku"},
+      {"name": "أبو المطامير", "nameEn": "Abu El Matamir"},
+      {"name": "حوش عيسى", "nameEn": "Housh Eissa"},
+      {"name": "شبراخيت", "nameEn": "Shubra Khit"},
+      {"name": "كوم حمادة", "nameEn": "Kom Hamada"},
+      {"name": "الدلنجات", "nameEn": "El Delengat"},
+      {"name": "المحمودية", "nameEn": "El Mahmoudiya"},
+      {"name": "إيتاي البارود", "nameEn": "Itay El Baroud"},
+      {"name": "الرحمانية", "nameEn": "El Rahmaniya"},
+      {"name": "النوبارية", "nameEn": "El Nobareya"},
+      {"name": "وادي النطرون", "nameEn": "Wadi El Natrun"},
+      {"name": "أبو حمص", "nameEn": "Abu Hummus"}
+    ]
+  },
+  "KAFR_EL_SHEIKH": {
+    "arabicName": "كفر الشيخ",
+    "districts": [
+      {"name": "كفر الشيخ", "nameEn": "Kafr El Sheikh"},
+      {"name": "دسوق", "nameEn": "Desouk"},
+      {"name": "فوه", "nameEn": "Fuwwah"},
+      {"name": "مطوبس", "nameEn": "Mutubas"},
+      {"name": "برج البرلس", "nameEn": "Burj El Burullus"},
+      {"name": "بلطيم", "nameEn": "Baltim"},
+      {"name": "بيلا", "nameEn": "Bila"},
+      {"name": "الحامول", "nameEn": "El Hamool"},
+      {"name": "سيدي سالم", "nameEn": "Sidi Salem"},
+      {"name": "قلين", "nameEn": "Qellin"},
+      {"name": "الرياض", "nameEn": "El Riyad"}
+    ]
+  },
+  "DAMIETTA": {
+    "arabicName": "دمياط",
+    "districts": [
+      {"name": "دمياط", "nameEn": "Damietta"},
+      {"name": "دمياط الجديدة", "nameEn": "New Damietta"},
+      {"name": "رأس البر", "nameEn": "Ras El Bar"},
+      {"name": "فارسكور", "nameEn": "Faraskour"},
+      {"name": "كفر سعد", "nameEn": "Kafr Saad"},
+      {"name": "الزرقا", "nameEn": "El Zarqa"},
+      {"name": "كفر البطيخ", "nameEn": "Kafr El Batikh"}
+    ]
+  },
+  "PORT_SAID": {
+    "arabicName": "بورسعيد",
+    "districts": [
+      {"name": "بورسعيد", "nameEn": "Port Said"},
+      {"name": "بورفؤاد", "nameEn": "Port Fouad"},
+      {"name": "العرب", "nameEn": "El Arab"},
+      {"name": "حي الزهور", "nameEn": "El Zohour"},
+      {"name": "حي الشرق", "nameEn": "El Sharq"},
+      {"name": "حي الضواحي", "nameEn": "El Dawahi"},
+      {"name": "حي المناخ", "nameEn": "El Manakh"}
+    ]
+  },
+  "ISMAILIA": {
+    "arabicName": "الإسماعيلية",
+    "districts": [
+      {"name": "الإسماعيلية", "nameEn": "Ismailia"},
+      {"name": "فايد", "nameEn": "Fayed"},
+      {"name": "القنطرة شرق", "nameEn": "El Qantara Sharq"},
+      {"name": "القنطرة غرب", "nameEn": "El Qantara Gharb"},
+      {"name": "التل الكبير", "nameEn": "El Tal El Kebir"},
+      {"name": "أبو صوير", "nameEn": "Abu Suweir"},
+      {"name": "القصاصين", "nameEn": "El Qassasin"}
+    ]
+  },
+  "SUEZ": {
+    "arabicName": "السويس",
+    "districts": [
+      {"name": "السويس", "nameEn": "Suez"},
+      {"name": "حي الأربعين", "nameEn": "El Arbaeen"},
+      {"name": "حي عتاقة", "nameEn": "Ataka"},
+      {"name": "حي السويس", "nameEn": "Suez District"},
+      {"name": "فيصل", "nameEn": "Faisal"},
+      {"name": "الجناين", "nameEn": "El Ganayen"}
+    ]
+  },
+  "FAYOUM": {
+    "arabicName": "الفيوم",
+    "districts": [
+      {"name": "الفيوم", "nameEn": "Fayoum"},
+      {"name": "الفيوم الجديدة", "nameEn": "New Fayoum"},
+      {"name": "إبشواي", "nameEn": "Ibsheway"},
+      {"name": "طامية", "nameEn": "Tamiya"},
+      {"name": "سنورس", "nameEn": "Sennoures"},
+      {"name": "إطسا", "nameEn": "Etsa"},
+      {"name": "يوسف الصديق", "nameEn": "Youssef El Seddik"}
+    ]
+  },
+  "BENI_SUEF": {
+    "arabicName": "بني سويف",
+    "districts": [
+      {"name": "بني سويف", "nameEn": "Beni Suef"},
+      {"name": "بني سويف الجديدة", "nameEn": "New Beni Suef"},
+      {"name": "الواسطى", "nameEn": "El Wasta"},
+      {"name": "ناصر", "nameEn": "Naser"},
+      {"name": "إهناسيا", "nameEn": "Ehnasya"},
+      {"name": "ببا", "nameEn": "Beba"},
+      {"name": "الفشن", "nameEn": "El Fashn"},
+      {"name": "سمسطا", "nameEn": "Samasta"}
+    ]
+  },
+  "MINYA": {
+    "arabicName": "المنيا",
+    "districts": [
+      {"name": "المنيا", "nameEn": "Minya"},
+      {"name": "المنيا الجديدة", "nameEn": "New Minya"},
+      {"name": "ملوي", "nameEn": "Mallawi"},
+      {"name": "سمالوط", "nameEn": "Samalout"},
+      {"name": "المغاغة", "nameEn": "El Minya"},
+      {"name": "بني مزار", "nameEn": "Bani Mazar"},
+      {"name": "مطاي", "nameEn": "Matay"},
+      {"name": "أبو قرقاص", "nameEn": "Abu Qurqas"},
+      {"name": "دير مواس", "nameEn": "Deir Mawas"},
+      {"name": "العدوة", "nameEn": "El Edwa"}
+    ]
+  },
+  "ASSIUT": {
+    "arabicName": "أسيوط",
+    "districts": [
+      {"name": "أسيوط", "nameEn": "Assiut"},
+      {"name": "أسيوط الجديدة", "nameEn": "New Assiut"},
+      {"name": "ديروط", "nameEn": "Dairout"},
+      {"name": "منفلوط", "nameEn": "Manfalout"},
+      {"name": "القوصية", "nameEn": "El Qusiya"},
+      {"name": "أبنوب", "nameEn": "Abnoub"},
+      {"name": "أبو تيج", "nameEn": "Abu Tig"},
+      {"name": "الغنايم", "nameEn": "El Ghanayem"},
+      {"name": "ساحل سليم", "nameEn": "Sahel Selim"},
+      {"name": "البداري", "nameEn": "El Badari"},
+      {"name": "صدفا", "nameEn": "Sidfa"}
+    ]
+  },
+  "SOHAG": {
+    "arabicName": "سوهاج",
+    "districts": [
+      {"name": "سوهاج", "nameEn": "Sohag"},
+      {"name": "سوهاج الجديدة", "nameEn": "New Sohag"},
+      {"name": "أخميم", "nameEn": "Akhmim"},
+      {"name": "المنشاة", "nameEn": "El Menshaa"},
+      {"name": "المراغة", "nameEn": "El Maragha"},
+      {"name": "طهطا", "nameEn": "Tahta"},
+      {"name": "جهينة", "nameEn": "Gehena"},
+      {"name": "البلينا", "nameEn": "El Balyana"},
+      {"name": "جرجا", "nameEn": "Girga"},
+      {"name": "دار السلام", "nameEn": "Dar El Salam"},
+      {"name": "طما", "nameEn": "Tama"},
+      {"name": "ساقلتة", "nameEn": "Saqlta"}
+    ]
+  },
+  "QENA": {
+    "arabicName": "قنا",
+    "districts": [
+      {"name": "قنا", "nameEn": "Qena"},
+      {"name": "قنا الجديدة", "nameEn": "New Qena"},
+      {"name": "نجع حمادي", "nameEn": "Nag Hammadi"},
+      {"name": "أبو تشت", "nameEn": "Abu Tesht"},
+      {"name": "فرشوط", "nameEn": "Farshout"},
+      {"name": "دشنا", "nameEn": "Dishna"},
+      {"name": "الوقف", "nameEn": "El Waqf"},
+      {"name": "قفط", "nameEn": "Qeft"},
+      {"name": "قوص", "nameEn": "Qus"},
+      {"name": "نقادة", "nameEn": "Naqada"}
+    ]
+  },
+  "LUXOR": {
+    "arabicName": "الأقصر",
+    "districts": [
+      {"name": "الأقصر", "nameEn": "Luxor"},
+      {"name": "الأقصر الجديدة", "nameEn": "New Luxor"},
+      {"name": "الطود", "nameEn": "El Tod"},
+      {"name": "إسنا", "nameEn": "Esna"},
+      {"name": "أرمنت", "nameEn": "Armant"},
+      {"name": "القرنة", "nameEn": "El Qurna"},
+      {"name": "البياضية", "nameEn": "El Bayadeya"}
+    ]
+  },
+  "ASWAN": {
+    "arabicName": "أسوان",
+    "districts": [
+      {"name": "أسوان", "nameEn": "Aswan"},
+      {"name": "أسوان الجديدة", "nameEn": "New Aswan"},
+      {"name": "دراو", "nameEn": "Daraw"},
+      {"name": "كوم أمبو", "nameEn": "Kom Ombo"},
+      {"name": "نصر النوبة", "nameEn": "Nasr El Nuba"},
+      {"name": "إدفو", "nameEn": "Edfu"},
+      {"name": "أبو سمبل", "nameEn": "Abu Simbel"}
+    ]
+  },
+  "RED_SEA": {
+    "arabicName": "البحر الأحمر",
+    "districts": [
+      {"name": "الغردقة", "nameEn": "Hurghada"},
+      {"name": "رأس غارب", "nameEn": "Ras Gharib"},
+      {"name": "سفاجا", "nameEn": "Safaga"},
+      {"name": "القصير", "nameEn": "El Quseir"},
+      {"name": "مرسى علم", "nameEn": "Marsa Alam"},
+      {"name": "الشلاتين", "nameEn": "Shalatin"},
+      {"name": "حلايب", "nameEn": "Halayeb"}
+    ]
+  },
+  "NEW_VALLEY": {
+    "arabicName": "الوادي الجديد",
+    "districts": [
+      {"name": "الخارجة", "nameEn": "El Kharga"},
+      {"name": "الداخلة", "nameEn": "El Dakhla"},
+      {"name": "الفرافرة", "nameEn": "El Farafra"},
+      {"name": "باريس", "nameEn": "Paris"},
+      {"name": "بلاط", "nameEn": "Balat"}
+    ]
+  },
+  "MATROUH": {
+    "arabicName": "مطروح",
+    "districts": [
+      {"name": "مرسى مطروح", "nameEn": "Marsa Matrouh"},
+      {"name": "الحمام", "nameEn": "El Hammam"},
+      {"name": "العلمين", "nameEn": "El Alamein"},
+      {"name": "الضبعة", "nameEn": "El Dabaa"},
+      {"name": "سيدي براني", "nameEn": "Sidi Barrani"},
+      {"name": "السلوم", "nameEn": "El Salloum"},
+      {"name": "سيوة", "nameEn": "Siwa"}
+    ]
+  },
+  "NORTH_SINAI": {
+    "arabicName": "شمال سيناء",
+    "districts": [
+      {"name": "العريش", "nameEn": "El Arish"},
+      {"name": "الشيخ زويد", "nameEn": "Sheikh Zuweid"},
+      {"name": "رفح", "nameEn": "Rafah"},
+      {"name": "بئر العبد", "nameEn": "Bir El Abd"},
+      {"name": "الحسنة", "nameEn": "El Hasana"},
+      {"name": "نخل", "nameEn": "Nakhl"}
+    ]
+  },
+  "SOUTH_SINAI": {
+    "arabicName": "جنوب سيناء",
+    "districts": [
+      {"name": "الطور", "nameEn": "El Tor"},
+      {"name": "شرم الشيخ", "nameEn": "Sharm El Sheikh"},
+      {"name": "دهب", "nameEn": "Dahab"},
+      {"name": "نويبع", "nameEn": "Nuweiba"},
+      {"name": "طابا", "nameEn": "Taba"},
+      {"name": "سانت كاترين", "nameEn": "Saint Catherine"},
+      {"name": "أبو رديس", "nameEn": "Abu Redis"},
+      {"name": "أبو زنيمة", "nameEn": "Abu Zenima"},
+      {"name": "رأس سدر", "nameEn": "Ras Sudr"}
+    ]
+  }
+}

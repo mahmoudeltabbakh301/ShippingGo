@@ -41,11 +41,12 @@ public class UserService {
     private final OrganizationRepository organizationRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final SubscriptionService subscriptionService;
 
     public UserService(UserRepository userRepository, CompanyRepository companyRepository,
             OfficeRepository officeRepository, StoreRepository storeRepository,
             OrganizationRepository organizationRepository, PasswordEncoder passwordEncoder,
-            EmailService emailService) {
+            EmailService emailService, SubscriptionService subscriptionService) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
         this.officeRepository = officeRepository;
@@ -53,6 +54,7 @@ public class UserService {
         this.organizationRepository = organizationRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.subscriptionService = subscriptionService;
     }
 
     // تسجيل مستخدم جديد مع التحقق من عدم تكرار البيانات (البريد، الهاتف، اسم
@@ -144,6 +146,7 @@ public class UserService {
 
             // Create organization if requested
             if (dto.isCreateOrganization() && dto.getOrganizationType() != null) {
+                com.shipment.shippinggo.entity.Organization createdOrg = null;
                 if (dto.getOrganizationType() == OrganizationType.STORE) {
                     com.shipment.shippinggo.entity.Store store = new com.shipment.shippinggo.entity.Store(
                             dto.getOrganizationName(),
@@ -152,7 +155,7 @@ public class UserService {
                             dto.getOrganizationEmail(),
                             user);
                     store.setGovernorate(dto.getOrganizationGovernorate());
-                    storeRepository.save(store);
+                    createdOrg = storeRepository.save(store);
                 } else if (dto.getOrganizationType() == OrganizationType.COMPANY) {
                     Company company = new Company(
                             dto.getOrganizationName(),
@@ -161,7 +164,7 @@ public class UserService {
                             dto.getOrganizationEmail(),
                             user);
                     company.setGovernorate(dto.getOrganizationGovernorate());
-                    companyRepository.save(company);
+                    createdOrg = companyRepository.save(company);
                 } else if (dto.getOrganizationType() == OrganizationType.OFFICE) {
                     Office office = new Office(
                             dto.getOrganizationName(),
@@ -171,7 +174,16 @@ public class UserService {
                             user,
                             null); 
                     office.setGovernorate(dto.getOrganizationGovernorate());
-                    officeRepository.save(office);
+                    createdOrg = officeRepository.save(office);
+                }
+
+                // إنشاء اشتراك تجريبي تلقائي للمنظمة الجديدة
+                if (createdOrg != null) {
+                    try {
+                        subscriptionService.createTrialSubscription(createdOrg);
+                    } catch (Exception e) {
+                        System.err.println("Warning: Failed to create trial subscription for org " + createdOrg.getId() + ": " + e.getMessage());
+                    }
                 }
             }
             

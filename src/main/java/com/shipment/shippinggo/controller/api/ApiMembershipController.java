@@ -37,6 +37,8 @@ public class ApiMembershipController {
             map.put("organizationName", invitation.getOrganization() != null ? invitation.getOrganization().getName() : "غير معروف");
             map.put("role", invitation.getAssignedRole().name());
             map.put("createdAt", invitation.getInvitedAt() != null ? invitation.getInvitedAt().toString() : null);
+            // Invitation expires 2 days after creation
+            map.put("expiresAt", invitation.getInvitedAt() != null ? invitation.getInvitedAt().plusDays(2).toString() : null);
             return map;
         }).collect(Collectors.toList());
 

@@ -49,6 +49,12 @@ class ApiOrderControllerTest {
     private OrderService orderService;
 
     @MockBean
+    private com.shipment.shippinggo.service.NotificationService notificationService;
+
+    @MockBean
+    private com.shipment.shippinggo.service.SubscriptionService subscriptionService;
+
+    @MockBean
     private OrganizationService organizationService;
 
     @MockBean
@@ -57,8 +63,6 @@ class ApiOrderControllerTest {
     @MockBean
     private JwtAuthenticationFilter jwtAuthFilter;
 
-    @MockBean
-    private com.shipment.shippinggo.service.NotificationService notificationService;
 
     private User testUser;
     private Organization testOrg;

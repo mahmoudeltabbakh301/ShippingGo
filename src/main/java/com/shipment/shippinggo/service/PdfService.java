@@ -156,9 +156,17 @@ public class PdfService {
             addLabelValueCell(govTable, "الشركة", order.getCompanyName() != null ? order.getCompanyName() : "-", labelFont, bodyFont);
             document.add(govTable);
 
+            // === المنطقة (إذا وُجدت) ===
+            if (order.getDistrict() != null && !order.getDistrict().isEmpty()) {
+                PdfPTable districtTable = createRtlTable(1, null);
+                addLabelValueCell(districtTable, "المنطقة", order.getDistrict(), labelFont, bodyFont);
+                document.add(districtTable);
+            }
+
             // === العنوان التفصيلي ===
+            String fullAddress = buildFullAddress(order);
             PdfPTable addressTable = createRtlTable(1, null);
-            addLabelValueCell(addressTable, "العنوان التفصيلي", order.getRecipientAddress() != null ? order.getRecipientAddress() : "-", labelFont, bodyFont);
+            addLabelValueCell(addressTable, "العنوان التفصيلي", fullAddress, labelFont, bodyFont);
             document.add(addressTable);
             document.add(new Paragraph("\n"));
 
@@ -248,9 +256,17 @@ public class PdfService {
         addLabelValueCell(govTable, "الشركة", order.getCompanyName() != null ? order.getCompanyName() : "-", labelFont, bodyFont);
         document.add(govTable);
 
+        // المنطقة (إذا وُجدت)
+        if (order.getDistrict() != null && !order.getDistrict().isEmpty()) {
+            PdfPTable districtTable = createRtlTable(1, null);
+            addLabelValueCell(districtTable, "المنطقة", order.getDistrict(), labelFont, bodyFont);
+            document.add(districtTable);
+        }
+
         // العنوان
+        String fullAddress = buildFullAddress(order);
         PdfPTable addressTable = createRtlTable(1, null);
-        addLabelValueCell(addressTable, "العنوان التفصيلي", order.getRecipientAddress() != null ? order.getRecipientAddress() : "-", labelFont, bodyFont);
+        addLabelValueCell(addressTable, "العنوان التفصيلي", fullAddress, labelFont, bodyFont);
         document.add(addressTable);
         document.add(new Paragraph("\n"));
 
@@ -490,6 +506,31 @@ public class PdfService {
         cell.setHorizontalAlignment(alignment);
         cell.setPadding(5);
         table.addCell(cell);
+    }
+
+    /**
+     * بناء العنوان الكامل: المركز + المنطقة + العنوان المكتوب
+     */
+    private String buildFullAddress(Order order) {
+        StringBuilder sb = new StringBuilder();
+        List<String> parts = new java.util.ArrayList<>();
+
+        if (order.getCenter() != null && !order.getCenter().isEmpty()) {
+            parts.add(order.getCenter());
+        }
+        if (order.getArea() != null && !order.getArea().isEmpty()) {
+            parts.add(order.getArea());
+        }
+        // fallback للحقل القديم
+        if (parts.isEmpty() && order.getDistrict() != null && !order.getDistrict().isEmpty()) {
+            parts.add(order.getDistrict());
+        }
+        if (order.getRecipientAddress() != null && !order.getRecipientAddress().isEmpty()) {
+            parts.add(order.getRecipientAddress());
+        }
+
+        if (parts.isEmpty()) return "-";
+        return String.join(" - ", parts);
     }
 
     private String safeText(String text) {

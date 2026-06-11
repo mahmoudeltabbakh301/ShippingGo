@@ -30,7 +30,7 @@ public abstract class Organization {
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "`type`", nullable = false)
     private OrganizationType type;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -38,7 +38,7 @@ public abstract class Organization {
     @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private User admin;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String about;
 
     @Column(name = "logo_url")
@@ -53,11 +53,37 @@ public abstract class Organization {
     private boolean acceptsInternalShipments = true; // Default true
     private boolean acceptsExternalShipments = false; // Default false
 
+    // سياسة البيك أب — وصف حر تكتبه الشركة
+    @Column(length = 65535)
+    private String pickupPolicy;
+
+    // سياسة المرتجعات
+    @Column(length = 65535)
+    private String returnPolicy;
+
+    // مدة التوصيل المتوقعة (بالأيام)
+    private Integer estimatedDeliveryDays;
+
+    // شروط الدفع والتسوية
+    @Column(length = 65535)
+    private String paymentTerms;
+
+    // رقم واتساب
+    private String whatsappNumber;
+
+    // موقع الشركة الرسمي
+    private String websiteUrl;
+
     @Column(name = "is_virtual", nullable = false, columnDefinition = "boolean default false")
     private boolean isVirtual = false;
 
     @Column(name = "active", nullable = false, columnDefinition = "boolean default true")
     private boolean active = true;
+
+    @Column(name = "deleted", nullable = false, columnDefinition = "boolean default false")
+    private boolean deleted = false;
+
+    private LocalDateTime deletedAt;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

@@ -73,8 +73,9 @@
                         <span class="badge badge-refused" th:unless="${org.active}" th:text="#{super_admin.status.inactive}">معطّلة</span>
                     </p>
                 </div>
-                <div style="display: flex; gap: var(--space-2);">
+                <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
                     <a th:href="@{/super-admin/organizations}" class="btn btn-outline">← <span th:text="#{super_admin.btn.back}">رجوع</span></a>
+                    <a th:href="@{/super-admin/organizations/{id}/edit(id=${org.id})}" class="btn btn-outline">✏️ تعديل</a>
                     <a th:href="@{/audit-logs/organization/{id}(id=${org.id})}" class="btn btn-outline">📜 <span th:text="#{super_admin.org_detail.logs}">سجلات المنظمة</span></a>
                     <form th:action="@{/super-admin/organizations/{id}/toggle(id=${org.id})}" method="post" style="display: inline;">
                         <button type="submit" class="btn"
@@ -82,7 +83,19 @@
                                 th:text="${org.active} ? #{super_admin.btn.deactivate} : #{super_admin.btn.activate}"
                                 onclick="return confirm(this.textContent + '?');">تعطيل</button>
                     </form>
+                    <!-- حذف / استعادة -->
+                    <form th:if="${!org.deleted}" th:action="@{/super-admin/organizations/{id}/delete(id=${org.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذه المنظمة؟ سيتم أرشفتها.');">🗑️ حذف</button>
+                    </form>
+                    <form th:if="${org.deleted}" th:action="@{/super-admin/organizations/{id}/restore(id=${org.id})}" method="post" style="display: inline;">
+                        <button type="submit" class="btn btn-success">♻️ استعادة</button>
+                    </form>
                 </div>
+            </div>
+
+            <!-- شريط تحذير المنظمة المحذوفة -->
+            <div th:if="${org.deleted}" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-weight: 600;">
+                ⚠️ هذه المنظمة محذوفة (مؤرشفة) منذ <span th:text="${org.deletedAt != null ? #temporals.format(org.deletedAt, 'yyyy/MM/dd HH:mm') : ''}"></span>
             </div>
 
             <!-- Organization Info -->
@@ -125,6 +138,128 @@
                         <span class="info-label" th:text="#{super_admin.orgs.col_created}">تاريخ التسجيل</span>
                         <span class="info-value" th:text="${#temporals.format(org.createdAt, 'yyyy/MM/dd HH:mm')}">التاريخ</span>
                     </div>
+                </div>
+            </div>
+            <!-- Subscription Management -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">💎 إدارة الاشتراك</h2>
+
+                <div th:if="${subscription == null}" class="table-empty" style="padding: var(--space-4);">
+                    <div class="table-empty-icon">💎</div>
+                    <div class="table-empty-text">لم يتم إنشاء اشتراك لهذه المنظمة بعد</div>
+                </div>
+
+                <div th:if="${subscription != null}">
+                    <!-- Subscription Status & Info -->
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">حالة الاشتراك</span>
+                            <span class="info-value">
+                                <span class="badge badge-delivered" th:if="${subscription.status.name() == 'ACTIVE'}" th:text="${subscription.status.arabicName}">نشط</span>
+                                <span class="badge" style="background: #fef3c7; color: #92400e;" th:if="${subscription.status.name() == 'TRIAL'}" th:text="${subscription.status.arabicName}">تجريبي</span>
+                                <span class="badge badge-refused" th:if="${subscription.status.name() == 'EXPIRED'}" th:text="${subscription.status.arabicName}">منتهي</span>
+                                <span class="badge badge-cancelled" th:if="${subscription.status.name() == 'SUSPENDED'}" th:text="${subscription.status.arabicName}">معلق</span>
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">السعر الشهري</span>
+                            <span class="info-value" th:text="${subscription.monthlyPrice != null ? subscription.monthlyPrice + ' جنيه' : 'غير محدد'}">500 جنيه</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">الأيام المتبقية</span>
+                            <span class="info-value" th:style="${subscription.remainingDays <= 3 ? 'color: #dc2626; font-weight: 700;' : ''}"
+                                  th:text="${subscription.remainingDays > 0 ? subscription.remainingDays + ' يوم' : 'منتهي'}">14 يوم</span>
+                        </div>
+                        <div class="info-item" th:if="${subscription.status.name() == 'TRIAL'}">
+                            <span class="info-label">نهاية الفترة التجريبية</span>
+                            <span class="info-value" th:text="${#temporals.format(subscription.trialEndDate, 'yyyy/MM/dd HH:mm')}">التاريخ</span>
+                        </div>
+                        <div class="info-item" th:if="${subscription.status.name() == 'ACTIVE' && subscription.currentPeriodEnd != null}">
+                            <span class="info-label">نهاية فترة الاشتراك</span>
+                            <span class="info-value" th:text="${#temporals.format(subscription.currentPeriodEnd, 'yyyy/MM/dd HH:mm')}">التاريخ</span>
+                        </div>
+                        <div class="info-item" th:if="${subscription.notes != null}">
+                            <span class="info-label">ملاحظات</span>
+                            <span class="info-value" th:text="${subscription.notes}">-</span>
+                        </div>
+                    </div>
+
+                    <hr style="border: 1px solid var(--border-color); margin: var(--space-4) 0;">
+
+                    <!-- Actions -->
+                    <div style="display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end;">
+                        <!-- تحديد السعر -->
+                        <form th:action="@{/super-admin/subscriptions/{id}/set-price(id=${org.id})}" method="post"
+                              style="display: flex; gap: var(--space-2); align-items: flex-end;">
+                            <div>
+                                <label style="font-size: 0.8rem; display: block; margin-bottom: 4px; color: var(--text-muted);">السعر الشهري (جنيه)</label>
+                                <input type="number" name="price" step="0.01" min="0"
+                                       th:value="${subscription.monthlyPrice}"
+                                       style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 120px; background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary">💲 تحديث السعر</button>
+                        </form>
+
+                        <!-- تفعيل يدوي -->
+                        <form th:action="@{/super-admin/subscriptions/{id}/activate(id=${org.id})}" method="post"
+                              style="display: flex; gap: var(--space-2); align-items: flex-end;"
+                              th:if="${subscription.status.name() != 'ACTIVE' || subscription.remainingDays <= 0}">
+                            <div>
+                                <label style="font-size: 0.8rem; display: block; margin-bottom: 4px; color: var(--text-muted);">عدد الأشهر</label>
+                                <input type="number" name="months" value="1" min="1" max="24"
+                                       style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 80px; background: var(--bg-secondary); color: var(--text-primary);">
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-success"
+                                    onclick="return confirm('تفعيل الاشتراك يدوياً؟');">✅ تفعيل يدوي</button>
+                        </form>
+
+                        <!-- تعليق -->
+                        <form th:action="@{/super-admin/subscriptions/{id}/suspend(id=${org.id})}" method="post"
+                              th:if="${subscription.status.name() == 'ACTIVE' || subscription.status.name() == 'TRIAL'}">
+                            <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('هل أنت متأكد من تعليق الاشتراك؟');">⛔ تعليق</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History -->
+            <div class="card" style="margin-bottom: var(--space-6);">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">💳 سجل المدفوعات</h2>
+
+                <div th:if="${payments == null || payments.isEmpty()}" class="table-empty" style="padding: var(--space-4);">
+                    <div class="table-empty-icon">💳</div>
+                    <div class="table-empty-text">لا توجد مدفوعات بعد</div>
+                </div>
+
+                <div th:if="${payments != null && !payments.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>طريقة الدفع</th>
+                                <th>تاريخ الدفع</th>
+                                <th>رقم Paymob</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="payment, iter : ${payments}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td th:text="${payment.amount + ' ' + payment.currency}">500 EGP</td>
+                                <td>
+                                    <span class="badge badge-delivered" th:if="${payment.status.name() == 'SUCCESS'}" th:text="${payment.status.arabicName}">ناجح</span>
+                                    <span class="badge" style="background: #fef3c7; color: #92400e;" th:if="${payment.status.name() == 'PENDING'}" th:text="${payment.status.arabicName}">معلق</span>
+                                    <span class="badge badge-refused" th:if="${payment.status.name() == 'FAILED'}" th:text="${payment.status.arabicName}">فشل</span>
+                                    <span class="badge badge-cancelled" th:if="${payment.status.name() == 'REFUNDED'}" th:text="${payment.status.arabicName}">مسترد</span>
+                                </td>
+                                <td th:text="${payment.paymentMethod != null ? payment.paymentMethod : '-'}">Card</td>
+                                <td th:text="${payment.paidAt != null ? #temporals.format(payment.paidAt, 'yyyy/MM/dd HH:mm') : '-'}">التاريخ</td>
+                                <td th:text="${payment.paymobTransactionId != null ? payment.paymobTransactionId : '-'}" style="font-size: 0.8rem;">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -200,6 +335,32 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- نقل الملكية -->
+            <div class="card" style="margin-bottom: var(--space-6); border: 2px solid var(--border-color);">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">🔄 نقل ملكية المنظمة</h2>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: var(--space-3);">
+                    نقل ملكية المنظمة لمستخدم آخر. يجب أن يكون المستخدم الجديد له صلاحية مدير (ADMIN) أو مدير (MANAGER).
+                </p>
+                <form th:action="@{/super-admin/organizations/{id}/transfer(id=${org.id})}" method="post"
+                      style="display: flex; gap: var(--space-3); align-items: flex-end; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 250px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: var(--space-1);">المدير الجديد</label>
+                        <select name="newAdminId" required
+                                style="width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-family: inherit;">
+                            <option value="">-- اختر المستخدم --</option>
+                            <th:block th:each="u : ${allUsers}">
+                                <option th:if="${u.role.name() == 'ADMIN' || u.role.name() == 'MANAGER' || u.role.name() == 'SUPER_ADMIN'}"
+                                        th:value="${u.id}"
+                                        th:text="${u.fullName + ' (' + u.email + ') - ' + u.role.name()}"
+                                        th:selected="${admin != null && u.id == admin.id}"></option>
+                            </th:block>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary"
+                            onclick="return confirm('هل أنت متأكد من نقل ملكية المنظمة؟');">🔄 نقل الملكية</button>
+                </form>
             </div>
         </main>
     </div>

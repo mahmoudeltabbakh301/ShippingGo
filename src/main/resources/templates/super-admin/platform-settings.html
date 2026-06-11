@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إعدادات المنصة - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+
+    <style>
+        .settings-container { max-width: 800px; }
+        .tabs { display: flex; gap: var(--space-1); border-bottom: 2px solid var(--border-color); margin-bottom: var(--space-5); flex-wrap: wrap; }
+        .tab { padding: var(--space-2) var(--space-4); cursor: pointer; border: none; background: none; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); border-bottom: 3px solid transparent; margin-bottom: -2px; transition: all 0.2s; font-family: inherit; }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .setting-group { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-4); }
+        .setting-group-title { font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-color); }
+        .setting-row { display: flex; flex-direction: column; gap: var(--space-1); margin-bottom: var(--space-4); }
+        .setting-row:last-child { margin-bottom: 0; }
+        .setting-label { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); }
+        .setting-desc { font-size: 0.75rem; color: var(--text-muted); margin-bottom: var(--space-1); }
+        .setting-input { padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem; width: 100%; font-family: inherit; }
+        .setting-input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .setting-textarea { min-height: 200px; resize: vertical; }
+        .sensitive-note { background: #fef3c7; color: #92400e; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md); font-size: 0.8rem; margin-bottom: var(--space-4); }
+        .maintenance-toggle { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: var(--radius-lg); margin-bottom: var(--space-4); }
+        .maintenance-toggle.active-maintenance { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+        .toggle-switch { position: relative; width: 48px; height: 26px; background: var(--text-muted); border-radius: 13px; cursor: pointer; transition: background 0.3s; flex-shrink: 0; }
+        .toggle-switch.on { background: #ef4444; }
+        .toggle-switch::after { content: ''; position: absolute; width: 22px; height: 22px; background: white; border-radius: 50%; top: 2px; left: 2px; transition: transform 0.3s; }
+        .toggle-switch.on::after { transform: translateX(22px); }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">⚙️ إعدادات المنصة</h1>
+                    <p class="page-subtitle">إعدادات عامة للمنصة وبوابة الدفع والصفحات الثابتة</p>
+                </div>
+            </div>
+
+            <div class="settings-container">
+                <div class="tabs">
+                    <button class="tab active" onclick="showTab('general')">🏢 عام</button>
+                    <button class="tab" onclick="showTab('subscription')">💎 اشتراكات</button>
+                    <button class="tab" onclick="showTab('paymob')">💳 Paymob</button>
+                    <button class="tab" onclick="showTab('notifications')">🔔 إشعارات</button>
+                    <button class="tab" onclick="showTab('pages')">📄 صفحات ثابتة</button>
+                </div>
+
+                <form th:action="@{/super-admin/settings}" method="post">
+
+                    <!-- عام -->
+                    <div id="tab-general" class="tab-content active">
+                        <div class="setting-group">
+                            <div class="setting-group-title">🏢 معلومات المنصة</div>
+                            <div th:each="setting : ${settings}"
+                                 th:if="${setting.settingKey == 'platform_name' || setting.settingKey == 'platform_currency' || setting.settingKey == 'platform_logo_url' || setting.settingKey == 'platform_contact_email' || setting.settingKey == 'platform_contact_phone' || setting.settingKey == 'platform_whatsapp' || setting.settingKey == 'platform_address'}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}" th:text="${setting.description}">وصف</label>
+                                    <input class="setting-input" type="text"
+                                           th:id="${setting.settingKey}"
+                                           th:name="${setting.settingKey}"
+                                           th:value="${setting.settingValue}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- اشتراكات -->
+                    <div id="tab-subscription" class="tab-content">
+                        <div class="setting-group">
+                            <div class="setting-group-title">💎 إعدادات الاشتراكات</div>
+                            <div th:each="setting : ${settings}"
+                                 th:if="${setting.settingKey == 'default_trial_days' || setting.settingKey == 'default_monthly_price'}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}" th:text="${setting.description}">وصف</label>
+                                    <input class="setting-input" type="text"
+                                           th:id="${setting.settingKey}"
+                                           th:name="${setting.settingKey}"
+                                           th:value="${setting.settingValue}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Paymob -->
+                    <div id="tab-paymob" class="tab-content">
+                        <div class="setting-group">
+                            <div class="setting-group-title">💳 إعدادات بوابة Paymob</div>
+                            <div class="sensitive-note">⚠️ هذه بيانات حساسة. تأكد من عدم مشاركتها مع أحد.</div>
+                            <div th:each="setting : ${settings}" th:if="${setting.settingKey.startsWith('paymob_')}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}" th:text="${setting.description}">وصف</label>
+                                    <input class="setting-input" type="text"
+                                           th:id="${setting.settingKey}"
+                                           th:name="${setting.settingKey}"
+                                           th:value="${setting.settingValue}"
+                                           th:placeholder="${setting.settingKey.contains('secret') || setting.settingKey.contains('hmac') ? '••••••••' : ''}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- إشعارات -->
+                    <div id="tab-notifications" class="tab-content">
+                        <div class="setting-group">
+                            <div class="setting-group-title">🔔 إعدادات الإشعارات</div>
+                            <div th:each="setting : ${settings}"
+                                 th:if="${setting.settingKey == 'notification_firebase_enabled'}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}" th:text="${setting.description}">وصف</label>
+                                    <select class="setting-input" th:id="${setting.settingKey}" th:name="${setting.settingKey}">
+                                        <option value="true" th:selected="${setting.settingValue == 'true'}">مفعل</option>
+                                        <option value="false" th:selected="${setting.settingValue == 'false'}">معطل</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- صفحات ثابتة -->
+                    <div id="tab-pages" class="tab-content">
+                        <div class="setting-group">
+                            <div class="setting-group-title">📄 الشروط والأحكام</div>
+                            <div th:each="setting : ${settings}" th:if="${setting.settingKey == 'terms_and_conditions'}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}">محتوى الشروط والأحكام (HTML مدعوم)</label>
+                                    <textarea class="setting-input setting-textarea"
+                                              th:id="${setting.settingKey}"
+                                              th:name="${setting.settingKey}"
+                                              th:text="${setting.settingValue}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="setting-group">
+                            <div class="setting-group-title">🔒 سياسة الخصوصية</div>
+                            <div th:each="setting : ${settings}" th:if="${setting.settingKey == 'privacy_policy'}">
+                                <div class="setting-row">
+                                    <label class="setting-label" th:for="${setting.settingKey}">محتوى سياسة الخصوصية (HTML مدعوم)</label>
+                                    <textarea class="setting-input setting-textarea"
+                                              th:id="${setting.settingKey}"
+                                              th:name="${setting.settingKey}"
+                                              th:text="${setting.settingValue}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--space-4);">
+                        💾 حفظ الإعدادات
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>
+        function showTab(name) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

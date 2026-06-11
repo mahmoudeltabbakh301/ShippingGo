@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{auto_dist.title} + ' - ShippingGo'">التوزيع التلقائي</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🚚 <span th:text="#{auto_dist.title}">التوزيع التلقائي</span></h1>
+                    <p class="text-muted" th:text="#{auto_dist.subtitle}">إسناد الأوردرات تلقائياً للمناديب حسب المنطقة</p>
+                </div>
+            </div>
+
+            <!-- Smart Distribution Hint -->
+            <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; margin-bottom: var(--space-4); border-radius: 12px; background: linear-gradient(135deg, rgba(33,150,243,0.08), rgba(33,150,243,0.03)); border: 1px solid rgba(33,150,243,0.2);">
+                <span style="font-size: 1.4rem; flex-shrink: 0; margin-top: 1px;">💡</span>
+                <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;">
+                    <strong style="color: var(--text-primary);" th:text="#{auto_dist.smart_hint_title}">ملاحظة حول التوزيع الذكي</strong><br>
+                    <span th:text="#{auto_dist.smart_hint_body}">يعتمد التوزيع التلقائي على تحديد المحافظة في الطلب كحد أدنى. الطلبات التي لا تحتوي على محافظة لن تدخل في التوزيع، وذلك لتجنب التشابه بين أسماء المناطق في المحافظات المختلفة. كلما كانت بيانات العنوان أكثر تفصيلاً (محافظة ← مركز ← منطقة)، كانت دقة التوزيع أعلى.</span>
+                </div>
+            </div>
+
+            <!-- Add Zone Assignment -->
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <h3 th:text="#{auto_dist.add_assignment}">إضافة ربط جديد</h3>
+
+                <div th:if="${couriers == null or couriers.isEmpty()}" class="alert"
+                    style="background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3);">
+                    <span>⚠️</span> <span th:text="#{auto_dist.no_couriers}">لا يوجد مناديب</span>
+                </div>
+
+                <form th:if="${couriers != null and !couriers.isEmpty()}"
+                    th:action="@{/auto-distribution/assign}" method="post"
+                    style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap;">
+                    <!-- Courier -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <label th:text="#{auto_dist.col_courier}">المندوب</label>
+                        <select name="courierId" class="form-control" required>
+                            <option value="" th:text="#{auto_dist.select_courier}">اختر المندوب</option>
+                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(c.id) ? courierDisplayNames.get(c.id) : c.fullName}"></option>
+                        </select>
+                    </div>
+                    <!-- Governorate -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <label th:text="#{auto_dist.col_governorate}">المحافظة</label>
+                        <select name="governorate" id="govSelect" class="form-control" required
+                            onchange="loadCenters(this.value)">
+                            <option value="" th:text="#{auto_dist.select_governorate}">اختر المحافظة</option>
+                            <option th:each="gov : ${governorates}" th:value="${gov.name()}"
+                                th:text="${gov.getArabicName()}"></option>
+                        </select>
+                    </div>
+                    <!-- Center (المركز) -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <label th:text="#{order.center}">المركز</label>
+                        <select name="center" id="centerSelect" class="form-control"
+                            onchange="loadAreas(this.value)">
+                            <option value="" th:text="#{order.center_select}">اختر المركز (اختياري)</option>
+                        </select>
+                    </div>
+                    <!-- Area (المنطقة) -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <label th:text="#{order.area}">المنطقة</label>
+                        <select name="area" id="areaSelect" class="form-control">
+                            <option value="" th:text="#{order.area_select}">اختر المنطقة (اختياري)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" th:text="#{auto_dist.btn_assign}">ربط</button>
+                </form>
+                <small style="color: var(--text-secondary); margin-top: 4px; display: block;"
+                    th:text="#{auto_dist.district_hint}">اتركه فارغاً ليغطي المندوب كل المحافظة</small>
+            </div>
+
+            <!-- Custom Area Management -->
+            <div class="card" style="margin-bottom: var(--space-4);">
+                <h3>📍 <span th:text="#{auto_dist.custom_areas_title}">إدارة المناطق المخصصة</span></h3>
+                <p style="color: var(--text-secondary); margin-bottom: 12px;" th:text="#{auto_dist.custom_areas_desc}">أضف مناطق أو قرى أو شوارع مخصصة للمراكز لتسهيل التوزيع</p>
+
+                <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
+                    <!-- Governorate -->
+                    <div style="flex: 1; min-width: 140px;">
+                        <label th:text="#{auto_dist.col_governorate}">المحافظة</label>
+                        <select id="customGovSelect" class="form-control" onchange="loadCustomCenters(this.value)">
+                            <option value="" th:text="#{auto_dist.select_governorate}">اختر المحافظة</option>
+                            <option th:each="gov : ${governorates}" th:value="${gov.name()}"
+                                th:text="${gov.getArabicName()}"></option>
+                        </select>
+                    </div>
+                    <!-- Center -->
+                    <div style="flex: 1; min-width: 140px;">
+                        <label th:text="#{order.center}">المركز</label>
+                        <select id="customCenterSelect" class="form-control">
+                            <option value="" th:text="#{order.center_select}">اختر المركز</option>
+                        </select>
+                    </div>
+                    <!-- Area Name -->
+                    <div style="flex: 1; min-width: 160px;">
+                        <label th:text="#{auto_dist.custom_area_name}">اسم المنطقة</label>
+                        <input type="text" id="customAreaName" class="form-control" 
+                            th:placeholder="#{auto_dist.custom_area_name_hint}" placeholder="مثال: كفر الشيخ سليم">
+                    </div>
+                    <!-- Area Name En -->
+                    <div style="flex: 1; min-width: 140px;">
+                        <label th:text="#{auto_dist.custom_area_name_en}">الاسم بالإنجليزي</label>
+                        <input type="text" id="customAreaNameEn" class="form-control" 
+                            placeholder="Kafr El Sheikh Selim" dir="ltr">
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="addCustomArea()"
+                        th:text="#{auto_dist.btn_add_area}">➕ إضافة</button>
+                </div>
+
+                <div id="customAreaMessage" style="display: none;" class="alert"></div>
+
+                <!-- Custom Areas List -->
+                <div id="customAreasList" style="margin-top: 8px;"></div>
+            </div>
+
+            <!-- Current Assignments -->
+            <div class="card">
+                <h3 th:text="#{auto_dist.zone_assignments}">ربط المناديب بالمناطق</h3>
+
+                <div th:if="${zoneAssignments == null or zoneAssignments.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    <p th:text="#{auto_dist.no_assignments}">لا يوجد ربط مناديب بمناطق بعد</p>
+                    <p th:text="#{auto_dist.no_assignments_desc}">اربط المناديب بالمناطق لتفعيل التوزيع التلقائي</p>
+                </div>
+
+                <!-- Grouped by Courier -->
+                <div th:if="${zoneAssignments != null and !zoneAssignments.isEmpty()}">
+                    <div th:each="entry : ${groupedByCourier}" style="margin-bottom: 16px; border: 1px solid var(--border-color, #e0e0e0); border-radius: 12px; overflow: hidden;">
+                        <!-- Courier Header -->
+                        <div style="display: flex; align-items: center; gap: 12px; padding: 14px 18px; background: linear-gradient(135deg, rgba(var(--primary-rgb, 25,118,210), 0.07), rgba(var(--primary-rgb, 25,118,210), 0.02)); border-bottom: 1px solid var(--border-color, #e0e0e0);">
+                            <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1565c0)); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.1rem; flex-shrink: 0;"
+                                th:text="${(courierDisplayNames != null && courierDisplayNames.containsKey(entry.key.id) ? courierDisplayNames.get(entry.key.id) : entry.key.fullName)?.substring(0,1)}">م</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 700; font-size: 1.05rem;" th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(entry.key.id) ? courierDisplayNames.get(entry.key.id) : entry.key.fullName}">اسم المندوب</div>
+                                <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                                    <span th:text="${entry.value.size()}">0</span>
+                                    <span th:text="#{auto_dist.courier_zone_count}">منطقة</span>
+                                    <span th:if="${entry.key.phone}" style="margin-inline-start: 10px;">📱 <span th:text="${entry.key.phone}"></span></span>
+                                </div>
+                            </div>
+                            <a th:href="@{/auto-distribution/courier/{id}(id=${entry.key.id})}"
+                                class="btn btn-sm btn-secondary"
+                                th:text="#{auto_dist.btn_details}">📋 تفاصيل</a>
+                        </div>
+                        <!-- Courier Zones Table -->
+                        <div class="table-container" style="border: none; margin: 0;">
+                            <table class="table" style="margin: 0;">
+                                <thead>
+                                    <tr>
+                                        <th th:text="#{auto_dist.col_governorate}">المحافظة</th>
+                                        <th th:text="#{order.center}">المركز</th>
+                                        <th th:text="#{order.area}">المنطقة</th>
+                                        <th th:text="#{auto_dist.col_actions}" style="width: 80px;">إجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="za : ${entry.value}">
+                                        <td th:text="${za.governorate.getArabicName()}"></td>
+                                        <td>
+                                            <span th:if="${za.center != null}" th:text="${za.center}"></span>
+                                            <span th:unless="${za.center != null}"
+                                                style="color: var(--text-secondary); font-style: italic;"
+                                                th:text="#{auto_dist.all_governorate}">كل المحافظة</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${za.area != null}" th:text="${za.area}"></span>
+                                            <span th:unless="${za.area != null}"
+                                                style="color: var(--text-secondary);">—</span>
+                                        </td>
+                                        <td>
+                                            <form th:action="@{/auto-distribution/remove/{id}(id=${za.id})}" method="post"
+                                                style="display: inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                    th:text="#{auto_dist.btn_remove}"
+                                                    onclick="return confirm('هل أنت متأكد؟')">إزالة</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script th:inline="javascript">
+        var currentGov = '';
+        var orgId = /*[[${organization?.id}]]*/ null;
+
+        function loadCenters(govKey) {
+            currentGov = govKey;
+            var govHidden = document.getElementById('govHidden');
+            var centerSelect = document.getElementById('centerSelect');
+            var areaSelect = document.getElementById('areaSelect');
+
+            if (govHidden) govHidden.value = govKey;
+            centerSelect.innerHTML = '<option value="">اختر المركز (اختياري)</option>';
+            areaSelect.innerHTML = '<option value="">اختر المنطقة (اختياري)</option>';
+
+            if (!govKey) return;
+
+            fetch('/api/zones/' + govKey)
+                .then(function (r) { return r.json(); })
+                .then(function (centers) {
+                    centers.forEach(function (c) {
+                        var opt = document.createElement('option');
+                        opt.value = c.name;
+                        opt.textContent = c.name;
+                        centerSelect.appendChild(opt);
+                    });
+                })
+                .catch(function (err) { console.error('Failed to load centers:', err); });
+        }
+
+        function loadAreas(centerName) {
+            var areaSelect = document.getElementById('areaSelect');
+            areaSelect.innerHTML = '<option value="">اختر المنطقة (اختياري)</option>';
+
+            if (!centerName || !currentGov) return;
+
+            var url = '/api/zones/' + currentGov + '/' + encodeURIComponent(centerName);
+            if (orgId) url += '?orgId=' + orgId;
+
+            fetch(url)
+                .then(function (r) { return r.json(); })
+                .then(function (areas) {
+                    areas.forEach(function (a) {
+                        var opt = document.createElement('option');
+                        opt.value = a.name;
+                        opt.textContent = a.name + (a.custom ? ' ✦' : '');
+                        if (a.custom) opt.style.color = 'var(--primary)';
+                        areaSelect.appendChild(opt);
+                    });
+                })
+                .catch(function (err) { console.error('Failed to load areas:', err); });
+        }
+
+        // ==================== Custom Areas ====================
+        var customGov = '';
+
+        function loadCustomCenters(govKey) {
+            customGov = govKey;
+            var cs = document.getElementById('customCenterSelect');
+            cs.innerHTML = '<option value="">اختر المركز</option>';
+            if (!govKey) return;
+
+            fetch('/api/zones/' + govKey)
+                .then(function (r) { return r.json(); })
+                .then(function (centers) {
+                    centers.forEach(function (c) {
+                        var opt = document.createElement('option');
+                        opt.value = c.name;
+                        opt.textContent = c.name;
+                        cs.appendChild(opt);
+                    });
+                });
+        }
+
+        function showCustomMsg(text, isError) {
+            var msg = document.getElementById('customAreaMessage');
+            msg.style.display = 'block';
+            msg.className = 'alert ' + (isError ? 'alert-danger' : 'alert-success');
+            msg.innerHTML = (isError ? '✕ ' : '✓ ') + text;
+            setTimeout(function() { msg.style.display = 'none'; }, 4000);
+        }
+
+        function addCustomArea() {
+            var center = document.getElementById('customCenterSelect').value;
+            var name = document.getElementById('customAreaName').value.trim();
+            var nameEn = document.getElementById('customAreaNameEn').value.trim();
+
+            if (!customGov) { showCustomMsg('اختر المحافظة أولاً', true); return; }
+            if (!center) { showCustomMsg('اختر المركز أولاً', true); return; }
+            if (!name) { showCustomMsg('أدخل اسم المنطقة', true); return; }
+
+            fetch('/api/zones/' + customGov + '/' + encodeURIComponent(center) + '/custom', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: name, nameEn: nameEn || null })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.error) {
+                    showCustomMsg(data.error, true);
+                } else {
+                    showCustomMsg('تم إضافة المنطقة: ' + data.name, false);
+                    document.getElementById('customAreaName').value = '';
+                    document.getElementById('customAreaNameEn').value = '';
+                    // Reload areas if same gov/center is selected in assignment form
+                    var assignCenter = document.getElementById('centerSelect');
+                    if (currentGov === customGov && assignCenter && assignCenter.value === center) {
+                        loadAreas(center);
+                    }
+                }
+            })
+            .catch(function (err) { showCustomMsg('حدث خطأ: ' + err, true); });
+        }
+
+        // Sync governorate hidden field on form submit
+        document.addEventListener('DOMContentLoaded', function() {
+            var form = document.querySelector('form[action*="assign"]');
+            if (form) {
+                form.addEventListener('submit', function() {
+                    var govHidden = document.getElementById('govHidden');
+                    var govSelect = document.getElementById('govSelect');
+                    if (govHidden && govSelect) govHidden.value = govSelect.value;
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -8,8 +8,11 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.entity.Organization;
+import com.shipment.shippinggo.entity.Subscription;
 import com.shipment.shippinggo.service.OrganizationService;
 import com.shipment.shippinggo.service.NotificationService;
+import com.shipment.shippinggo.service.SubscriptionService;
+
 
 import java.util.Map;
 
@@ -18,15 +21,17 @@ public class GlobalControllerAdvice {
 
     private final OrganizationService organizationService;
     private final NotificationService notificationService;
-
-    public GlobalControllerAdvice(OrganizationService organizationService, NotificationService notificationService) {
+    private final SubscriptionService subscriptionService;
+    public GlobalControllerAdvice(OrganizationService organizationService,
+                                   NotificationService notificationService,
+                                   SubscriptionService subscriptionService) {
         this.organizationService = organizationService;
         this.notificationService = notificationService;
+        this.subscriptionService = subscriptionService;
     }
 
     @ModelAttribute("currentUri")
     public String currentUri(HttpServletRequest request) {
-        // Skip for API requests — REST controllers don't use model attributes
         if (request.getRequestURI().startsWith("/api/")) return null;
         return request.getRequestURI();
     }
@@ -41,7 +46,6 @@ public class GlobalControllerAdvice {
         final String ATTR_KEY = "_resolvedOrganization";
         final String ATTR_RESOLVED_FLAG = "_resolvedOrganizationFlag";
 
-        // Check if we already resolved (even if null)
         if (Boolean.TRUE.equals(request.getAttribute(ATTR_RESOLVED_FLAG))) {
             return (Organization) request.getAttribute(ATTR_KEY);
         }
@@ -54,7 +58,6 @@ public class GlobalControllerAdvice {
 
     @ModelAttribute("currentOrgType")
     public String currentOrgType(HttpServletRequest request, @AuthenticationPrincipal User user) {
-        // Skip for API requests — REST controllers don't use model attributes
         if (request.getRequestURI().startsWith("/api/")) return null;
         if (user == null) return null;
         Organization org = getOrResolveOrganization(request, user);
@@ -79,7 +82,6 @@ public class GlobalControllerAdvice {
 
     @ModelAttribute("pendingInvitationsCount")
     public Long pendingInvitationsCount(HttpServletRequest request, @AuthenticationPrincipal User user) {
-        // Skip for API requests — REST controllers don't use model attributes
         if (request.getRequestURI().startsWith("/api/")) return 0L;
         if (user == null || user.getRole() == null)
             return 0L;
@@ -98,6 +100,41 @@ public class GlobalControllerAdvice {
             return notificationService.getUnreadCount(user);
         } catch (Exception e) {
             return 0L;
+        }
+    }
+
+    /**
+     * بيانات الاشتراك — تُستخدم لعرض بانر التحذير في جميع الصفحات
+     */
+    @ModelAttribute("subscriptionRemainingDays")
+    public Long subscriptionRemainingDays(HttpServletRequest request, @AuthenticationPrincipal User user) {
+        if (request.getRequestURI().startsWith("/api/")) return null;
+        if (user == null) return null;
+        if (user.getRole() == com.shipment.shippinggo.enums.Role.SUPER_ADMIN) return null;
+        try {
+            Organization org = getOrResolveOrganization(request, user);
+            if (org == null) return null;
+            Subscription sub = subscriptionService.getSubscriptionByOrgIdOrNull(org.getId());
+            if (sub == null) return null;
+            return sub.getRemainingDays();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @ModelAttribute("subscriptionStatusName")
+    public String subscriptionStatusName(HttpServletRequest request, @AuthenticationPrincipal User user) {
+        if (request.getRequestURI().startsWith("/api/")) return null;
+        if (user == null) return null;
+        if (user.getRole() == com.shipment.shippinggo.enums.Role.SUPER_ADMIN) return null;
+        try {
+            Organization org = getOrResolveOrganization(request, user);
+            if (org == null) return null;
+            Subscription sub = subscriptionService.getSubscriptionByOrgIdOrNull(org.getId());
+            if (sub == null) return null;
+            return sub.getStatus().name();
+        } catch (Exception e) {
+            return null;
         }
     }
 

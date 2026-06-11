@@ -50,9 +50,11 @@ public class ApiWarehouseController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard(
             @AuthenticationPrincipal User user) {
 
-        if (user.getRole() != Role.WAREHOUSE_MANAGER) {
+        if (user.getRole() != Role.WAREHOUSE_MANAGER
+                && user.getRole() != Role.ADMIN
+                && user.getRole() != Role.MANAGER) {
             return ResponseEntity.status(403)
-                    .body(ApiResponse.error("Only warehouse managers can access this endpoint"));
+                    .body(ApiResponse.error("Only warehouse managers, admins, and managers can access this endpoint"));
         }
 
         Organization org = organizationService.getOrganizationByUser(user);
@@ -133,9 +135,11 @@ public class ApiWarehouseController {
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal User user) {
 
-        if (user.getRole() != Role.WAREHOUSE_MANAGER) {
+        if (user.getRole() != Role.WAREHOUSE_MANAGER
+                && user.getRole() != Role.ADMIN
+                && user.getRole() != Role.MANAGER) {
             return ResponseEntity.status(403)
-                    .body(ApiResponse.error("Only warehouse managers can perform this action"));
+                    .body(ApiResponse.error("Only warehouse managers, admins, and managers can perform this action"));
         }
 
         String code = body.get("code");
@@ -207,9 +211,11 @@ public class ApiWarehouseController {
             @RequestBody Map<String, String> body,
             @AuthenticationPrincipal User user) {
 
-        if (user.getRole() != Role.WAREHOUSE_MANAGER) {
+        if (user.getRole() != Role.WAREHOUSE_MANAGER
+                && user.getRole() != Role.ADMIN
+                && user.getRole() != Role.MANAGER) {
             return ResponseEntity.status(403)
-                    .body(ApiResponse.error("Only warehouse managers can perform this action"));
+                    .body(ApiResponse.error("Only warehouse managers, admins, and managers can perform this action"));
         }
 
         String code = body.get("code");

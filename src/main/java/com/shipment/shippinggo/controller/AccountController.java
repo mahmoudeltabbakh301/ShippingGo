@@ -101,7 +101,20 @@ public class AccountController {
         Long businessDayId = accountDay.getBusinessDay().getId();
         List<AccountSummaryDTO> accountSummaries = accountService.getAllAccountSummariesByBusinessDay(org,
                 linkedOrganizations, couriers, businessDayId);
+
+        java.util.Map<Long, String> courierDisplayNames = organizationService.buildCourierDisplayNameMap(org);
+        for (AccountSummaryDTO summary : accountSummaries) {
+            if ("courier".equals(summary.getType()) && summary.getCourierId() != null) {
+                String displayName = courierDisplayNames.get(summary.getCourierId());
+                if (displayName != null) {
+                    summary.setName(displayName);
+                    summary.setCourierName(displayName);
+                }
+            }
+        }
+
         model.addAttribute("accountSummaries", accountSummaries);
+        model.addAttribute("courierDisplayNames", courierDisplayNames);
 
         // إجمالي العمولات لهذا اليوم
         BigDecimal totalCommission = accountSummaries.stream()
@@ -207,6 +220,7 @@ public class AccountController {
 
         model.addAttribute("organization", sourceOrg);
         model.addAttribute("targetOrganization", targetOrg);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(sourceOrg));
 
         String title = "حساب: " + targetOrg.getName();
         if (direction != null && !direction.isEmpty()) {
@@ -287,7 +301,9 @@ public class AccountController {
 
         model.addAttribute("organization", org);
         model.addAttribute("courier", courier);
-        model.addAttribute("pageTitle", "حساب: " + courier.getFullName());
+        String courierDisplayName = organizationService.getCourierDisplayName(courier, org);
+        model.addAttribute("courierDisplayName", courierDisplayName);
+        model.addAttribute("pageTitle", "حساب: " + courierDisplayName);
 
         return "accounts/courier-detail";
     }
@@ -361,6 +377,7 @@ public class AccountController {
         // المناديب
         List<User> couriers = organizationService.getCouriersByOrganization(org);
         model.addAttribute("couriers", couriers);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
 
         model.addAttribute("organization", org);
         model.addAttribute("commissionTypes", CommissionType.values());
@@ -614,8 +631,125 @@ public class AccountController {
         model.addAttribute("orders", orders);
         model.addAttribute("businessDayId", businessDayId);
         model.addAttribute("organization", org);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         model.addAttribute("pageTitle", "حساب: غير مسند");
 
         return "accounts/unassigned-detail";
+    }
+
+    // ==========================================
+    // مكافآت وتارجت (Rewards & Targets)
+    // ==========================================
+
+    @GetMapping("/rewards")
+    public String showRewardsSettings(@CurrentOrganization Organization org, @AuthenticationPrincipal User user, Model model) {
+        if (org == null) return "redirect:/";
+
+        List<TargetSetting> settings = accountService.getTargetSettings(org);
+        model.addAttribute("settings", settings);
+        model.addAttribute("organization", org);
+
+        // For selection dropdowns
+        List<Organization> relatedOrgs = organizationService.getLinkedOrganizations(org);
+        List<User> couriers = organizationService.getCouriersByOrganization(org);
+        
+        model.addAttribute("relatedOrgs", relatedOrgs);
+        model.addAttribute("couriers", couriers);
+        model.addAttribute("pageTitle", "إعدادات التارجت والمكافآت");
+        
+        return "accounts/rewards";
+    }
+
+    @PostMapping("/rewards/save")
+    public String saveRewardSetting(
+            @CurrentOrganization Organization sourceOrg,
+            @RequestParam(required = false) Long targetOrganizationId,
+            @RequestParam(required = false) Long courierId,
+            @RequestParam BigDecimal targetAmount,
+            @RequestParam CommissionType rewardType,
+            @RequestParam BigDecimal rewardValue,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            if (targetOrganizationId != null) {
+                Organization targetOrg = organizationService.findById(targetOrganizationId);
+                if(targetOrg == null) throw new RuntimeException("المنظمة غير موجودة");
+                accountService.saveOrganizationTarget(sourceOrg, targetOrg, targetAmount, rewardType, rewardValue);
+            } else if (courierId != null) {
+                User courier = organizationService.getUserById(courierId);
+                if (courier == null) throw new RuntimeException("المندوب غير موجود");
+                accountService.saveCourierTarget(sourceOrg, courier, targetAmount, rewardType, rewardValue);
+            } else {
+                throw new RuntimeException("يجب اختيار مندوب أو منظمة");
+            }
+            redirectAttributes.addFlashAttribute("success", "تم حفظ إعداد التارجت بنجاح. سيبدأ حساب التارجت من اليوم.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
+        }
+        
+        return "redirect:/accounts/rewards";
+    }
+
+    @PostMapping("/rewards/delete")
+    public String deleteRewardSetting(
+            @CurrentOrganization Organization org,
+            @RequestParam Long settingId,
+            RedirectAttributes redirectAttributes) {
+        try {
+            TargetSetting setting = accountService.getTargetSettingById(settingId)
+                    .orElseThrow(() -> new RuntimeException("الإعداد غير موجود"));
+
+            if (!setting.getSourceOrganization().getId().equals(org.getId())) {
+                redirectAttributes.addFlashAttribute("error", "غير مصرح لك بحذف هذا الإعداد");
+                return "redirect:/accounts/rewards";
+            }
+
+            accountService.deleteTargetSetting(settingId);
+            redirectAttributes.addFlashAttribute("success", "تم إيقاف وحذف التارجت بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "خطأ: " + e.getMessage());
+        }
+
+        return "redirect:/accounts/rewards";
+    }
+
+    @GetMapping("/rewards/{id}/details")
+    public String showRewardDetails(
+            @PathVariable Long id,
+            @CurrentOrganization Organization org,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        
+        TargetSetting setting = accountService.getTargetSettingById(id).orElse(null);
+        if (setting == null || !setting.getSourceOrganization().getId().equals(org.getId())) {
+            redirectAttributes.addFlashAttribute("error", "الإعداد غير موجود أو غير مصرح لك بعرضه");
+            return "redirect:/accounts/rewards";
+        }
+
+        java.time.LocalDateTime[] period = accountService.getCurrentMonthPeriod(setting);
+        BigDecimal totalDelivered = BigDecimal.ZERO;
+        List<com.shipment.shippinggo.dto.DailyTargetStatsDto> dailyStats = new java.util.ArrayList<>();
+
+        if (setting.getCourier() != null) {
+            totalDelivered = accountService.getCourierDeliveredAmount(setting.getCourier(), period[0], period[1]);
+            dailyStats = accountService.getDailyCourierDeliveredAmount(setting.getCourier(), period[0], period[1]);
+        } else if (setting.getTargetOrganization() != null) {
+            totalDelivered = accountService.getOrganizationDeliveredAmount(org, setting.getTargetOrganization(), period[0], period[1]);
+            dailyStats = accountService.getDailyOrganizationDeliveredAmount(org, setting.getTargetOrganization(), period[0], period[1]);
+        }
+
+        int progress = accountService.calculateTargetProgress(totalDelivered, setting.getTargetAmount());
+        java.math.BigDecimal rewardAmount = accountService.calculateReward(setting, totalDelivered);
+
+        model.addAttribute("setting", setting);
+        model.addAttribute("periodStart", period[0]);
+        model.addAttribute("periodEnd", period[1]);
+        model.addAttribute("totalDelivered", totalDelivered);
+        model.addAttribute("dailyStats", dailyStats);
+        model.addAttribute("progress", progress);
+        model.addAttribute("rewardAmount", rewardAmount);
+        model.addAttribute("pageTitle", "تفاصيل تارجت - " + (setting.getCourier() != null ? setting.getCourier().getFullName() : setting.getTargetOrganization().getName()));
+
+        return "accounts/reward-details";
     }
 }

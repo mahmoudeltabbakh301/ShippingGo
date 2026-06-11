@@ -245,4 +245,25 @@ public class ApiAuthController {
 
                 return ResponseEntity.ok(ApiResponse.success(userDto));
         }
+
+        /**
+         * تحديث FCM Token للمستخدم الحالي.
+         * يُستدعى عند كل فتح للتطبيق لضمان أن الباك إند دائماً لديه أحدث token.
+         */
+        @PutMapping("/fcm-token")
+        public ResponseEntity<ApiResponse<Void>> updateFcmToken(
+                        @AuthenticationPrincipal User user,
+                        @RequestBody java.util.Map<String, String> body) {
+                if (user == null) {
+                        return ResponseEntity.status(401).body(ApiResponse.error("Not authenticated"));
+                }
+
+                String fcmToken = body.get("fcmToken");
+                if (fcmToken != null && !fcmToken.isEmpty()) {
+                        user.setFcmToken(fcmToken);
+                        userService.updateUser(user);
+                }
+
+                return ResponseEntity.ok(ApiResponse.success(null, "FCM token updated"));
+        }
 }

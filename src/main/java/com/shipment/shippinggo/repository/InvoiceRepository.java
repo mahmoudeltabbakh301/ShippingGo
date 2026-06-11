@@ -61,6 +61,25 @@ public interface InvoiceRepository extends JpaRepository<Invoice, Long> {
                      @Param("businessDayId") Long businessDayId,
                      @Param("code") String code);
 
+       @Query(value = "SELECT i FROM Invoice i " +
+                     "LEFT JOIN FETCH i.order o " +
+                     "LEFT JOIN FETCH i.businessDay " +
+                     "WHERE i.organization.id = :orgId AND i.businessDay.id = :businessDayId " +
+                     "AND (:code IS NULL OR :code = '' OR o.code LIKE CONCAT('%', :code, '%') OR i.invoiceNumber LIKE CONCAT('%', :code, '%')) " +
+                     "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId) " +
+                     "ORDER BY i.createdAt DESC",
+              countQuery = "SELECT COUNT(i) FROM Invoice i " +
+                     "LEFT JOIN i.order o " +
+                     "WHERE i.organization.id = :orgId AND i.businessDay.id = :businessDayId " +
+                     "AND (:code IS NULL OR :code = '' OR o.code LIKE CONCAT('%', :code, '%') OR i.invoiceNumber LIKE CONCAT('%', :code, '%')) " +
+                     "AND (:courierId IS NULL OR o.assignedToCourier.id = :courierId)")
+       Page<Invoice> searchInvoicesPaged(
+                     @Param("orgId") Long orgId,
+                     @Param("businessDayId") Long businessDayId,
+                     @Param("code") String code,
+                     @Param("courierId") Long courierId,
+                     Pageable pageable);
+
        // هل يوجد فاتورة لهذا الأوردر
        boolean existsByOrderId(Long orderId);
 

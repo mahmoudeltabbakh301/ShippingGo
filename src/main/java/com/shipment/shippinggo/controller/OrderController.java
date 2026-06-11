@@ -754,6 +754,8 @@ public class OrderController {
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String companyName,
             @RequestParam(required = false) Governorate governorate,
+            @RequestParam(required = false) String center,
+            @RequestParam(required = false) String area,
             @RequestParam(required = false) Integer quantity,
             @AuthenticationPrincipal User user,
             RedirectAttributes redirectAttributes) {
@@ -782,6 +784,8 @@ public class OrderController {
             dto.setCode(code);
             dto.setCompanyName(companyName);
             dto.setGovernorate(governorate);
+            dto.setCenter(center);
+            dto.setArea(area);
             dto.setQuantity(quantity);
 
             orderService.updateOrderDetails(id, dto, user);

@@ -34,6 +34,8 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private EmailService emailService;
+    @Mock
+    private SubscriptionService subscriptionService;
 
     private UserService userService;
 
@@ -41,7 +43,7 @@ class UserServiceTest {
     void setUp() {
         userService = new UserService(userRepository, companyRepository, officeRepository, storeRepository,
                 organizationRepository,
-                passwordEncoder, emailService);
+                passwordEncoder, emailService, subscriptionService);
     }
 
     @Test

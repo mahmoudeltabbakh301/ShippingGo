@@ -60,7 +60,7 @@ public class Order {
     private String recipientPhone;
 
     // العنوان
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String recipientAddress;
 
     // الكمية
@@ -93,7 +93,7 @@ public class Order {
     private BigDecimal rejectionPayment;
 
     // ملاحظات
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String notes;
 
     // رقم الطلب في المنصة الخارجية (شوبيفاي، ويلت، إلخ)
@@ -108,6 +108,18 @@ public class Order {
     // محافظة الاوردر
     @Enumerated(EnumType.STRING)
     private Governorate governorate;
+
+    // المنطقة/المركز (اختياري — يُستخدم في التوزيع التلقائي والتقارير)
+    @Column(name = "district")
+    private String district;
+
+    // المركز (اختياري — المستوى الثاني بعد المحافظة)
+    @Column(name = "center")
+    private String center;
+
+    // المنطقة داخل المركز (اختياري — المستوى الثالث)
+    @Column(name = "area")
+    private String area;
 
     // عمولة المكتب الفردية
     @Column(precision = 10, scale = 2)
@@ -209,7 +221,7 @@ public class Order {
     private Organization custodySetterOrganization;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "order", cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler", "order" })
     private java.util.List<Invoice> invoices;
 
     @Column(nullable = false, updatable = false)

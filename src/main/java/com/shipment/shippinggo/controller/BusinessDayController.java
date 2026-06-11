@@ -226,6 +226,7 @@ public class BusinessDayController {
 
         // Data for filter dropdowns — كل المنظمات المرتبطة
         model.addAttribute("couriers", organizationService.getCouriers(org));
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         List<com.shipment.shippinggo.entity.Organization> linkedOrgs = organizationService.getLinkedOrganizations(org);
         model.addAttribute("linkedOrganizations", linkedOrgs);
 
@@ -324,6 +325,7 @@ public class BusinessDayController {
         model.addAttribute("orders", orders);
         model.addAttribute("orderChainContext", chainContext);
         model.addAttribute("organization", org);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         
         // --- Fix: Adding businessDay to model required for the fragment links
         var businessDay = businessDayService.getById(id);

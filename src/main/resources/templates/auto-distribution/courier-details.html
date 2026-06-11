@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${courierDisplayName != null ? courierDisplayName : courier.fullName} + ' - ' + #{auto_dist.courier_details_title} + ' - ShippingGo'">تفاصيل المندوب</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .courier-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .courier-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1565c0));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .courier-info h1 {
+            margin: 0;
+            font-size: 1.4rem;
+        }
+        .courier-info p {
+            margin: 4px 0 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            flex: 1;
+            min-width: 140px;
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-color, #e0e0e0);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .stat-card .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .gov-section {
+            margin-bottom: 20px;
+        }
+        .gov-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(var(--primary-rgb, 25,118,210), 0.08), rgba(var(--primary-rgb, 25,118,210), 0.03));
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-right: 4px solid var(--primary);
+        }
+        .gov-header .gov-icon {
+            font-size: 1.3rem;
+        }
+        .gov-header .gov-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+        }
+        .gov-header .gov-count {
+            margin-inline-start: auto;
+            background: var(--primary);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .zone-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            padding: 0 8px;
+        }
+        .zone-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--bg-card, #fff);
+            border: 1px solid var(--border-color, #e0e0e0);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        .zone-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transform: translateY(-1px);
+        }
+        .zone-item .zone-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .zone-item .zone-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .zone-item .zone-center {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+        .zone-item .zone-area {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+        .zone-item .zone-badge-all {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(76,175,80,0.12);
+            color: #2e7d32;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .zone-item .zone-actions {
+            flex-shrink: 0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-secondary);
+        }
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header" style="margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <div class="courier-header">
+                        <div class="courier-avatar" th:text="${(courierDisplayName != null ? courierDisplayName : courier.fullName)?.substring(0,1)}">م</div>
+                        <div class="courier-info">
+                            <h1 th:text="${courierDisplayName != null ? courierDisplayName : courier.fullName}">اسم المندوب</h1>
+                            <p>
+                                <span th:text="#{auto_dist.courier_details_subtitle}">المناطق المربوطة بالمندوب</span>
+                                <span th:if="${courier.phone}" style="margin-inline-start: 12px;">
+                                    📱 <span th:text="${courier.phone}"></span>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <a th:href="@{/auto-distribution}" class="btn btn-secondary"
+                    th:text="#{auto_dist.btn_back}">← رجوع</a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${courierZones.size()}">0</div>
+                    <div class="stat-label" th:text="#{auto_dist.courier_total_zones}">إجمالي المناطق</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" th:text="${groupedByGov.size()}">0</div>
+                    <div class="stat-label" th:text="#{auto_dist.courier_total_govs}">عدد المحافظات</div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${courierZones.isEmpty()}" class="card empty-state">
+                <div class="empty-icon">📍</div>
+                <h3 th:text="#{auto_dist.courier_no_zones}">لا توجد مناطق مربوطة بهذا المندوب</h3>
+                <p th:text="#{auto_dist.courier_no_zones_desc}">اربط مناطق للمندوب من صفحة التوزيع التلقائي</p>
+                <a th:href="@{/auto-distribution}" class="btn btn-primary" style="margin-top: 12px;"
+                    th:text="#{auto_dist.btn_back}">← رجوع للتوزيع التلقائي</a>
+            </div>
+
+            <!-- Zones grouped by Governorate -->
+            <div th:each="entry : ${groupedByGov}" class="gov-section">
+                <div class="gov-header">
+                    <span class="gov-icon">🏛️</span>
+                    <span class="gov-name" th:text="${entry.key.getArabicName()}">المحافظة</span>
+                    <span class="gov-count" th:text="${entry.value.size()} + ' ' + #{auto_dist.courier_zone_count}">3 منطقة</span>
+                </div>
+                <div class="zone-list">
+                    <div th:each="zone : ${entry.value}" class="zone-item">
+                        <span class="zone-icon" th:text="${zone.center != null ? '📍' : '🗺️'}">📍</span>
+                        <div class="zone-details">
+                            <div class="zone-center">
+                                <span th:if="${zone.center != null}" th:text="${zone.center}">المركز</span>
+                                <span th:unless="${zone.center != null}"
+                                    th:text="#{auto_dist.all_governorate}">كل المحافظة</span>
+                            </div>
+                            <div class="zone-area" th:if="${zone.area != null}">
+                                ← <span th:text="${zone.area}">المنطقة</span>
+                            </div>
+                            <div class="zone-area" th:if="${zone.district != null && zone.center == null}">
+                                ← <span th:text="${zone.district}">المنطقة القديمة</span>
+                            </div>
+                        </div>
+                        <span th:if="${zone.center == null && zone.district == null}" class="zone-badge-all"
+                            th:text="#{auto_dist.covers_all}">يغطي الكل</span>
+                        <div class="zone-actions">
+                            <form th:action="@{/auto-distribution/remove/{id}(id=${zone.id})}" method="post"
+                                style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                    th:title="#{auto_dist.btn_remove}"
+                                    onclick="return confirm('هل أنت متأكد من إزالة هذا الربط؟')">✕</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+
+</html>

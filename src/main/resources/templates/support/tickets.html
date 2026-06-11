@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تذاكر الدعم الفني - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <style>
+        .status-badge { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+        .status-OPEN { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_PROGRESS { background: #fef3c7; color: #92400e; }
+        .status-RESOLVED { background: #dcfce7; color: #166534; }
+        .status-CLOSED { background: #e5e7eb; color: #374151; }
+        .priority-badge { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+        .priority-LOW { background: #e0e7ff; color: #3730a3; }
+        .priority-MEDIUM { background: #fef3c7; color: #92400e; }
+        .priority-HIGH { background: #fed7aa; color: #9a3412; }
+        .priority-URGENT { background: #fecaca; color: #991b1b; }
+        .empty-state { text-align: center; padding: var(--space-8); color: var(--text-muted); }
+        .empty-state-icon { font-size: 3rem; margin-bottom: var(--space-3); }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🎫 تذاكر الدعم الفني</h1>
+                    <p class="page-subtitle">تواصل مع إدارة المنصة</p>
+                </div>
+                <a th:href="@{/support/new}" class="btn btn-primary">➕ تذكرة جديدة</a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(tickets)}" class="empty-state">
+                <div class="empty-state-icon">🎫</div>
+                <p>لا توجد تذاكر دعم فني حالياً</p>
+                <a th:href="@{/support/new}" class="btn btn-primary" style="margin-top: var(--space-3);">إنشاء أول تذكرة</a>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(tickets)}" class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الرقم</th>
+                            <th>الموضوع</th>
+                            <th>التصنيف</th>
+                            <th>الأولوية</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="ticket : ${tickets}">
+                            <td th:text="${ticket.ticketNumber}">TKT-00001</td>
+                            <td style="font-weight: 600;" th:text="${ticket.subject}">الموضوع</td>
+                            <td th:text="${ticket.category.arabicName}">عام</td>
+                            <td><span class="priority-badge" th:classappend="'priority-' + ${ticket.priority}" th:text="${ticket.priority.arabicName}"></span></td>
+                            <td><span class="status-badge" th:classappend="'status-' + ${ticket.status}" th:text="${ticket.status.arabicName}"></span></td>
+                            <td th:text="${#temporals.format(ticket.createdAt, 'yyyy/MM/dd')}">2026/06/01</td>
+                            <td><a th:href="@{'/support/' + ${ticket.id}}" class="btn btn-sm btn-secondary">عرض</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

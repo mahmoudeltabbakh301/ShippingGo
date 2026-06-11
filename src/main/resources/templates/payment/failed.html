@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فشل الدفع - ShippingGo</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            padding: var(--space-4);
+        }
+        .result-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            max-width: 480px;
+            width: 100%;
+            padding: var(--space-8);
+            text-align: center;
+        }
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: var(--space-4);
+        }
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #dc2626;
+            margin-bottom: var(--space-2);
+        }
+        .result-text {
+            color: var(--text-muted);
+            margin-bottom: var(--space-6);
+            line-height: 1.6;
+        }
+        .btn-retry {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: var(--space-3);
+            transition: transform 0.2s;
+        }
+        .btn-retry:hover {
+            transform: translateY(-2px);
+        }
+        .btn-back {
+            display: block;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin-top: var(--space-3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="result-card">
+        <div class="result-icon">❌</div>
+        <h1 class="result-title">فشل عملية الدفع</h1>
+        <p class="result-text">
+            لم تتم عملية الدفع بنجاح. يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.
+        </p>
+        <a th:href="@{/payment/subscribe}" class="btn-retry">
+            🔄 حاول مرة أخرى
+        </a>
+        <a th:href="@{/dashboard}" class="btn-back">
+            العودة للوحة التحكم
+        </a>
+    </div>
+</body>
+</html>

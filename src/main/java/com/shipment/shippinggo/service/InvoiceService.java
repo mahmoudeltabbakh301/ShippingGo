@@ -70,6 +70,10 @@ public class InvoiceService {
                 PageRequest.of(page, size));
     }
 
+    public Page<Invoice> searchInvoicesPaged(Long orgId, Long businessDayId, String code, Long courierId, int page, int size) {
+        return invoiceRepository.searchInvoicesPaged(orgId, businessDayId, code, courierId, PageRequest.of(page, size));
+    }
+
     /**
      * إنشاء فاتورة لأوردر واحد داخل يوم عمل
      */
@@ -98,8 +102,8 @@ public class InvoiceService {
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
-        // إنشاء سلسلة تأكيد الاستلام
-        createReceiptChain(savedInvoice, order);
+        // نظام تأكيد الاستلام معطّل - تم إلغاؤه لتمكين المنظمات من التحكم بدون قيود
+        // createReceiptChain(savedInvoice, order);
 
         return savedInvoice;
     }

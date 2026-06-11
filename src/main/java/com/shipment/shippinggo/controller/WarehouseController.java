@@ -104,6 +104,7 @@ public class WarehouseController {
 
         // بيانات الفلاتر
         model.addAttribute("couriers", organizationService.getCouriers(org));
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         model.addAttribute("linkedOrganizations", organizationService.getLinkedOrganizations(org));
         model.addAttribute("statuses", OrderStatus.values());
 
@@ -176,6 +177,7 @@ public class WarehouseController {
         model.addAttribute("orderChainContext", chainCtx);
         model.addAttribute("returnContext", returnCtx);
         model.addAttribute("organization", org);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         
         BusinessDay businessDay = businessDayService.getById(id);
         model.addAttribute("businessDay", businessDay);
@@ -239,6 +241,7 @@ public class WarehouseController {
 
         // بيانات الفلاتر
         model.addAttribute("couriers", organizationService.getCouriers(org));
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         model.addAttribute("linkedOrganizations", organizationService.getLinkedOrganizations(org));
         model.addAttribute("statuses", OrderStatus.values());
 
@@ -316,6 +319,7 @@ public class WarehouseController {
         model.addAttribute("orderChainContext", chainCtx);
         model.addAttribute("returnContext", returnCtx);
         model.addAttribute("organization", org);
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         
         BusinessDay businessDay = businessDayService.getById(id);
         model.addAttribute("businessDay", businessDay);
@@ -387,6 +391,7 @@ public class WarehouseController {
 
         // بيانات الفلاتر
         model.addAttribute("couriers", organizationService.getCouriers(org));
+        model.addAttribute("courierDisplayNames", organizationService.buildCourierDisplayNameMap(org));
         model.addAttribute("linkedOrganizations", organizationService.getLinkedOrganizations(org));
         model.addAttribute("statuses", OrderStatus.values());
 

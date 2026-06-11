@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'سياسة الخصوصية - ' + ${platformName}">سياسة الخصوصية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.8; }
+        .page-container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        .page-header { text-align: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; }
+        .page-header h1 { font-size: 1.8rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
+        .page-header p { color: #64748b; font-size: 0.9rem; }
+        .page-content { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .page-content p { margin-bottom: 1rem; }
+        .page-content h2 { font-size: 1.2rem; margin: 1.5rem 0 0.5rem; color: #334155; }
+        .page-content ul, .page-content ol { padding-inline-start: 1.5rem; margin-bottom: 1rem; }
+        .back-link { display: inline-block; margin-top: 1.5rem; color: #667eea; text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
+        .empty-content { text-align: center; padding: 3rem; color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="page-header">
+            <h1>🔒 سياسة الخصوصية</h1>
+            <p th:text="${platformName}">ShippingGo</p>
+        </div>
+        <div class="page-content">
+            <div th:if="${content != null && !content.isEmpty()}" th:utext="${content}"></div>
+            <div th:if="${content == null || content.isEmpty()}" class="empty-content">
+                <p>لم يتم إضافة سياسة الخصوصية بعد.</p>
+            </div>
+        </div>
+        <a href="/" class="back-link">↩ الرجوع للصفحة الرئيسية</a>
+    </div>
+</body>
+</html>

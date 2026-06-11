@@ -85,11 +85,29 @@
 
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label" for="governorate" th:text="#{orders.new.governorate}">المحافظة</label>
-                                <select id="governorate" th:field="*{governorate}" class="form-control">
+                                <select id="governorate" th:field="*{governorate}" class="form-control"
+                                    onchange="onGovChange(this.value)">
                                     <option value="" th:text="#{orders.new.select_governorate}">--- اختر المحافظة ---</option>
                                     <option th:each="gov : ${governorates}" th:value="${gov}"
                                         th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}">
                                     </option>
+                                </select>
+                            </div>
+
+                            <!-- المركز -->
+                            <div class="form-group">
+                                <label class="form-label" for="center" th:text="#{order.center}">المركز</label>
+                                <select id="center" name="center" class="form-control"
+                                    onchange="onCenterChange(this.value)">
+                                    <option value="" th:text="#{order.center_select}">اختر المركز (اختياري)</option>
+                                </select>
+                            </div>
+
+                            <!-- المنطقة -->
+                            <div class="form-group">
+                                <label class="form-label" for="area" th:text="#{order.area}">المنطقة</label>
+                                <select id="area" name="area" class="form-control">
+                                    <option value="" th:text="#{order.area_select}">اختر المنطقة (اختياري)</option>
                                 </select>
                             </div>
 
@@ -172,6 +190,39 @@
             var shippingPrice = parseFloat(document.getElementById('shippingPrice').value) || 0;
             var orderPrice = parseFloat(document.getElementById('orderPrice').value) || 0;
             document.getElementById('amount').value = (shippingPrice + orderPrice).toFixed(2);
+        }
+
+        var currentGovNew = '';
+        function onGovChange(govKey) {
+            currentGovNew = govKey;
+            var centerSel = document.getElementById('center');
+            var areaSel = document.getElementById('area');
+            centerSel.innerHTML = '<option value="">اختر المركز (اختياري)</option>';
+            areaSel.innerHTML = '<option value="">اختر المنطقة (اختياري)</option>';
+            if (!govKey) return;
+            fetch('/api/zones/' + govKey)
+                .then(function(r) { return r.json(); })
+                .then(function(centers) {
+                    centers.forEach(function(c) {
+                        var opt = document.createElement('option');
+                        opt.value = c.name; opt.textContent = c.name;
+                        centerSel.appendChild(opt);
+                    });
+                }).catch(function(e) { console.error(e); });
+        }
+        function onCenterChange(centerName) {
+            var areaSel = document.getElementById('area');
+            areaSel.innerHTML = '<option value="">اختر المنطقة (اختياري)</option>';
+            if (!centerName || !currentGovNew) return;
+            fetch('/api/zones/' + currentGovNew + '/' + encodeURIComponent(centerName))
+                .then(function(r) { return r.json(); })
+                .then(function(areas) {
+                    areas.forEach(function(a) {
+                        var opt = document.createElement('option');
+                        opt.value = a.name; opt.textContent = a.name;
+                        areaSel.appendChild(opt);
+                    });
+                }).catch(function(e) { console.error(e); });
         }
     </script>
 </body>

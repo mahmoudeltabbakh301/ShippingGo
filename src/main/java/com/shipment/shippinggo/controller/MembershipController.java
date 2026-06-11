@@ -83,6 +83,19 @@ public class MembershipController {
         return "redirect:/members";
     }
 
+    @PostMapping("/{id}/update-nickname")
+    public String updateNickname(@PathVariable Long id,
+            @RequestParam(required = false) String nickname,
+            RedirectAttributes redirectAttributes) {
+        try {
+            organizationService.updateNickname(id, nickname);
+            redirectAttributes.addFlashAttribute("success", "تم تحديث الاسم المستعار بنجاح");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+        return "redirect:/members";
+    }
+
     @PostMapping("/{id}/remove")
     public String removeMember(@PathVariable Long id,
             RedirectAttributes redirectAttributes) {

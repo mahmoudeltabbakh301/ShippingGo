@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "companies")
@@ -16,6 +17,7 @@ import java.util.List;
 public class Company extends Organization {
 
     @OneToMany(mappedBy = "parentCompany", cascade = CascadeType.ALL)
+    @JsonIgnoreProperties("parentCompany")
     private List<Office> offices = new ArrayList<>();
 
     @Builder

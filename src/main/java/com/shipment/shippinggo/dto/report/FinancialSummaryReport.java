@@ -34,37 +34,55 @@ public class FinancialSummaryReport {
     private long waitingOrders;
     private long partialDeliveryOrders;
 
-    // === المبالغ المحصّلة ===
+    // === عمولات الصادر (عمولات المنظمة من الأوردرات اللي بتبعتها لمنظمات تانية) ===
     @Builder.Default
-    private BigDecimal totalOrderAmount = BigDecimal.ZERO;       // إجمالي مبالغ كل الأوردرات
+    private BigDecimal outgoingOrgCommissions = BigDecimal.ZERO;      // إجمالي عمولات صادرة
     @Builder.Default
-    private BigDecimal deliveredAmount = BigDecimal.ZERO;         // مبلغ المسلم (كامل + جزئي)
+    private BigDecimal outgoingDeliveryComm = BigDecimal.ZERO;        // عمولات توصيل صادرة
     @Builder.Default
-    private BigDecimal rejectionPayments = BigDecimal.ZERO;       // مدفوعات الرفض
+    private BigDecimal outgoingRejectionComm = BigDecimal.ZERO;       // عمولات رفض صادرة
     @Builder.Default
-    private BigDecimal totalCollected = BigDecimal.ZERO;          // إجمالي المحصّل = مسلم + رفض مدفوع
+    private BigDecimal outgoingCancellationComm = BigDecimal.ZERO;    // عمولات إلغاء صادرة
 
-    // === العمولات الصادرة (المنظمة تدفعها لآخرين) ===
+    // === عمولات الوارد (عمولات المنظمة من الأوردرات اللي بتستقبلها من منظمات تانية) ===
     @Builder.Default
-    private BigDecimal outgoingOrgCommissions = BigDecimal.ZERO;  // عمولات منظمات صادرة
+    private BigDecimal incomingOrgCommissions = BigDecimal.ZERO;      // إجمالي عمولات واردة
     @Builder.Default
-    private BigDecimal courierCommissions = BigDecimal.ZERO;      // عمولات مناديب
+    private BigDecimal incomingDeliveryComm = BigDecimal.ZERO;        // عمولات توصيل واردة
     @Builder.Default
-    private BigDecimal totalOutgoingCommissions = BigDecimal.ZERO; // إجمالي صادر
+    private BigDecimal incomingRejectionComm = BigDecimal.ZERO;       // عمولات رفض واردة
+    @Builder.Default
+    private BigDecimal incomingCancellationComm = BigDecimal.ZERO;    // عمولات إلغاء واردة
 
-    // === العمولات الواردة (المنظمة تحصلها من آخرين) ===
+    // === عمولات المناديب (مصروف - اللي بندفعه للمناديب) ===
     @Builder.Default
-    private BigDecimal incomingOrgCommissions = BigDecimal.ZERO;  // عمولات المنظمات الواردة
+    private BigDecimal courierCommissions = BigDecimal.ZERO;          // إجمالي عمولات مناديب
     @Builder.Default
-    private BigDecimal totalIncomingCommissions = BigDecimal.ZERO; // إجمالي وارد
+    private BigDecimal courierDeliveryComm = BigDecimal.ZERO;         // عمولات توصيل مناديب
+    @Builder.Default
+    private BigDecimal courierRejectionComm = BigDecimal.ZERO;        // عمولات رفض مناديب
+    @Builder.Default
+    private BigDecimal courierCancellationComm = BigDecimal.ZERO;     // عمولات إلغاء مناديب
 
-    // === الصافي ===
+    // === عمولات غير مسندة (أوردرات المنظمة اللي مش مسندة لحد) ===
     @Builder.Default
-    private BigDecimal netOutgoing = BigDecimal.ZERO;    // صافي الصادر (محصّل - عمولات صادرة)
+    private BigDecimal unassignedCommissions = BigDecimal.ZERO;       // إجمالي عمولات غير مسندة
     @Builder.Default
-    private BigDecimal netIncoming = BigDecimal.ZERO;    // صافي الوارد (عمولات واردة)
+    private BigDecimal unassignedDeliveryComm = BigDecimal.ZERO;
     @Builder.Default
-    private BigDecimal netProfit = BigDecimal.ZERO;      // الصافي الكلي = وارد - صادر
+    private BigDecimal unassignedRejectionComm = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal unassignedCancellationComm = BigDecimal.ZERO;
+
+    // === الإجماليات والصافي ===
+    @Builder.Default
+    private BigDecimal totalCommissionRevenue = BigDecimal.ZERO;  // إجمالي إيرادات العمولات (صادر + وارد + غير مسندة)
+    @Builder.Default
+    private BigDecimal totalOutgoingCommissions = BigDecimal.ZERO; // إجمالي صادر (للتوافق)
+    @Builder.Default
+    private BigDecimal totalIncomingCommissions = BigDecimal.ZERO; // إجمالي وارد (للتوافق)
+    @Builder.Default
+    private BigDecimal netProfit = BigDecimal.ZERO;               // صافي الربح = إيرادات العمولات − عمولات المناديب
 
     // === تفاصيل حسب المنظمة/المندوب ===
     @Builder.Default

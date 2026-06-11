@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إدارة الاشتراكات - ShippingGo</title>
+
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        .stat-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: var(--space-4);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card-icon { font-size: 1.5rem; margin-bottom: var(--space-1); }
+        .stat-card-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+        .stat-card-label { font-size: 0.8rem; color: var(--text-muted); }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success">
+                <span>✓</span> <span th:text="${success}"></span>
+            </div>
+            <div th:if="${error}" class="alert alert-danger">
+                <span>✕</span> <span th:text="${error}"></span>
+            </div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">💎 إدارة الاشتراكات</h1>
+                    <p class="page-subtitle">عرض وإدارة اشتراكات جميع المنظمات على المنصة</p>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-icon">📊</div>
+                    <div class="stat-card-value" th:text="${subStats.total}">0</div>
+                    <div class="stat-card-label">إجمالي الاشتراكات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">🆓</div>
+                    <div class="stat-card-value" th:text="${subStats.trial}">0</div>
+                    <div class="stat-card-label">تجريبي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-value" th:text="${subStats.active}">0</div>
+                    <div class="stat-card-label">نشط</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">⏰</div>
+                    <div class="stat-card-value" th:text="${subStats.expired}">0</div>
+                    <div class="stat-card-label">منتهي</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-icon">⛔</div>
+                    <div class="stat-card-value" th:text="${subStats.suspended}">0</div>
+                    <div class="stat-card-label">معلق</div>
+                </div>
+            </div>
+
+            <!-- Subscriptions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 style="margin: 0; font-size: 1.1rem;">📋 جميع الاشتراكات</h2>
+                </div>
+
+                <div th:if="${subscriptions.isEmpty()}" class="table-empty">
+                    <div class="table-empty-icon">💎</div>
+                    <div class="table-empty-text">لا توجد اشتراكات بعد</div>
+                </div>
+
+                <div th:if="${!subscriptions.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المنظمة</th>
+                                <th>الحالة</th>
+                                <th>السعر الشهري</th>
+                                <th>الأيام المتبقية</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="sub, iter : ${subscriptions}">
+                                <td th:text="${iter.index + 1}">1</td>
+                                <td>
+                                    <a th:href="@{/super-admin/organizations/{id}(id=${sub.organization.id})}"
+                                       th:text="${sub.organization.name}" style="text-decoration: none; font-weight: 600;"></a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-delivered" th:if="${sub.status.name() == 'ACTIVE'}" th:text="${sub.status.arabicName}">نشط</span>
+                                    <span class="badge" style="background: #fef3c7; color: #92400e;" th:if="${sub.status.name() == 'TRIAL'}" th:text="${sub.status.arabicName}">تجريبي</span>
+                                    <span class="badge badge-refused" th:if="${sub.status.name() == 'EXPIRED'}" th:text="${sub.status.arabicName}">منتهي</span>
+                                    <span class="badge badge-cancelled" th:if="${sub.status.name() == 'SUSPENDED'}" th:text="${sub.status.arabicName}">معلق</span>
+                                </td>
+                                <td>
+                                    <span th:if="${sub.monthlyPrice != null}" th:text="${sub.monthlyPrice + ' جنيه'}">-</span>
+                                    <span th:if="${sub.monthlyPrice == null}" style="color: var(--text-muted);">غير محدد</span>
+                                </td>
+                                <td>
+                                    <span th:if="${sub.remainingDays > 3}" th:text="${sub.remainingDays + ' يوم'}" style="color: #16a34a;">14 يوم</span>
+                                    <span th:if="${sub.remainingDays <= 3 && sub.remainingDays > 0}" th:text="${sub.remainingDays + ' يوم'}" style="color: #dc2626; font-weight: 700;">3 يوم</span>
+                                    <span th:if="${sub.remainingDays <= 0}" style="color: #dc2626;">منتهي</span>
+                                </td>
+                                <td>
+                                    <span th:if="${sub.status.name() == 'TRIAL' && sub.trialEndDate != null}"
+                                          th:text="${#temporals.format(sub.trialEndDate, 'yyyy/MM/dd')}">التاريخ</span>
+                                    <span th:if="${sub.status.name() == 'ACTIVE' && sub.currentPeriodEnd != null}"
+                                          th:text="${#temporals.format(sub.currentPeriodEnd, 'yyyy/MM/dd')}">التاريخ</span>
+                                    <span th:if="${sub.status.name() == 'EXPIRED' || sub.status.name() == 'SUSPENDED'}">-</span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/super-admin/organizations/{id}(id=${sub.organization.id})}"
+                                       class="btn btn-sm btn-outline">تفاصيل</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

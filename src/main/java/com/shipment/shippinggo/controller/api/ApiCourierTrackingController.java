@@ -46,12 +46,14 @@ public class ApiCourierTrackingController {
         }
 
         List<User> couriers = organizationService.getCouriers(org);
+        Map<Long, String> displayNames = organizationService.buildCourierDisplayNameMap(org);
         LocalDateTime now = LocalDateTime.now();
 
         List<Map<String, Object>> courierData = couriers.stream().map(courier -> {
             Map<String, Object> data = new HashMap<>();
             data.put("id", courier.getId());
-            data.put("fullName", courier.getFullName());
+            String dName = displayNames.get(courier.getId());
+            data.put("fullName", dName != null ? dName : courier.getFullName());
             data.put("phone", courier.getPhone());
             data.put("lastLatitude", courier.getLastLatitude());
             data.put("lastLongitude", courier.getLastLongitude());

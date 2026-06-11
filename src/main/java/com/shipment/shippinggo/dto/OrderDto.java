@@ -60,4 +60,10 @@ public class OrderDto {
 
     // المحافظة
     private Governorate governorate;
+
+    // المركز
+    private String center;
+
+    // المنطقة
+    private String area;
 }

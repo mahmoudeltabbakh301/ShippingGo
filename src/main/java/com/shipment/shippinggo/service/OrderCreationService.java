@@ -95,6 +95,9 @@ public class OrderCreationService {
                 .orderPrice(dto.getOrderPrice())
                 .notes(dto.getNotes())
                 .governorate(dto.getGovernorate())
+                .center(dto.getCenter())
+                .area(dto.getArea())
+                .district(getDistrictFallback(dto.getCenter(), dto.getArea()))
                 .status(OrderStatus.WAITING)
                 .createdBy(createdBy)
                 .ownerOrganization(ownerOrganization)
@@ -129,6 +132,9 @@ public class OrderCreationService {
                     .orderPrice(dto.getOrderPrice())
                     .notes(dto.getNotes())
                     .governorate(dto.getGovernorate())
+                    .center(dto.getCenter())
+                    .area(dto.getArea())
+                    .district(getDistrictFallback(dto.getCenter(), dto.getArea()))
                     .status(OrderStatus.WAITING)
                     .createdBy(createdBy)
                     .ownerOrganization(ownerOrganization)
@@ -248,6 +254,18 @@ public class OrderCreationService {
                     order.getGovernorate() != null ? order.getGovernorate().getArabicName() : "غير محدد",
                     dto.getGovernorate().getArabicName()));
             order.setGovernorate(dto.getGovernorate());
+        }
+
+        if (dto.getCenter() != null && !dto.getCenter().equals(order.getCenter())) {
+            changesLog.append(String.format("تعديل المركز إلى '%s'. ", dto.getCenter()));
+            order.setCenter(dto.getCenter());
+            order.setDistrict(getDistrictFallback(dto.getCenter(), dto.getArea() != null ? dto.getArea() : order.getArea()));
+        }
+
+        if (dto.getArea() != null && !dto.getArea().equals(order.getArea())) {
+            changesLog.append(String.format("تعديل المنطقة إلى '%s'. ", dto.getArea()));
+            order.setArea(dto.getArea());
+            order.setDistrict(getDistrictFallback(order.getCenter(), dto.getArea()));
         }
 
         if (dto.getQuantity() != null && !dto.getQuantity().equals(order.getQuantity())) {
@@ -388,4 +406,13 @@ public class OrderCreationService {
         return org;
     }
 
+    private String getDistrictFallback(String center, String area) {
+        if (area != null && !area.trim().isEmpty()) {
+            return area;
+        }
+        if (center != null && !center.trim().isEmpty()) {
+            return center;
+        }
+        return null;
+    }
 }

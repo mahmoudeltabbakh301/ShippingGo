@@ -39,6 +39,9 @@ class ApiShipmentRequestControllerTest {
     private com.shipment.shippinggo.service.NotificationService notificationService;
 
     @MockBean
+    private com.shipment.shippinggo.service.SubscriptionService subscriptionService;
+
+    @MockBean
     private OrganizationService organizationService;
 
     @Test

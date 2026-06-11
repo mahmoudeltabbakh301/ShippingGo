@@ -127,7 +127,7 @@
 }
 
 .courier-avatar.online {
-    background: var(--gray-950);
+    background: #10b981;
 }
 
 .courier-avatar.offline {
@@ -145,8 +145,8 @@
 }
 
 .courier-status-dot.online {
-    background: var(--gray-950);
-    animation: pulse-dot 2s infinite;
+    background: #10b981;
+    animation: pulse-dot-online 2s infinite;
 }
 
 .courier-status-dot.offline {
@@ -156,6 +156,11 @@
 @keyframes pulse-dot {
     0%, 100% { box-shadow: 0 0 0 0 rgba(128, 128, 128, 0.4); }
     50% { box-shadow: 0 0 0 6px rgba(128, 128, 128, 0); }
+}
+
+@keyframes pulse-dot-online {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
 }
 
 .courier-info {
@@ -190,8 +195,8 @@
 }
 
 .courier-status-text.online {
-    background: var(--gray-200);
-    color: var(--gray-900);
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .courier-status-text.offline {
@@ -276,7 +281,7 @@
 }
 
 .stat-item .stat-dot.online {
-    background: var(--gray-950);
+    background: #10b981;
 }
 
 .stat-item .stat-dot.offline {
@@ -321,8 +326,8 @@
 }
 
 .courier-popup .popup-status.online {
-    background: var(--gray-200);
-    color: var(--gray-900);
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .courier-popup .popup-status.offline {
@@ -349,7 +354,7 @@
 }
 
 .marker-pin.online {
-    background: var(--gray-950);
+    background: #10b981;
 }
 
 .marker-pin.offline {

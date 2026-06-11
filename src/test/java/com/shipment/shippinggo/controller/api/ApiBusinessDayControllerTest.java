@@ -48,6 +48,9 @@ class ApiBusinessDayControllerTest {
     private JwtAuthenticationFilter jwtAuthFilter;
 
     @MockBean
+    private com.shipment.shippinggo.service.SubscriptionService subscriptionService;
+
+    @MockBean
     private com.shipment.shippinggo.service.NotificationService notificationService;
 
     private User testUser;

@@ -33,7 +33,7 @@ public class AppNotification {
     @Column(nullable = false, length = 1000)
     private String body;
 
-    @Column(nullable = false)
+    @Column(name = "`type`", nullable = false)
     private String type;
 
     // الرابط الذي ينتقل إليه المستخدم عند النقر على الإشعار

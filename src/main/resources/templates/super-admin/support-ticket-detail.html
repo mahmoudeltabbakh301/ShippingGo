@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'تذكرة دعم - ' + ${ticket.ticketNumber} + ' - ShippingGo'">تذكرة دعم - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <style>
+        .ticket-header { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-4); }
+        .ticket-title { font-size: 1.2rem; font-weight: 700; margin-bottom: var(--space-2); }
+        .ticket-meta { display: flex; gap: var(--space-4); flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted); margin-bottom: var(--space-3); }
+        .ticket-meta-item { display: flex; align-items: center; gap: var(--space-1); }
+        .ticket-description { background: var(--bg-secondary); padding: var(--space-4); border-radius: var(--radius-md); white-space: pre-wrap; line-height: 1.6; }
+        .status-badge { padding: 3px 10px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; }
+        .status-OPEN { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_PROGRESS { background: #fef3c7; color: #92400e; }
+        .status-RESOLVED { background: #dcfce7; color: #166534; }
+        .status-CLOSED { background: #e5e7eb; color: #374151; }
+        .priority-badge { padding: 3px 10px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; }
+        .priority-LOW { background: #e0e7ff; color: #3730a3; }
+        .priority-MEDIUM { background: #fef3c7; color: #92400e; }
+        .priority-HIGH { background: #fed7aa; color: #9a3412; }
+        .priority-URGENT { background: #fecaca; color: #991b1b; }
+        .status-form { display: flex; gap: var(--space-2); align-items: center; margin-top: var(--space-3); }
+        .replies-section { margin-bottom: var(--space-4); }
+        .replies-title { font-size: 1rem; font-weight: 700; margin-bottom: var(--space-3); }
+        .reply-item { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-3); }
+        .reply-item.admin-reply { border-inline-start: 4px solid var(--primary); }
+        .reply-item.user-reply { border-inline-start: 4px solid #22c55e; }
+        .reply-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-2); }
+        .reply-author { font-weight: 600; font-size: 0.9rem; }
+        .reply-time { font-size: 0.75rem; color: var(--text-muted); }
+        .reply-badge { font-size: 0.7rem; padding: 2px 6px; border-radius: var(--radius-sm); font-weight: 600; }
+        .reply-badge.admin { background: #dbeafe; color: #1d4ed8; }
+        .reply-badge.user { background: #dcfce7; color: #166534; }
+        .reply-body { white-space: pre-wrap; line-height: 1.6; color: var(--text-primary); }
+        .reply-form { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-4); }
+        .reply-textarea { width: 100%; min-height: 100px; padding: var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-family: inherit; font-size: 0.9rem; resize: vertical; margin-bottom: var(--space-3); }
+        .reply-textarea:focus { border-color: var(--primary); outline: none; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" th:text="'🎫 ' + ${ticket.ticketNumber}">TKT-00001</h1>
+                </div>
+                <a th:href="@{/super-admin/support}" class="btn btn-secondary">↩ رجوع</a>
+            </div>
+
+            <!-- بيانات التذكرة -->
+            <div class="ticket-header">
+                <div class="ticket-title" th:text="${ticket.subject}">الموضوع</div>
+                <div class="ticket-meta">
+                    <div class="ticket-meta-item">
+                        👤 <span th:text="${ticket.createdBy.fullName}">المستخدم</span>
+                    </div>
+                    <div class="ticket-meta-item" th:if="${ticket.organization != null}">
+                        🏢 <span th:text="${ticket.organization.name}">المنظمة</span>
+                    </div>
+                    <div class="ticket-meta-item">
+                        📅 <span th:text="${#temporals.format(ticket.createdAt, 'yyyy/MM/dd HH:mm')}">التاريخ</span>
+                    </div>
+                    <div class="ticket-meta-item">
+                        <span class="priority-badge" th:classappend="'priority-' + ${ticket.priority}" th:text="${ticket.priority.arabicName}">الأولوية</span>
+                    </div>
+                    <div class="ticket-meta-item">
+                        <span class="status-badge" th:classappend="'status-' + ${ticket.status}" th:text="${ticket.status.arabicName}">الحالة</span>
+                    </div>
+                    <div class="ticket-meta-item" th:if="${ticket.category != null}">
+                        📂 <span th:text="${ticket.category.arabicName}">التصنيف</span>
+                    </div>
+                </div>
+                <div class="ticket-description" th:text="${ticket.description}">الوصف</div>
+
+                <!-- تغيير الحالة -->
+                <form class="status-form" th:action="@{'/super-admin/support/' + ${ticket.id} + '/status'}" method="post">
+                    <label style="font-weight: 600; font-size: 0.85rem;">تغيير الحالة:</label>
+                    <select name="status" class="reply-textarea" style="min-height: auto; width: auto; padding: var(--space-1) var(--space-3);">
+                        <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.arabicName}" th:selected="${ticket.status == s}"></option>
+                    </select>
+                    <button type="submit" class="btn btn-primary btn-sm">تحديث</button>
+                </form>
+            </div>
+
+            <!-- الردود -->
+            <div class="replies-section">
+                <div class="replies-title">💬 المحادثة (<span th:text="${#lists.size(replies)}">0</span>)</div>
+
+                <div th:if="${#lists.isEmpty(replies)}" style="text-align: center; padding: var(--space-5); color: var(--text-muted);">
+                    لا توجد ردود بعد
+                </div>
+
+                <div th:each="reply : ${replies}" class="reply-item" th:classappend="${reply.adminReply ? 'admin-reply' : 'user-reply'}">
+                    <div class="reply-header">
+                        <div style="display: flex; align-items: center; gap: var(--space-2);">
+                            <span class="reply-author" th:text="${reply.repliedBy.fullName}">الاسم</span>
+                            <span class="reply-badge" th:classappend="${reply.adminReply ? 'admin' : 'user'}"
+                                  th:text="${reply.adminReply ? 'إدارة المنصة' : 'العميل'}">الدور</span>
+                        </div>
+                        <span class="reply-time" th:text="${#temporals.format(reply.createdAt, 'yyyy/MM/dd HH:mm')}">الوقت</span>
+                    </div>
+                    <div class="reply-body" th:text="${reply.message}">الرد</div>
+                </div>
+            </div>
+
+            <!-- فورم الرد -->
+            <div class="reply-form">
+                <form th:action="@{'/super-admin/support/' + ${ticket.id} + '/reply'}" method="post">
+                    <label style="font-weight: 700; display: block; margin-bottom: var(--space-2);">✍️ إضافة رد</label>
+                    <textarea class="reply-textarea" name="message" required placeholder="اكتب ردك هنا..."></textarea>
+                    <button type="submit" class="btn btn-primary">📤 إرسال الرد</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

@@ -53,6 +53,13 @@ public class Membership {
     @Column(name = "is_client_invitation", nullable = false)
     private boolean clientInvitation = false;
 
+    @Column(name = "nickname")
+    private String nickname;
+
+    public User getUser() {
+        return this.user;
+    }
+
     @PrePersist
     protected void onCreate() {
         invitedAt = LocalDateTime.now();

@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,15 +24,72 @@ public class AccountService {
     private final TransactionService transactionService;
     private final AccountSummaryService accountSummaryService;
     private final BusinessDayRepository businessDayRepository;
+    private final TargetService targetService;
 
     public AccountService(CommissionService commissionService,
             TransactionService transactionService,
             AccountSummaryService accountSummaryService,
-            BusinessDayRepository businessDayRepository) {
+            BusinessDayRepository businessDayRepository,
+            TargetService targetService) {
         this.commissionService = commissionService;
         this.transactionService = transactionService;
         this.accountSummaryService = accountSummaryService;
         this.businessDayRepository = businessDayRepository;
+        this.targetService = targetService;
+    }
+
+    // --- TargetService Delegation ---
+
+    public TargetSetting saveOrganizationTarget(Organization sourceOrg, Organization targetOrg,
+            BigDecimal targetAmount, CommissionType rewardType, BigDecimal rewardValue) {
+        return targetService.saveOrganizationTarget(sourceOrg, targetOrg, targetAmount, rewardType, rewardValue);
+    }
+
+    public TargetSetting saveCourierTarget(Organization sourceOrg, User courier,
+            BigDecimal targetAmount, CommissionType rewardType, BigDecimal rewardValue) {
+        return targetService.saveCourierTarget(sourceOrg, courier, targetAmount, rewardType, rewardValue);
+    }
+
+    public List<TargetSetting> getTargetSettings(Organization organization) {
+        return targetService.getTargetSettings(organization);
+    }
+
+    public Optional<TargetSetting> getTargetSettingById(Long id) {
+        return targetService.getTargetSettingById(id);
+    }
+
+    public void deleteTargetSetting(Long id) {
+        targetService.deleteTargetSetting(id);
+    }
+
+
+    public List<com.shipment.shippinggo.dto.DailyTargetStatsDto> getDailyCourierDeliveredAmount(User courier, java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        return targetService.getDailyCourierDeliveredAmount(courier, from, to);
+    }
+
+    public List<com.shipment.shippinggo.dto.DailyTargetStatsDto> getDailyOrganizationDeliveredAmount(Organization sourceOrg, Organization targetOrg, java.time.LocalDateTime from, java.time.LocalDateTime to) {
+        return targetService.getDailyOrganizationDeliveredAmount(sourceOrg, targetOrg, from, to);
+    }
+
+    public LocalDateTime[] getCurrentMonthPeriod(TargetSetting setting) {
+        return targetService.getCurrentMonthPeriod(setting);
+    }
+
+    public BigDecimal getCourierDeliveredAmount(User courier, LocalDateTime from, LocalDateTime to) {
+        return targetService.getCourierDeliveredAmount(courier, from, to);
+    }
+
+    public BigDecimal getOrganizationDeliveredAmount(Organization sourceOrg, Organization targetOrg,
+            LocalDateTime from, LocalDateTime to) {
+        return targetService.getOrganizationDeliveredAmount(sourceOrg, targetOrg, from, to);
+    }
+
+    public BigDecimal calculateReward(TargetSetting setting, BigDecimal deliveredAmount) {
+        return targetService.calculateReward(setting, deliveredAmount);
+    }
+
+    public int calculateTargetProgress(BigDecimal deliveredAmount, BigDecimal targetAmount) {
+        return targetService.calculateProgress(deliveredAmount, targetAmount);
     }
 
     // --- CommissionService Delegation ---

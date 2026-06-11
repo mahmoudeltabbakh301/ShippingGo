@@ -37,7 +37,7 @@ public class AuditLog {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String details;
 
     @ManyToOne(fetch = FetchType.LAZY)

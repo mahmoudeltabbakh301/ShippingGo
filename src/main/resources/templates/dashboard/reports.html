@@ -329,84 +329,160 @@
                 <div id="financialLoading" class="loading-spinner">⏳ جاري تحميل البيانات المالية...</div>
                 <div id="financialContent" style="display:none;">
 
-                    <!-- الصافي الكلي -->
+                    <!-- صافي الربح -->
                     <div class="card" style="text-align:center; padding:2rem; margin-bottom:1.5rem; border: 2px solid var(--primary-color);">
-                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">صافي المكسب الكلي</div>
+                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">💎 صافي ربح المنظمة</div>
                         <div id="fin-net-profit" class="finance-value" style="font-size:2.5rem;">0 ج.م</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">= إجمالي إيرادات العمولات − عمولات المناديب</div>
                         <div style="display:flex; justify-content:center; gap:2rem; margin-top:1rem; flex-wrap: wrap;">
                             <div>
-                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات واردة</span><br>
-                                <span id="fin-incoming-total" class="positive" style="font-weight:700;">0 ج.م</span>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">إجمالي إيرادات العمولات</span><br>
+                                <span id="fin-total-revenue" class="positive" style="font-weight:700;">0 ج.م</span>
                             </div>
                             <div>
-                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات صادرة</span><br>
-                                <span id="fin-outgoing-total" class="negative" style="font-weight:700;">0 ج.م</span>
+                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات المناديب (مصروف)</span><br>
+                                <span id="fin-courier-total" class="negative" style="font-weight:700;">0 ج.م</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- تفاصيل الأوردرات + العمولات -->
-                    <div class="finance-grid">
+                    <!-- إحصائيات الأوردرات السريعة -->
+                    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
+                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">الأوردرات</div>
+                            <div id="fin-total-orders" style="font-weight:700; font-size:1.1rem;">0</div>
+                        </div>
+                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">✅ مسلم</div>
+                            <div id="fin-delivered-orders" style="font-weight:700; font-size:1.1rem; color:var(--success-color, #10b981);">0</div>
+                        </div>
+                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">❌ مرفوض</div>
+                            <div id="fin-refused-orders" style="font-weight:700; font-size:1.1rem; color:var(--danger-color, #ef4444);">0</div>
+                        </div>
+                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
+                            <div style="font-size:0.75rem; color:var(--text-muted);">⛔ ملغي</div>
+                            <div id="fin-cancelled-orders" style="font-weight:700; font-size:1.1rem; color:#f59e0b;">0</div>
+                        </div>
+                    </div>
+
+                    <!-- كروت العمولات الأربعة -->
+                    <div class="finance-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
                         <div class="finance-card">
-                            <h4>📤 العمولات الصادرة (لمنظمات)</h4>
-                            <div class="finance-value negative" id="fin-out-org">0 ج.م</div>
-                            <div class="finance-sub" id="fin-out-org-count">0 منظمة</div>
+                            <h4>📤 عمولات الصادر</h4>
+                            <div class="finance-value positive" id="fin-out-org">0 ج.م</div>
+                            <div class="finance-sub">
+                                توصيل: <span id="fin-out-del">0</span> •
+                                رفض: <span id="fin-out-rej">0</span> •
+                                إلغاء: <span id="fin-out-can">0</span>
+                            </div>
+                            <div class="finance-sub" id="fin-out-org-count" style="margin-top:0.25rem;">0 منظمة</div>
                         </div>
                         <div class="finance-card">
-                            <h4>🚴 عمولات المناديب</h4>
-                            <div class="finance-value negative" id="fin-courier-comm">0 ج.م</div>
-                            <div class="finance-sub" id="fin-courier-count">0 مندوب</div>
-                        </div>
-                        <div class="finance-card">
-                            <h4>📥 العمولات الواردة (من منظمات)</h4>
+                            <h4>📥 عمولات الوارد</h4>
                             <div class="finance-value positive" id="fin-in-org">0 ج.م</div>
-                            <div class="finance-sub" id="fin-in-org-count">0 منظمة</div>
+                            <div class="finance-sub">
+                                توصيل: <span id="fin-in-del">0</span> •
+                                رفض: <span id="fin-in-rej">0</span> •
+                                إلغاء: <span id="fin-in-can">0</span>
+                            </div>
+                            <div class="finance-sub" id="fin-in-org-count" style="margin-top:0.25rem;">0 منظمة</div>
+                        </div>
+                        <div class="finance-card">
+                            <h4>📋 عمولات غير مسندة</h4>
+                            <div class="finance-value positive" id="fin-unassigned">0 ج.م</div>
+                            <div class="finance-sub">
+                                توصيل: <span id="fin-ua-del">0</span> •
+                                رفض: <span id="fin-ua-rej">0</span> •
+                                إلغاء: <span id="fin-ua-can">0</span>
+                            </div>
+                        </div>
+                        <div class="finance-card" style="border: 2px solid var(--danger-color, #ef4444);">
+                            <h4>🚴 عمولات المناديب <small style="color:var(--danger-color, #ef4444);">(مصروف)</small></h4>
+                            <div class="finance-value negative" id="fin-courier-comm">0 ج.م</div>
+                            <div class="finance-sub">
+                                توصيل: <span id="fin-c-del">0</span> •
+                                رفض: <span id="fin-c-rej">0</span> •
+                                إلغاء: <span id="fin-c-can">0</span>
+                            </div>
+                            <div class="finance-sub" id="fin-courier-count" style="margin-top:0.25rem;">0 مندوب</div>
                         </div>
                     </div>
 
                     <!-- تفاصيل المنظمات الصادرة -->
                     <div class="section-header">
-                        <h3>📤 تفاصيل العمولات الصادرة</h3>
+                        <h3>📤 تفاصيل عمولات الصادر</h3>
                     </div>
                     <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
-                        <table class="detail-table">
-                            <thead>
-                                <tr>
-                                    <th>المنظمة/المندوب</th>
-                                    <th>الأوردرات</th>
-                                    <th>مسلم</th>
-                                    <th>ع. توصيل</th>
-                                    <th>ع. رفض</th>
-                                    <th>ع. إلغاء</th>
-                                    <th>الإجمالي</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fin-outgoing-details"></tbody>
-                        </table>
+                        <div id="fin-outgoing-wrap" style="max-height:none; overflow:hidden;">
+                            <table class="detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>المنظمة/المندوب</th>
+                                        <th>الأوردرات</th>
+                                        <th>مسلم</th>
+                                        <th>ع. توصيل</th>
+                                        <th>ع. رفض</th>
+                                        <th>ع. إلغاء</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fin-outgoing-details"></tbody>
+                            </table>
+                        </div>
+                        <button id="fin-outgoing-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('outgoing')">⬇️ عرض المزيد</button>
                     </div>
 
                     <!-- تفاصيل المنظمات الواردة -->
                     <div class="section-header">
-                        <h3>📥 تفاصيل العمولات الواردة</h3>
+                        <h3>📥 تفاصيل عمولات الوارد</h3>
                     </div>
                     <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
-                        <table class="detail-table">
-                            <thead>
-                                <tr>
-                                    <th>المنظمة</th>
-                                    <th>الأوردرات</th>
-                                    <th>مسلم</th>
-                                    <th>ع. توصيل</th>
-                                    <th>ع. رفض</th>
-                                    <th>ع. إلغاء</th>
-                                    <th>الإجمالي</th>
-                                </tr>
-                            </thead>
-                            <tbody id="fin-incoming-details"></tbody>
-                        </table>
+                        <div id="fin-incoming-wrap" style="max-height:none; overflow:hidden;">
+                            <table class="detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>المنظمة</th>
+                                        <th>الأوردرات</th>
+                                        <th>مسلم</th>
+                                        <th>ع. توصيل</th>
+                                        <th>ع. رفض</th>
+                                        <th>ع. إلغاء</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fin-incoming-details"></tbody>
+                            </table>
+                        </div>
+                        <button id="fin-incoming-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('incoming')">⬇️ عرض المزيد</button>
+                    </div>
+
+                    <!-- تفاصيل المناديب -->
+                    <div class="section-header">
+                        <h3>🚴 تفاصيل عمولات المناديب</h3>
+                    </div>
+                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
+                        <div id="fin-courier-wrap" style="max-height:none; overflow:hidden;">
+                            <table class="detail-table">
+                                <thead>
+                                    <tr>
+                                        <th>المندوب</th>
+                                        <th>الأوردرات</th>
+                                        <th>مسلم</th>
+                                        <th>ع. توصيل</th>
+                                        <th>ع. رفض</th>
+                                        <th>ع. إلغاء</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="fin-courier-details"></tbody>
+                            </table>
+                        </div>
+                        <button id="fin-courier-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('courier')">⬇️ عرض المزيد</button>
                     </div>
                 </div>
             </div>
+
 
             <!-- Tab 2: Dashboard (Period) -->
             <div id="tab-dashboard" class="tab-content">
@@ -492,7 +568,7 @@
                     <div class="filter-group" style="margin-bottom:1rem;">
                         <select id="courierSelect" class="form-control" style="min-width:250px;" onchange="loadCourierDetail()">
                             <option value="">-- اختر المندوب --</option>
-                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.fullName}"></option>
+                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(c.id) ? courierDisplayNames.get(c.id) : c.fullName}"></option>
                         </select>
                     </div>
                     <div id="courierDetailSection" style="display:none;">
@@ -658,6 +734,58 @@
             return Number(n).toLocaleString('ar-EG', { maximumFractionDigits: 2 });
         }
 
+        // ===================== Lazy Loading State =====================
+        const ROWS_PER_PAGE = 20;
+        const _tableData = { outgoing: [], incoming: [], courier: [] };
+        const _tableShown = { outgoing: 0, incoming: 0, courier: 0 };
+
+        function renderTableRows(tableId, rows, start, count) {
+            const tbody = document.getElementById('fin-' + tableId + '-details');
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(start + count, rows.length);
+            for (let i = start; i < end; i++) {
+                const e = rows[i];
+                const tr = document.createElement('tr');
+                const typeLabel = e.entityType === 'courier' ? 'مندوب' : 'منظمة';
+                tr.innerHTML = `
+                    <td>${e.entityName} <small style="color:var(--text-muted)">(${typeLabel})</small></td>
+                    <td>${e.totalOrders}</td>
+                    <td>${e.deliveredOrders}</td>
+                    <td>${fmt(e.deliveryCommission)}</td>
+                    <td>${fmt(e.rejectionCommission)}</td>
+                    <td>${fmt(e.cancellationCommission)}</td>
+                    <td><strong>${fmt(e.totalCommission)}</strong></td>`;
+                fragment.appendChild(tr);
+            }
+            tbody.appendChild(fragment);
+            _tableShown[tableId] = end;
+
+            const moreBtn = document.getElementById('fin-' + tableId + '-more');
+            if (end >= rows.length) {
+                moreBtn.style.display = 'none';
+            } else {
+                moreBtn.style.display = 'block';
+                moreBtn.innerText = `⬇️ عرض المزيد (${rows.length - end} متبقي)`;
+            }
+        }
+
+        function showMoreRows(tableId) {
+            renderTableRows(tableId, _tableData[tableId], _tableShown[tableId], ROWS_PER_PAGE);
+        }
+
+        function initTable(tableId, rows) {
+            _tableData[tableId] = rows;
+            _tableShown[tableId] = 0;
+            const tbody = document.getElementById('fin-' + tableId + '-details');
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
+                document.getElementById('fin-' + tableId + '-more').style.display = 'none';
+            } else {
+                renderTableRows(tableId, rows, 0, ROWS_PER_PAGE);
+            }
+        }
+
         // ===================== Financial Summary =====================
         async function loadFinancialData() {
             const loadEl = document.getElementById('financialLoading');
@@ -669,66 +797,60 @@
                 const res = await fetch('/api/reports/financial' + getFilterParams());
                 const d = await res.json();
 
+                // صافي الربح
                 const netProfit = d.netProfit || 0;
                 const npEl = document.getElementById('fin-net-profit');
                 npEl.innerText = fmt(netProfit) + ' ج.م';
                 npEl.className = 'finance-value ' + (netProfit > 0 ? 'positive' : netProfit < 0 ? 'negative' : 'neutral');
 
-                document.getElementById('fin-incoming-total').innerText = fmt(d.totalIncomingCommissions) + ' ج.م';
-                document.getElementById('fin-outgoing-total').innerText = fmt(d.totalOutgoingCommissions) + ' ج.م';
+                // إجمالي الإيرادات وعمولات المناديب
+                document.getElementById('fin-total-revenue').innerText = fmt(d.totalCommissionRevenue) + ' ج.م';
+                document.getElementById('fin-courier-total').innerText = fmt(d.courierCommissions) + ' ج.م';
 
+                // إحصائيات الأوردرات
+                document.getElementById('fin-total-orders').innerText = d.totalOrders || 0;
+                document.getElementById('fin-delivered-orders').innerText = d.deliveredOrders || 0;
+                document.getElementById('fin-refused-orders').innerText = d.refusedOrders || 0;
+                document.getElementById('fin-cancelled-orders').innerText = d.cancelledOrders || 0;
+
+                // كارد عمولات الصادر
                 document.getElementById('fin-out-org').innerText = fmt(d.outgoingOrgCommissions) + ' ج.م';
+                document.getElementById('fin-out-del').innerText = fmt(d.outgoingDeliveryComm);
+                document.getElementById('fin-out-rej').innerText = fmt(d.outgoingRejectionComm);
+                document.getElementById('fin-out-can').innerText = fmt(d.outgoingCancellationComm);
                 document.getElementById('fin-out-org-count').innerText = (d.outgoingOrgDetails?.length || 0) + ' منظمة';
-                document.getElementById('fin-courier-comm').innerText = fmt(d.courierCommissions) + ' ج.م';
-                document.getElementById('fin-courier-count').innerText = (d.courierDetails?.length || 0) + ' مندوب';
+
+                // كارد عمولات الوارد
                 document.getElementById('fin-in-org').innerText = fmt(d.incomingOrgCommissions) + ' ج.م';
+                document.getElementById('fin-in-del').innerText = fmt(d.incomingDeliveryComm);
+                document.getElementById('fin-in-rej').innerText = fmt(d.incomingRejectionComm);
+                document.getElementById('fin-in-can').innerText = fmt(d.incomingCancellationComm);
                 document.getElementById('fin-in-org-count').innerText = (d.incomingOrgDetails?.length || 0) + ' منظمة';
 
-                // تفاصيل الصادر
-                const outBody = document.getElementById('fin-outgoing-details');
-                outBody.innerHTML = '';
-                const allOut = [...(d.outgoingOrgDetails || []), ...(d.courierDetails || [])];
-                if (allOut.length === 0) {
-                    outBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
-                } else {
-                    allOut.forEach(e => {
-                        outBody.innerHTML += `<tr>
-                            <td>${e.entityName} <small style="color:var(--text-muted)">(${e.entityType === 'courier' ? 'مندوب' : 'منظمة'})</small></td>
-                            <td>${e.totalOrders}</td>
-                            <td>${e.deliveredOrders}</td>
-                            <td>${fmt(e.deliveryCommission)}</td>
-                            <td>${fmt(e.rejectionCommission)}</td>
-                            <td>${fmt(e.cancellationCommission)}</td>
-                            <td><strong>${fmt(e.totalCommission)}</strong></td>
-                        </tr>`;
-                    });
-                }
+                // كارد عمولات غير مسندة
+                document.getElementById('fin-unassigned').innerText = fmt(d.unassignedCommissions) + ' ج.م';
+                document.getElementById('fin-ua-del').innerText = fmt(d.unassignedDeliveryComm);
+                document.getElementById('fin-ua-rej').innerText = fmt(d.unassignedRejectionComm);
+                document.getElementById('fin-ua-can').innerText = fmt(d.unassignedCancellationComm);
 
-                // تفاصيل الوارد
-                const inBody = document.getElementById('fin-incoming-details');
-                inBody.innerHTML = '';
-                const allIn = d.incomingOrgDetails || [];
-                if (allIn.length === 0) {
-                    inBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
-                } else {
-                    allIn.forEach(e => {
-                        inBody.innerHTML += `<tr>
-                            <td>${e.entityName}</td>
-                            <td>${e.totalOrders}</td>
-                            <td>${e.deliveredOrders}</td>
-                            <td>${fmt(e.deliveryCommission)}</td>
-                            <td>${fmt(e.rejectionCommission)}</td>
-                            <td>${fmt(e.cancellationCommission)}</td>
-                            <td><strong class="positive">${fmt(e.totalCommission)}</strong></td>
-                        </tr>`;
-                    });
-                }
+                // كارد عمولات المناديب
+                document.getElementById('fin-courier-comm').innerText = fmt(d.courierCommissions) + ' ج.م';
+                document.getElementById('fin-c-del').innerText = fmt(d.courierDeliveryComm);
+                document.getElementById('fin-c-rej').innerText = fmt(d.courierRejectionComm);
+                document.getElementById('fin-c-can').innerText = fmt(d.courierCancellationComm);
+                document.getElementById('fin-courier-count').innerText = (d.courierDetails?.length || 0) + ' مندوب';
+
+                // جداول التفاصيل مع lazy loading
+                initTable('outgoing', d.outgoingOrgDetails || []);
+                initTable('incoming', d.incomingOrgDetails || []);
+                initTable('courier', d.courierDetails || []);
 
                 window._financialLoaded = true;
             } catch (e) { console.error('Error loading financial data', e); }
             loadEl.style.display = 'none';
             contentEl.style.display = 'block';
         }
+
 
         // ===================== Dashboard (Period) =====================
         async function loadDashboardData() {

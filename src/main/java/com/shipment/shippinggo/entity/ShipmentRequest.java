@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -24,10 +25,12 @@ public class ShipmentRequest {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "requester_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User requester;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Organization organization;
 
     @Column(nullable = false)

@@ -116,8 +116,17 @@
                         <span th:if="${organization.type.name() == 'OFFICE'}"
                             th:text="#{user.ship.js.type_office}">مكتب</span>
                     </div>
-                    <h1 style="font-size: 2.5rem; margin-bottom: var(--space-2);" th:text="${organization.name}">اسم
-                        المنظمة</h1>
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: var(--space-2);">
+                        <img th:if="${organization.logoUrl}" 
+                             th:src="@{'/uploads/' + ${organization.logoUrl}}" 
+                             alt="Organization Logo"
+                             style="width: 64px; height: 64px; object-fit: contain; border-radius: 12px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); flex-shrink: 0;">
+                        <div th:unless="${organization.logoUrl}" 
+                             style="width: 64px; height: 64px; border-radius: 12px; background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); border: 2px solid rgba(255,255,255,0.3); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 800; flex-shrink: 0;"
+                             th:text="${#strings.substring(organization.name, 0, 1)}">M</div>
+                        <h1 style="font-size: 2.5rem;" th:text="${organization.name}">اسم
+                            المنظمة</h1>
+                    </div>
                     <p th:if="${organization.about != null and !organization.about.isEmpty()}"
                         style="opacity: 0.9; max-width: 600px;" th:text="${organization.about}">وصف المنظمة</p>
                     <p th:unless="${organization.about != null and !organization.about.isEmpty()}"
@@ -205,6 +214,65 @@
                                 <span>🌍</span> <span th:text="#{org.profile.service_external}">تقبل شحنات خارجية
                                     (محافظات)</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قوائم أسعار الشحن -->
+            <div class="info-card" style="margin-top: var(--space-6);">
+                <h3 style="margin-bottom: var(--space-4); color: var(--text-primary); border-bottom: 2px solid var(--border-color); padding-bottom: var(--space-3);"
+                    th:text="#{org.profile.pricing_title}">أسعار الشحن</h3>
+
+                <div th:if="${priceLists == null or priceLists.isEmpty()}"
+                    style="text-align: center; padding: var(--space-4); color: var(--text-secondary);">
+                    <p th:text="#{org.profile.no_pricing}">لم تُحدد أسعار شحن بعد</p>
+                </div>
+
+                <div th:if="${priceLists != null and !priceLists.isEmpty()}">
+                    <div th:each="plEntry : ${priceListsWithEntries}" style="margin-bottom: var(--space-6);">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: var(--space-3);">
+                            <h4 style="margin: 0; color: var(--text-primary); font-weight: 600;" th:text="${plEntry.key.name}">اسم القائمة</h4>
+                            <span th:if="${plEntry.key.isDefault()}"
+                                style="background: rgba(76,175,80,0.15); color: #388e3c; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem;">افتراضية</span>
+                        </div>
+
+                        <div th:if="${plEntry.value == null or plEntry.value.isEmpty()}"
+                            style="text-align: center; padding: var(--space-3); color: var(--text-secondary); font-size: 0.875rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                            <p>لا توجد أسعار مُحددة في هذه القائمة</p>
+                        </div>
+
+                        <div th:if="${plEntry.value != null and !plEntry.value.isEmpty()}" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                <thead>
+                                    <tr style="background: var(--bg-secondary); border-bottom: 2px solid var(--border-color);">
+                                        <th style="padding: 10px 14px; text-align: right; font-weight: 600;"
+                                            th:text="#{pricing.detail.col_governorate}">المحافظة</th>
+                                        <th style="padding: 10px 14px; text-align: center; font-weight: 600;"
+                                            th:text="#{pricing.detail.col_shipping}">سعر الشحن</th>
+                                        <th style="padding: 10px 14px; text-align: center; font-weight: 600;"
+                                            th:text="#{pricing.detail.col_return}">سعر المرتجع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="entry : ${plEntry.value}"
+                                        style="border-bottom: 1px solid var(--border-color);">
+                                        <td style="padding: 10px 14px; font-weight: 500;"
+                                            th:text="${entry.governorate.getArabicName()}">المحافظة</td>
+                                        <td style="padding: 10px 14px; text-align: center; color: var(--text-primary); font-weight: 600;">
+                                            <span th:text="${entry.shippingPrice}">0</span>
+                                            <span th:text="#{pricing.currency}" style="font-size: 0.8rem; color: var(--text-secondary);">ج.م</span>
+                                        </td>
+                                        <td style="padding: 10px 14px; text-align: center;">
+                                            <span th:if="${entry.returnPrice != null}" th:text="${entry.returnPrice}">0</span>
+                                            <span th:if="${entry.returnPrice != null}" th:text="#{pricing.currency}"
+                                                style="font-size: 0.8rem; color: var(--text-secondary);">ج.م</span>
+                                            <span th:unless="${entry.returnPrice != null}"
+                                                style="color: var(--text-tertiary);">—</span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

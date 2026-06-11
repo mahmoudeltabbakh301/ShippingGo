@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تذكرة دعم جديدة - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <style>
+        .form-container { max-width: 650px; }
+        .form-section { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-4); }
+        .form-group { margin-bottom: var(--space-4); }
+        .form-group:last-child { margin-bottom: 0; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .form-textarea { min-height: 150px; resize: vertical; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+        @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-1); }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">➕ تذكرة دعم جديدة</h1>
+                    <p class="page-subtitle">اكتب استفسارك وسنرد عليك في أقرب وقت</p>
+                </div>
+                <a th:href="@{/support}" class="btn btn-secondary">↩ رجوع</a>
+            </div>
+
+            <div class="form-container">
+                <form th:action="@{/support/create}" method="post">
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label class="form-label">الموضوع *</label>
+                            <input class="form-input" type="text" name="subject" required placeholder="عنوان مختصر للمشكلة أو الاستفسار">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">التصنيف</label>
+                                <select class="form-select" name="category" required>
+                                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c.arabicName}"></option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الأولوية</label>
+                                <select class="form-select" name="priority" required>
+                                    <option th:each="p : ${priorities}" th:value="${p}" th:text="${p.arabicName}" th:selected="${p.name() == 'MEDIUM'}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">الوصف التفصيلي *</label>
+                            <textarea class="form-textarea" name="description" required placeholder="اشرح المشكلة أو الاستفسار بالتفصيل..."></textarea>
+                            <p class="form-hint">كلما كان الوصف أكثر تفصيلاً، كلما تمكنا من مساعدتك بشكل أسرع.</p>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">📤 إرسال التذكرة</button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

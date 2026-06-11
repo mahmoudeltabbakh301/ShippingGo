@@ -221,14 +221,15 @@ public class OrderAssignmentService {
         BusinessDay assignerDay = businessDayService.ensureNormalBusinessDayExists(currentOrg.getId(),
                 java.time.LocalDate.now(), assignedBy);
 
+        List<Order> assignedOrders = new java.util.ArrayList<>();
         for (Order order : orders) {
             if (order.getStatus() == OrderStatus.DELIVERED ||
                     order.getStatus() == OrderStatus.PARTIAL_DELIVERY ||
                     order.getStatus() == OrderStatus.REFUSED)
-                continue;
+                throw new BusinessLogicException("الطلب في حالة نهائية ولا يمكن إسناده.");
 
             if (order.getAssignedToCourier() != null)
-                continue;
+                throw new BusinessLogicException("الطلب مسند لمندوب، يرجى إلغاء إسناد المندوب أولاً.");
 
             Organization assignedOrg = order.getAssignedToOrganization();
             if (assignedOrg != null && assignedOrg.getId().equals(targetOrg.getId()))
@@ -247,14 +248,14 @@ public class OrderAssignmentService {
                     }
                 }
                 if (!isAssignerAllowed)
-                    continue;
+                    throw new BusinessLogicException("الطلب مسند لمكتب آخر.");
             } else {
                 if (!currentOrg.getId().equals(order.getOwnerOrganization().getId()))
-                    continue;
+                    throw new BusinessLogicException("الطلب غير مصرح لك بإسناده.");
             }
 
             if (orderAssignmentRepository.existsInChain(order.getId(), targetOrg.getId())) {
-                continue;
+                throw new BusinessLogicException("المنظمة موجودة بالفعل في سلسلة إسناد الطلب");
             }
 
             java.util.Optional<OrderAssignment> lastAssignmentOpt = orderAssignmentRepository
@@ -285,12 +286,17 @@ public class OrderAssignmentService {
             String assignmentNote = String.format("تم اسناد الطلب متعدد إلى مكتب '%s'", targetOrg.getName());
             orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
                     assignmentNote);
+            assignedOrders.add(order);
         }
 
-        if (!orders.isEmpty()) {
-            orderRepository.saveAll(orders);
+        if (!assignedOrders.isEmpty()) {
+            orderRepository.saveAll(assignedOrders);
 
-            notificationService.sendBulkOrgAssignmentNotification(targetOrg, orders.size());
+            if (assignedOrders.size() == 1) {
+                notificationService.sendSingleOrgAssignmentNotification(targetOrg, assignedOrders.get(0));
+            } else {
+                notificationService.sendBulkOrgAssignmentNotification(targetOrg, assignedOrders.size());
+            }
         }
     }
 
@@ -545,17 +551,21 @@ public class OrderAssignmentService {
         List<Order> orders = orderRepository.findAllById(orderIds);
         Organization assignerOrg = resolveUserOrganization(assignedBy);
 
+        List<Order> assignedOrders = new java.util.ArrayList<>();
         for (Order order : orders) {
             if (order.getStatus() == OrderStatus.DELIVERED ||
                     order.getStatus() == OrderStatus.PARTIAL_DELIVERY ||
                     order.getStatus() == OrderStatus.REFUSED)
-                continue;
+                throw new BusinessLogicException("الطلب في حالة نهائية.");
 
             if (order.getAssignedToCourier() != null && order.getAssignedToCourier().getId().equals(courierId))
-                continue;
+                continue; // Already assigned to this courier, safe to skip
+
+            if (order.getAssignedToCourier() != null && !order.getAssignedToCourier().getId().equals(courierId))
+                throw new BusinessLogicException("الطلب مسند لمندوب آخر.");
 
             if (!canUserAccessOrder(assignedBy, order))
-                continue;
+                throw new UnauthorizedAccessException("غير مصرح بالوصول للطلب رقم ");
 
             Organization ownerOrg = order.getOwnerOrganization();
             Organization assignedOrg = order.getAssignedToOrganization();
@@ -615,7 +625,7 @@ public class OrderAssignmentService {
                 return false;
             });
             if (!isValidCourier)
-                continue;
+                throw new BusinessLogicException("المندوب غير مسجل في المكتب المسند إليه الطلب رقم " + order.getId());
 
             if (assignedOrg != null) {
                 boolean isAssignerAllowed = assignerOrg != null && assignerOrg.getId().equals(assignedOrg.getId());
@@ -630,7 +640,7 @@ public class OrderAssignmentService {
                     }
                 }
                 if (!isAssignerAllowed)
-                    continue;
+                    throw new BusinessLogicException("لا يمكن اسناد طلب مسند لمنظمه اخري");
             }
 
             OrderStatus previousStatus = order.getStatus();
@@ -640,12 +650,17 @@ public class OrderAssignmentService {
 
             orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.IN_TRANSIT, assignedBy, null, null,
                     "تم الإسناد للمندوب");
+            assignedOrders.add(order);
         }
 
-        if (!orders.isEmpty()) {
-            orderRepository.saveAll(orders);
+        if (!assignedOrders.isEmpty()) {
+            orderRepository.saveAll(assignedOrders);
 
-            notificationService.sendBulkOrderAssignmentNotification(courier, orders.size());
+            if (assignedOrders.size() == 1) {
+                notificationService.sendOrderAssignmentNotification(courier, assignedOrders.get(0));
+            } else {
+                notificationService.sendBulkOrderAssignmentNotification(courier, assignedOrders.size());
+            }
         }
     }
 

@@ -30,19 +30,22 @@ public class AccountSummaryService {
     private final TransactionService transactionService;
     private final CommissionService commissionService;
     private final VirtualOfficeRepository virtualOfficeRepository;
+    private final TargetService targetService;
 
     public AccountSummaryService(OrderRepository orderRepository,
             BusinessDayRepository businessDayRepository,
             OrderAssignmentRepository orderAssignmentRepository,
             TransactionService transactionService,
             CommissionService commissionService,
-            VirtualOfficeRepository virtualOfficeRepository) {
+            VirtualOfficeRepository virtualOfficeRepository,
+            TargetService targetService) {
         this.orderRepository = orderRepository;
         this.businessDayRepository = businessDayRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.transactionService = transactionService;
         this.commissionService = commissionService;
         this.virtualOfficeRepository = virtualOfficeRepository;
+        this.targetService = targetService;
     }
 
     private boolean isHolderMatchingOrg(Organization holder, Organization targetOrg) {
@@ -688,6 +691,32 @@ public class AccountSummaryService {
         summary.setNetAmount(netAmount);
         summary.setRequiredAmountFromCourier(requiredAmountFromCourier);
 
+        // --- Target/Reward Integration ---
+        // For OUTGOING direction, we check if the current organization has set a target for the otherOrg (assignee)
+        if ("OUTGOING".equals(summaryDirection) && otherOrg != null) {
+            java.util.Optional<com.shipment.shippinggo.entity.TargetSetting> targetOpt = targetService.getTargetSettings(organization).stream()
+                .filter(t -> t.isActive() && t.getTargetOrganization() != null && t.getTargetOrganization().getId().equals(otherOrg.getId()))
+                .findFirst();
+
+            if (targetOpt.isPresent()) {
+                com.shipment.shippinggo.entity.TargetSetting target = targetOpt.get();
+                java.time.LocalDateTime[] period = targetService.getCurrentMonthPeriod(target);
+                BigDecimal periodDelivered = targetService.getOrganizationDeliveredAmount(organization, otherOrg, period[0], period[1]);
+                BigDecimal reward = targetService.calculateReward(target, periodDelivered);
+                int progress = targetService.calculateProgress(periodDelivered, target.getTargetAmount());
+                
+                summary.setTargetAmount(target.getTargetAmount());
+                summary.setTargetReward(reward);
+                summary.setTargetProgress(BigDecimal.valueOf(progress));
+                summary.setTargetAchieved(reward.compareTo(BigDecimal.ZERO) > 0);
+                
+                // Add the reward to the assignee's net amount (subtracting from our commission/increasing their payout)
+                if (summary.isTargetAchieved()) {
+                    summary.setNetAmount(summary.getNetAmount().add(reward));
+                }
+            }
+        }
+
         return summary;
     }
 
@@ -820,6 +849,31 @@ public class AccountSummaryService {
         summary.setTotalCommission(totalCommissions);
         summary.setNetAmount(netAmount);
         summary.setRequiredAmountFromCourier(requiredAmountFromCourier);
+
+        // --- Target/Reward Integration ---
+        if (courier != null && myOrg != null) {
+            java.util.Optional<com.shipment.shippinggo.entity.TargetSetting> targetOpt = targetService.getTargetSettings(myOrg).stream()
+                .filter(t -> t.isActive() && t.getCourier() != null && t.getCourier().getId().equals(courier.getId()))
+                .findFirst();
+
+            if (targetOpt.isPresent()) {
+                com.shipment.shippinggo.entity.TargetSetting target = targetOpt.get();
+                java.time.LocalDateTime[] period = targetService.getCurrentMonthPeriod(target);
+                BigDecimal periodDelivered = targetService.getCourierDeliveredAmount(courier, period[0], period[1]);
+                BigDecimal reward = targetService.calculateReward(target, periodDelivered);
+                int progress = targetService.calculateProgress(periodDelivered, target.getTargetAmount());
+                
+                summary.setTargetAmount(target.getTargetAmount());
+                summary.setTargetReward(reward);
+                summary.setTargetProgress(BigDecimal.valueOf(progress));
+                summary.setTargetAchieved(reward.compareTo(BigDecimal.ZERO) > 0);
+                
+                // Add the reward to the courier's net amount
+                if (summary.isTargetAchieved()) {
+                    summary.setNetAmount(summary.getNetAmount().add(reward));
+                }
+            }
+        }
 
         return summary;
     }

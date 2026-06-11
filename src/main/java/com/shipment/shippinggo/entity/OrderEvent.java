@@ -34,7 +34,7 @@ public class OrderEvent {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String notes;
 
     @Column(nullable = false, updatable = false)

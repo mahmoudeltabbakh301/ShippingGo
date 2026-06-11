@@ -126,7 +126,7 @@
                             <select name="courierId" class="form-select" required>
                                 <option value="" th:text="#{accounts.settings.select_courier}">اختر المندوب</option>
                                 <option th:each="courier : ${couriers}" th:value="${courier.id}"
-                                    th:text="${courier.fullName}">
+                                    th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(courier.id) ? courierDisplayNames.get(courier.id) : courier.fullName}">
                                     اسم المندوب
                                 </option>
                             </select>
@@ -243,7 +243,7 @@
                                     <span th:if="${setting.targetOrganization != null}"
                                         th:text="${setting.targetOrganization.name}">منظمة</span>
                                     <span th:if="${setting.courier != null}"
-                                        th:text="${setting.courier.fullName}">مندوب</span>
+                                        th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(setting.courier.id) ? courierDisplayNames.get(setting.courier.id) : setting.courier.fullName}">مندوب</span>
                                     <span th:if="${setting.targetOrganization == null && setting.courier == null}">📦 غير مسند</span>
                                 </td>
                                 <td>

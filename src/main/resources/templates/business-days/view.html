@@ -178,7 +178,7 @@
                             <option value="-1" th:selected="${courierId == -1}"
                                 th:text="#{business_days.view.filter_unassigned_courier}">غير مسند لمندوب</option>
                             <option th:each="courier : ${couriers}" th:value="${courier.id}"
-                                th:text="${courier.fullName}" th:selected="${courierId == courier.id}"></option>
+                                th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(courier.id) ? courierDisplayNames.get(courier.id) : courier.fullName}" th:selected="${courierId == courier.id}"></option>
                         </select>
                         <div class="form-group" style="margin-bottom: 0;">
                             <select name="status" class="form-control" style="width: 130px;">
@@ -263,7 +263,7 @@
                                     <option value="" th:text="#{business_days.view.dropdown_courier}">اختر مندوب...
                                     </option>
                                     <th:block th:if="${couriers != null}">
-                                        <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${c.fullName}">
+                                        <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(c.id) ? courierDisplayNames.get(c.id) : c.fullName}">
                                         </option>
                                     </th:block>
                                 </select>
@@ -279,6 +279,18 @@
                                 <input type="hidden" name="orderIds" id="orderIdsForCustody" value="">
                                 <button type="submit" class="btn btn-warning btn-sm"
                                     th:text="#{business_days.view.bulk_assign_custody}">📦 إسناد لعهدة المخزن</button>
+                            </form>
+
+                            <!-- التوزيع التلقائي -->
+                            <form id="autoDistributeForm" th:action="@{/auto-distribution/execute-from-day}" method="post"
+                                sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                                th:if="${organization == null || (organization.type.name() != 'STORE' && organization.type.name() != 'CLIENT')}"
+                                style="display: flex; gap: var(--space-2); align-items: center;">
+                                <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                <input type="hidden" name="selectedIds" id="orderIdsForAutoDist" value="">
+                                <button type="submit" class="btn btn-sm"
+                                    style="background: linear-gradient(135deg, #10b981, #059669); color: white;"
+                                    th:text="#{auto_dist.btn_execute}">🤖 توزيع تلقائي</button>
                             </form>
 
                             <!-- Bulk Print Labels (10x15) -->
@@ -409,6 +421,9 @@
                                 if (orderIdsForInquiry) orderIdsForInquiry.value = idsStr;
                                 if (orderIdsForInquiryAll) orderIdsForInquiryAll.value = idsStr;
                                 if (orderIdsForInvoiceEl) orderIdsForInvoiceEl.value = idsStr;
+
+                                var orderIdsForAutoDist = document.getElementById('orderIdsForAutoDist');
+                                if (orderIdsForAutoDist) orderIdsForAutoDist.value = idsStr;
 
                                 if (bulkActionsBar) {
                                     if (ids.length > 0) {
@@ -566,6 +581,22 @@
                                         alert('يرجى تحديد طلبات أولاً لإنشاء الفواتير');
                                     } else {
                                         if (!confirm('هل أنت متأكد من إنشاء فواتير للطلبات المحددة؟ سيتم إنشاء فاتورة منفصلة لكل طلب.')) {
+                                            e.preventDefault();
+                                        }
+                                    }
+                                });
+                            }
+
+                            // Auto-distribution form validation
+                            var autoDistForm = document.getElementById('autoDistributeForm');
+                            if (autoDistForm) {
+                                autoDistForm.addEventListener('submit', function (e) {
+                                    var orderIdsForAutoDist = document.getElementById('orderIdsForAutoDist');
+                                    if (!orderIdsForAutoDist || !orderIdsForAutoDist.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً للتوزيع التلقائي');
+                                    } else {
+                                        if (!confirm('هل أنت متأكد من تنفيذ التوزيع التلقائي؟ سيتم إسناد الطلبات المطابقة فقط للمناديب.')) {
                                             e.preventDefault();
                                         }
                                     }

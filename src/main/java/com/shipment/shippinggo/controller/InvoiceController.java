@@ -70,6 +70,7 @@ public class InvoiceController {
     @GetMapping("/day/{businessDayId}")
     public String listInvoicesByDay(@PathVariable Long businessDayId,
                                      @RequestParam(required = false) String code,
+                                     @RequestParam(required = false) Long courierId,
                                      @CurrentOrganization Organization org,
                                      @AuthenticationPrincipal User user,
                                      Model model) {
@@ -89,38 +90,19 @@ public class InvoiceController {
         boolean hasMore = false;
         long totalCount = 0;
 
-        if (code != null && !code.trim().isEmpty()) {
-            // البحث لا يستخدم pagination
-            invoices = invoiceService.searchInvoicesByCode(org.getId(), businessDayId, code.trim());
-            totalCount = invoices.size();
-        } else {
-            // أول صفحة فقط (50 فاتورة)
-            Page<Invoice> page = invoiceService.getInvoicesByBusinessDayPaged(org.getId(), businessDayId, 0, PAGE_SIZE);
-            invoices = page.getContent();
-            hasMore = page.hasNext();
-            totalCount = page.getTotalElements();
-        }
-
-        Map<Long, Boolean> confirmationStatus = new LinkedHashMap<>();
-        Map<Long, Boolean> canConfirmMap = new LinkedHashMap<>();
-        Map<Long, List<InvoiceReceipt>> receiptsMap = new LinkedHashMap<>();
-
-        for (Invoice invoice : invoices) {
-            confirmationStatus.put(invoice.getId(),
-                    invoiceService.isInvoiceFullyConfirmed(invoice.getId()));
-            canConfirmMap.put(invoice.getId(),
-                    invoiceService.canConfirmReceipt(invoice.getId(), org.getId()));
-            receiptsMap.put(invoice.getId(),
-                    invoiceService.getReceiptsForInvoice(invoice.getId()));
-        }
+        String searchCode = (code != null && !code.trim().isEmpty()) ? code.trim() : null;
+        
+        Page<Invoice> page = invoiceService.searchInvoicesPaged(org.getId(), businessDayId, searchCode, courierId, 0, PAGE_SIZE);
+        invoices = page.getContent();
+        hasMore = page.hasNext();
+        totalCount = page.getTotalElements();
 
         model.addAttribute("invoices", invoices);
         model.addAttribute("businessDay", businessDay);
-        model.addAttribute("confirmationStatus", confirmationStatus);
-        model.addAttribute("canConfirmMap", canConfirmMap);
-        model.addAttribute("receiptsMap", receiptsMap);
         model.addAttribute("organization", org);
-        model.addAttribute("code", code);
+        model.addAttribute("code", searchCode);
+        model.addAttribute("courierId", courierId);
+        model.addAttribute("couriers", organizationService.buildCourierDisplayNameMap(org));
         model.addAttribute("hasMore", hasMore);
         model.addAttribute("totalCount", totalCount);
         model.addAttribute("currentPage", 0);
@@ -136,6 +118,8 @@ public class InvoiceController {
     public ResponseEntity<Map<String, Object>> loadMoreInvoices(
             @PathVariable Long businessDayId,
             @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) Long courierId,
             @CurrentOrganization Organization org,
             @AuthenticationPrincipal User user) {
         if (org == null) {
@@ -145,8 +129,12 @@ public class InvoiceController {
             return ResponseEntity.status(403).build();
         }
 
-        Page<Invoice> invoicePage = invoiceService.getInvoicesByBusinessDayPaged(
-                org.getId(), businessDayId, page, PAGE_SIZE);
+        String searchCode = (code != null && !code.trim().isEmpty()) ? code.trim() : null;
+
+        Page<Invoice> invoicePage = invoiceService.searchInvoicesPaged(
+                org.getId(), businessDayId, searchCode, courierId, page, PAGE_SIZE);
+
+        Map<Long, String> couriersMap = organizationService.buildCourierDisplayNameMap(org);
 
         List<Map<String, Object>> invoiceDataList = new ArrayList<>();
         for (Invoice invoice : invoicePage.getContent()) {
@@ -162,27 +150,13 @@ public class InvoiceController {
                 invoiceData.put("orderCode", invoice.getOrder().getCode());
                 invoiceData.put("recipientName", invoice.getOrder().getRecipientName());
                 invoiceData.put("recipientPhone", invoice.getOrder().getRecipientPhone());
+                if (invoice.getOrder().getAssignedToCourier() != null) {
+                    Long cId = invoice.getOrder().getAssignedToCourier().getId();
+                    invoiceData.put("courierName", couriersMap.getOrDefault(cId, invoice.getOrder().getAssignedToCourier().getFullName()));
+                } else {
+                    invoiceData.put("courierName", "غير محدد");
+                }
             }
-
-            // Confirmation status
-            boolean fullyConfirmed = invoiceService.isInvoiceFullyConfirmed(invoice.getId());
-            boolean canConfirm = invoiceService.canConfirmReceipt(invoice.getId(), org.getId());
-            invoiceData.put("fullyConfirmed", fullyConfirmed);
-            invoiceData.put("canConfirm", canConfirm);
-
-            // Receipt chain
-            List<InvoiceReceipt> receipts = invoiceService.getReceiptsForInvoice(invoice.getId());
-            List<Map<String, Object>> receiptList = new ArrayList<>();
-            for (InvoiceReceipt receipt : receipts) {
-                Map<String, Object> receiptData = new LinkedHashMap<>();
-                receiptData.put("orgName", receipt.getOrganization().getName());
-                receiptData.put("confirmed", receipt.isConfirmed());
-                receiptData.put("confirmedAt", receipt.isConfirmed() && receipt.getConfirmedAt() != null ?
-                        receipt.getConfirmedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm")) : null);
-                receiptData.put("isCurrentOrg", receipt.getOrganization().getId().equals(org.getId()));
-                receiptList.add(receiptData);
-            }
-            invoiceData.put("receipts", receiptList);
 
             invoiceDataList.add(invoiceData);
         }
@@ -296,32 +270,6 @@ public class InvoiceController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=Invoices-Bulk.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdfBytes);
-    }
-
-    /**
-     * تأكيد استلام الفاتورة
-     */
-    @PostMapping("/{id}/confirm-receipt")
-    public String confirmReceipt(@PathVariable Long id,
-                                  @RequestParam(required = false) Long businessDayId,
-                                  @CurrentOrganization Organization org,
-                                  @AuthenticationPrincipal User user,
-                                  RedirectAttributes redirectAttributes) {
-        if (org == null) {
-            org = organizationService.getOrganizationByUser(user);
-        }
-
-        try {
-            invoiceService.confirmReceipt(id, org, user);
-            redirectAttributes.addFlashAttribute("success", "تم تأكيد استلام الفاتورة بنجاح");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", e.getMessage());
-        }
-
-        if (businessDayId != null) {
-            return "redirect:/invoices/day/" + businessDayId;
-        }
-        return "redirect:/invoices";
     }
 
     /**

@@ -5,8 +5,8 @@
     <th:block th:fragment="orderRows">
         <tr th:each="order : ${orders}">
             <td sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
-                <input th:if="${order.status.name() == 'WAITING'}" type="checkbox"
-                    class="orderCheckbox" th:value="${order.id}" style="cursor: pointer;">
+                <input th:if="${order.status.name() == 'WAITING'}" type="checkbox" class="orderCheckbox"
+                    th:value="${order.id}" style="cursor: pointer;">
                 <input th:unless="${order.status.name() == 'WAITING'}" type="checkbox" disabled
                     style="cursor: not-allowed; opacity: 0.4;"
                     th:title="#{business_days.view.checkbox_disabled_tooltip}">
@@ -19,11 +19,12 @@
                 th:text="${order.status.name() == 'PARTIAL_DELIVERY' && order.partialDeliveryAmount != null ? order.partialDeliveryAmount : order.amount} ?: '-'">
                 المبلغ</td>
             <td>
-                <span class="badge"
-                    th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                <span class="badge" th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                        (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-partial' :
                                         (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
-                                        (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
-                                        (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                                        (order.status.name() == 'REFUSED' ? 'badge-refused' :
+                                        (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 
+                                        (order.status.name() == 'DEFERRED' ? 'badge-deferred' : 'badge-waiting')))))}"
                     th:text="${#locale.language == 'en' ? order.status : order.status.arabicName}">الحالة</span>
             </td>
             <td style="direction: ltr; text-align: right;">
@@ -32,12 +33,10 @@
                     <!-- المالك (المتجر): يظهر المنظمة التي أسند لها أو المسند إليها حالياً -->
                     <span th:if="${order.ownerOrganization.id == organization.id}">
                         <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                            th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
-                            title="تم الإسناد إلى"></span>
+                            th:text="'➡️ ' + ${ctx.get('outgoingTo')}" title="تم الإسناد إلى"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
-                            th:text="'➡️ ' + ${order.assignedToOrganization.name}"
-                            title="تم الإسناد إلى"></span>
+                            th:text="'➡️ ' + ${order.assignedToOrganization.name}" title="تم الإسناد إلى"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
                     </span>
@@ -47,13 +46,11 @@
                         <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
                             th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
                         <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                            th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
-                            title="تم الإسناد إلى"></span>
+                            th:text="' ➡️ ' + ${ctx.get('outgoingTo')}" title="تم الإسناد إلى"></span>
                         <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
-                            th:text="'⬅️ ' + ${order.ownerOrganization.name}"
-                            title="وارد من"></span>
+                            th:text="'⬅️ ' + ${order.ownerOrganization.name}" title="وارد من"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
                             th:text="${order.ownerOrganization.name}"></span>
@@ -61,7 +58,8 @@
                 </th:block>
             </td>
             <td>
-                <span th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">-</span>
+                <span
+                    th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
                 <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
                     style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
             </td>
@@ -73,4 +71,5 @@
         </tr>
     </th:block>
 </body>
+
 </html>

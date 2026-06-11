@@ -133,6 +133,7 @@
                         <thead>
                             <tr>
                                 <th th:text="#{members.list.col_name}">الاسم</th>
+                                <th>الاسم المستعار</th>
                                 <th th:text="#{members.list.col_current_role}">الوظيفة الحالية</th>
                                 <th th:text="#{members.list.col_change_role}">تغيير الوظيفة</th>
                                 <th th:text="#{members.list.col_join_date}">تاريخ الانضمام</th>
@@ -156,6 +157,16 @@
                                                 th:text="${m.user.phone} ?: '-'"></div>
                                         </div>
                                     </div>
+                                </td>
+                                <td>
+                                    <form th:action="@{/members/{id}/update-nickname(id=${m.id})}" method="post"
+                                        style="display: flex; gap: var(--space-2); align-items: center;">
+                                        <input type="text" name="nickname" class="form-control form-control-sm"
+                                            th:value="${m.nickname}" placeholder="اسم مستعار..."
+                                            style="width: 120px; font-size: 0.85rem;">
+                                        <button type="submit" class="btn btn-sm btn-secondary"
+                                            style="padding: 4px 8px; font-size: 0.8rem;">💾</button>
+                                    </form>
                                 </td>
                                 <td>
                                     <span class="badge"

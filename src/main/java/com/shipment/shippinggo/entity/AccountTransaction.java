@@ -46,7 +46,7 @@ public class AccountTransaction {
     private BigDecimal orderAmount;
 
     // الوصف
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String description;
 
     @Column(nullable = false, updatable = false)

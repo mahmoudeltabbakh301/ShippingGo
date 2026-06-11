@@ -146,6 +146,32 @@
                     <div class="stat-card-value" th:text="${stats.totalOrders}">0</div>
                     <div class="stat-card-label" th:text="#{super_admin.stats.total_orders}">إجمالي الطلبات</div>
                 </div>
+                <div class="stat-card" th:if="${subStats != null}">
+                    <div class="stat-card-icon">🆓</div>
+                    <div class="stat-card-value" th:text="${subStats.trial}">0</div>
+                    <div class="stat-card-label">اشتراكات تجريبية</div>
+                    <div class="stat-card-sub">
+                        <span th:text="${subStats.activeTrials}">0</span> نشطة
+                    </div>
+                </div>
+                <div class="stat-card" th:if="${subStats != null}">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-value" th:text="${subStats.active}">0</div>
+                    <div class="stat-card-label">اشتراكات نشطة</div>
+                </div>
+                <div class="stat-card" th:if="${subStats != null}">
+                    <div class="stat-card-icon">⏰</div>
+                    <div class="stat-card-value" th:text="${subStats.expired}">0</div>
+                    <div class="stat-card-label">اشتراكات منتهية</div>
+                </div>
+                <div class="stat-card" th:if="${totalRevenue != null}">
+                    <div class="stat-card-icon">💰</div>
+                    <div class="stat-card-value" th:text="${totalRevenue}">0</div>
+                    <div class="stat-card-label">إجمالي الإيرادات (جنيه)</div>
+                    <div class="stat-card-sub" th:if="${monthlyRevenue != null}">
+                        هذا الشهر: <span th:text="${monthlyRevenue}">0</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Quick Links -->
@@ -162,6 +188,20 @@
                     <div>
                         <div class="quick-link-title" th:text="#{super_admin.nav.users}">إدارة المستخدمين</div>
                         <div class="quick-link-desc" th:text="#{super_admin.dashboard.users_desc}">عرض وإدارة جميع المستخدمين على المنصة</div>
+                    </div>
+                </a>
+                <a th:href="@{/super-admin/subscriptions}" class="quick-link-card">
+                    <div class="quick-link-icon">💎</div>
+                    <div>
+                        <div class="quick-link-title">إدارة الاشتراكات</div>
+                        <div class="quick-link-desc">عرض وإدارة اشتراكات المنظمات والأسعار</div>
+                    </div>
+                </a>
+                <a th:href="@{/super-admin/settings}" class="quick-link-card">
+                    <div class="quick-link-icon">⚙️</div>
+                    <div>
+                        <div class="quick-link-title">إعدادات المنصة</div>
+                        <div class="quick-link-desc">إعدادات Paymob والفترة التجريبية والأسعار</div>
                     </div>
                 </a>
             </div>

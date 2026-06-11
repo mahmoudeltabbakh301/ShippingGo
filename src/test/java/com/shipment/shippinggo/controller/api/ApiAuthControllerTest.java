@@ -63,6 +63,9 @@ class ApiAuthControllerTest {
     @MockBean
     private OrganizationService organizationService;
 
+    @MockBean
+    private com.shipment.shippinggo.service.SubscriptionService subscriptionService;
+
     private User testUser;
 
     @BeforeEach

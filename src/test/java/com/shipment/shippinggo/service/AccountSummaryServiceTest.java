@@ -41,6 +41,8 @@ class AccountSummaryServiceTest {
     private CommissionService commissionService;
     @Mock
     private VirtualOfficeRepository virtualOfficeRepository;
+    @Mock
+    private TargetService targetService;
 
     private AccountSummaryService accountSummaryService;
     private Organization testOrg;
@@ -48,7 +50,7 @@ class AccountSummaryServiceTest {
     @BeforeEach
     void setUp() {
         accountSummaryService = new AccountSummaryService(orderRepository, businessDayRepository,
-                orderAssignmentRepository, transactionService, commissionService, virtualOfficeRepository);
+                orderAssignmentRepository, transactionService, commissionService, virtualOfficeRepository, targetService);
 
         testOrg = new Company();
         testOrg.setId(1L);

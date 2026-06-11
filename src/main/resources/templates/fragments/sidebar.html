@@ -53,6 +53,9 @@
 
     </div>
 
+    <!-- Subscription Warning Banner -->
+    <th:block th:replace="~{fragments/subscription-banner :: subscription-banner}"></th:block>
+
     <nav class="sidebar-nav">
         <!-- Super Admin Section -->
         <div class="nav-section" sec:authorize="hasRole('SUPER_ADMIN')">
@@ -77,6 +80,41 @@
                         th:classappend="${#strings.startsWith(currentUri, '/super-admin/users')} ? 'active' : ''">
                         <span class="nav-link-icon">👥</span>
                         <span th:text="#{super_admin.nav.users}">المستخدمين</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/super-admin/subscriptions}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/super-admin/subscriptions')} ? 'active' : ''">
+                        <span class="nav-link-icon">💎</span>
+                        <span>الاشتراكات</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/super-admin/payments}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/super-admin/payments')} ? 'active' : ''">
+                        <span class="nav-link-icon">💳</span>
+                        <span>المدفوعات</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/super-admin/broadcasts}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/super-admin/broadcasts')} ? 'active' : ''">
+                        <span class="nav-link-icon">📢</span>
+                        <span>الرسائل والإشعارات</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/super-admin/support}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/super-admin/support')} ? 'active' : ''">
+                        <span class="nav-link-icon">🎫</span>
+                        <span>الدعم الفني</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a th:href="@{/super-admin/settings}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/super-admin/settings')} ? 'active' : ''">
+                        <span class="nav-link-icon">⚙️</span>
+                        <span>إعدادات المنصة</span>
                     </a>
                 </li>
             </ul>
@@ -215,6 +253,13 @@
                         <span th:text="#{nav.integrations}">الربط الخارجي</span>
                     </a>
     </li> -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <a th:href="@{/support}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/support')} ? 'active' : ''">
+                        <span class="nav-link-icon">🎫</span>
+                        <span>الدعم الفني</span>
+                    </a>
+                </li>
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'SUPER_ADMIN')"
                     th:if="${currentOrgType != 'CLIENT'}">
                     <a th:href="@{/audit-logs}" class="nav-link"
@@ -235,6 +280,21 @@
                     <span class="nav-link-icon">📥</span>
                     <span th:text="#{nav.import-excel}">استيراد Excel</span>
                 </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                    th:if="${currentOrgType != 'STORE' and currentOrgType != 'CLIENT'}">
+                    <a th:href="@{/auto-distribution}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/auto-distribution')} ? 'active' : ''">
+                        <span class="nav-link-icon">🚚</span>
+                        <span th:text="#{nav.auto-distribution}">التوزيع التلقائي</span>
+                    </a>
+                </li>
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <a th:href="@{/settings/pricing}" class="nav-link"
+                        th:classappend="${#strings.startsWith(currentUri, '/settings/pricing')} ? 'active' : ''">
+                        <span class="nav-link-icon">💲</span>
+                        <span th:text="#{nav.pricing}">قوائم الأسعار</span>
+                    </a>
                 </li>
             </ul>
         </div>

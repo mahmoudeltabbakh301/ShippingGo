@@ -118,10 +118,12 @@
                         <h3 class="card-title" th:text="#{orders.view.info_title}" style="font-size: 1.1rem;">📦 معلومات
                             الشحنة</h3>
                         <span class="badge"
-                            th:classappend="${order.status.name() == 'WAITING' ? 'badge-waiting' : 
+                            th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
+                                              (order.status.name() == 'PARTIAL_DELIVERY' ? 'badge-partial' :
                                               (order.status.name() == 'IN_TRANSIT' ? 'badge-transit' : 
-                                              (order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
-                                              (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 'badge-refused')))}"
+                                              (order.status.name() == 'REFUSED' ? 'badge-refused' :
+                                              (order.status.name() == 'CANCELLED' ? 'badge-cancelled' : 
+                                              (order.status.name() == 'DEFERRED' ? 'badge-deferred' : 'badge-waiting')))))}"
                             th:text="${#locale.language == 'en' ? order.status.englishName : order.status.arabicName}">الحالة</span>
                     </div>
 
@@ -171,10 +173,29 @@
 
                             <div class="form-group">
                                 <label class="form-label" th:text="#{orders.view.governorate}">المحافظة</label>
-                                <select name="governorate" class="form-control">
+                                <select name="governorate" id="editGovSelect" class="form-control"
+                                    onchange="onEditGovChange(this.value)">
                                     <option value="" th:text="#{orders.view.select_governorate}">غير محدد</option>
                                     <option th:each="gov : ${governorates}" th:value="${gov}"
                                         th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}" th:selected="${order.governorate == gov}"></option>
+                                </select>
+                            </div>
+
+                            <!-- المركز -->
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{order.center}">المركز</label>
+                                <select name="center" id="editCenterSelect" class="form-control"
+                                    onchange="onEditCenterChange(this.value)">
+                                    <option value="" th:text="#{order.center_select}">اختر المركز</option>
+                                    <!-- سيتم تحميلها بالـ JS -->
+                                </select>
+                            </div>
+
+                            <!-- المنطقة -->
+                            <div class="form-group">
+                                <label class="form-label" th:text="#{order.area}">المنطقة</label>
+                                <select name="area" id="editAreaSelect" class="form-control">
+                                    <option value="" th:text="#{order.area_select}">اختر المنطقة</option>
                                 </select>
                             </div>
 
@@ -854,7 +875,62 @@
                 }
             }
         }
-        document.addEventListener('DOMContentLoaded', togglePartialDelivery);
+
+        var currentEditGov = /*[[${order.governorate?.name()}]]*/ '';
+        var currentEditCenter = /*[[${order.center}]]*/ '';
+        var currentEditArea = /*[[${order.area}]]*/ '';
+
+        function onEditGovChange(govKey) {
+            currentEditGov = govKey;
+            var centerSel = document.getElementById('editCenterSelect');
+            var areaSel = document.getElementById('editAreaSelect');
+            if(!centerSel || !areaSel) return;
+            
+            centerSel.innerHTML = '<option value="">اختر المركز</option>';
+            areaSel.innerHTML = '<option value="">اختر المنطقة</option>';
+            if (!govKey) return;
+
+            fetch('/api/zones/' + govKey)
+                .then(r => r.json())
+                .then(centers => {
+                    centers.forEach(c => {
+                        var opt = document.createElement('option');
+                        opt.value = c.name; opt.textContent = c.name;
+                        if (c.name === currentEditCenter) opt.selected = true;
+                        centerSel.appendChild(opt);
+                    });
+                    if (currentEditCenter) {
+                        onEditCenterChange(currentEditCenter);
+                    }
+                }).catch(e => console.error(e));
+        }
+
+        function onEditCenterChange(centerName) {
+            currentEditCenter = centerName;
+            var areaSel = document.getElementById('editAreaSelect');
+            if(!areaSel) return;
+            
+            areaSel.innerHTML = '<option value="">اختر المنطقة</option>';
+            if (!centerName || !currentEditGov) return;
+
+            fetch('/api/zones/' + currentEditGov + '/' + encodeURIComponent(centerName))
+                .then(r => r.json())
+                .then(areas => {
+                    areas.forEach(a => {
+                        var opt = document.createElement('option');
+                        opt.value = a.name; opt.textContent = a.name;
+                        if (a.name === currentEditArea) opt.selected = true;
+                        areaSel.appendChild(opt);
+                    });
+                }).catch(e => console.error(e));
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            togglePartialDelivery();
+            if (currentEditGov) {
+                onEditGovChange(currentEditGov);
+            }
+        });
     </script>
 
 </body>

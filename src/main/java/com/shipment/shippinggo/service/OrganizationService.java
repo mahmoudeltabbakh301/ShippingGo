@@ -16,6 +16,7 @@ import com.shipment.shippinggo.exception.UnauthorizedAccessException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrganizationService {
@@ -465,7 +466,12 @@ public class OrganizationService {
     }
 
     public List<Membership> getPendingInvitationsForUser(User user) {
-        return membershipRepository.findByUserAndStatus(user, MembershipStatus.PENDING);
+        List<Membership> pending = membershipRepository.findByUserAndStatus(user, MembershipStatus.PENDING);
+        // Filter out expired invitations (older than 2 days)
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(2);
+        return pending.stream()
+                .filter(m -> m.getInvitedAt() != null && m.getInvitedAt().isAfter(cutoff))
+                .collect(Collectors.toList());
     }
 
     public List<Membership> getMembersByRole(Organization organization, Role role) {
@@ -486,6 +492,13 @@ public class OrganizationService {
 
         if (membership.getStatus() != MembershipStatus.PENDING) {
             throw new BusinessLogicException("هذه الدعوة تم الرد عليها مسبقاً");
+        }
+
+        // Check if invitation has expired (older than 2 days)
+        if (membership.getInvitedAt() != null &&
+                membership.getInvitedAt().isBefore(LocalDateTime.now().minusDays(2))) {
+            membershipRepository.delete(membership);
+            throw new BusinessLogicException("انتهت صلاحية هذه الدعوة. يرجى طلب دعوة جديدة.");
         }
 
         // === معالجة دعوة العميل ===
@@ -617,6 +630,48 @@ public class OrganizationService {
         User user = membership.getUser();
         user.setRole(newRole);
         userRepository.save(user);
+    }
+
+    /**
+     * تحديث الاسم المستعار لعضو في المنظمة
+     */
+    @Transactional
+    public void updateNickname(Long membershipId, String nickname) {
+        Membership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new ResourceNotFoundException("العضوية غير موجودة"));
+
+        membership.setNickname(nickname != null && !nickname.trim().isEmpty() ? nickname.trim() : null);
+        membershipRepository.save(membership);
+    }
+
+    /**
+     * الحصول على اسم العرض للمندوب (الاسم المستعار إن وُجد، وإلا الاسم الحقيقي)
+     */
+    public String getCourierDisplayName(User user, Organization organization) {
+        if (user == null) return "-";
+        if (organization == null) return user.getFullName();
+
+        Organization resolvedOrg = organization;
+        if (resolvedOrg instanceof VirtualOffice) {
+            resolvedOrg = ((VirtualOffice) resolvedOrg).getParentOrganization();
+        }
+
+        return membershipRepository.findByUserAndOrganization(user, resolvedOrg)
+                .filter(m -> m.getNickname() != null && !m.getNickname().isEmpty())
+                .map(Membership::getNickname)
+                .orElse(user.getFullName());
+    }
+
+    /**
+     * بناء خريطة أسماء العرض لكل المناديب في المنظمة (userId -> displayName)
+     */
+    public java.util.Map<Long, String> buildCourierDisplayNameMap(Organization organization) {
+        java.util.Map<Long, String> map = new java.util.LinkedHashMap<>();
+        List<User> couriers = getCouriers(organization);
+        for (User courier : couriers) {
+            map.put(courier.getId(), getCourierDisplayName(courier, organization));
+        }
+        return map;
     }
 
     @Transactional

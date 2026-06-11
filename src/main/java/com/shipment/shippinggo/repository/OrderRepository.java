@@ -1038,4 +1038,51 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "ORDER BY o.createdAt DESC")
         List<Order> findUnassignedOrdersByOrganization(@Param("orgId") Long orgId);
 
+        // ===================== Target Setting Queries =====================
+
+        // Sum delivered amount for a courier in a specific date range
+        @Query("SELECT COALESCE(SUM(CASE " +
+                        "WHEN o.status = 'DELIVERED' THEN COALESCE(o.collectedAmount, o.amount) " +
+                        "WHEN o.status = 'PARTIAL_DELIVERY' THEN COALESCE(o.partialDeliveryAmount, 0) " +
+                        "ELSE 0 END), 0) " +
+                        "FROM Order o WHERE o.assignedToCourier.id = :courierId " +
+                        "AND o.courierAssignmentDate >= :startDate AND o.courierAssignmentDate < :endDate " +
+                        "AND (o.status = 'DELIVERED' OR o.status = 'PARTIAL_DELIVERY')")
+        java.math.BigDecimal sumDeliveredAmountByCourierAndDateRange(
+                        @Param("courierId") Long courierId,
+                        @Param("startDate") java.time.LocalDateTime startDate,
+                        @Param("endDate") java.time.LocalDateTime endDate);
+
+        // Fetch delivered orders for a courier in a specific date range
+        @Query("SELECT o FROM Order o WHERE o.assignedToCourier.id = :courierId " +
+                        "AND o.courierAssignmentDate >= :startDate AND o.courierAssignmentDate < :endDate " +
+                        "AND (o.status = 'DELIVERED' OR o.status = 'PARTIAL_DELIVERY')")
+        List<Order> findDeliveredOrdersByCourierAndDateRange(
+                        @Param("courierId") Long courierId,
+                        @Param("startDate") java.time.LocalDateTime startDate,
+                        @Param("endDate") java.time.LocalDateTime endDate);
+
+        // Sum delivered amount for an assigned organization in a specific date range
+        @Query("SELECT COALESCE(SUM(CASE " +
+                        "WHEN o.status = 'DELIVERED' THEN COALESCE(o.collectedAmount, o.amount) " +
+                        "WHEN o.status = 'PARTIAL_DELIVERY' THEN COALESCE(o.partialDeliveryAmount, 0) " +
+                        "ELSE 0 END), 0) " +
+                        "FROM Order o WHERE o.assignedToOrganization.id = :assignedOrgId " +
+                        "AND o.assignmentDate >= CAST(:startDate AS java.time.LocalDate) AND o.assignmentDate <= CAST(:endDate AS java.time.LocalDate) " +
+                        "AND (o.status = 'DELIVERED' OR o.status = 'PARTIAL_DELIVERY')")
+        java.math.BigDecimal sumDeliveredAmountByAssignedOrgAndDateRange(
+                        @Param("assignedOrgId") Long assignedOrgId,
+                        @Param("startDate") java.time.LocalDateTime startDate,
+                        @Param("endDate") java.time.LocalDateTime endDate);
+
+        // Fetch delivered orders for an assigned organization in a specific date range
+        @Query("SELECT o FROM Order o WHERE o.assignedToOrganization.id = :assignedOrgId " +
+                        "AND o.assignmentDate >= CAST(:startDate AS java.time.LocalDate) AND o.assignmentDate <= CAST(:endDate AS java.time.LocalDate) " +
+                        "AND (o.status = 'DELIVERED' OR o.status = 'PARTIAL_DELIVERY')")
+        List<Order> findDeliveredOrdersByAssignedOrgAndDateRange(
+                        @Param("assignedOrgId") Long assignedOrgId,
+                        @Param("startDate") java.time.LocalDateTime startDate,
+                        @Param("endDate") java.time.LocalDateTime endDate);
+
 }
+

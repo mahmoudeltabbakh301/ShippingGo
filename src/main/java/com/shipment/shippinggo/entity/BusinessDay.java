@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "business_days", uniqueConstraints = {
@@ -22,6 +23,7 @@ public class BusinessDay {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Organization organization;
 
     // اسم المنظمة (يُحفظ عند حذف المكتب الافتراضي)
@@ -43,10 +45,12 @@ public class BusinessDay {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User createdBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "closed_by_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User closedBy;
 
     @Column(nullable = false, updatable = false)

@@ -72,18 +72,27 @@ public class OrderStatusService {
 
         OrderStatus currentStatus = order.getStatus();
 
+        Organization assignedOrg = order.getAssignedToOrganization();
+        boolean isOwner = orderAssignmentService.isUserMemberOfOrganization(changedBy, order.getOwnerOrganization());
+
         if (currentStatus == OrderStatus.DELIVERED || currentStatus == OrderStatus.REFUSED
                 || currentStatus == OrderStatus.CANCELLED) {
-            if (newStatus == OrderStatus.IN_TRANSIT) {
-                Organization assignedOrg = order.getAssignedToOrganization();
-                if (assignedOrg == null || !orderAssignmentService.isUserMemberOfOrganization(changedBy, assignedOrg)) {
-                    throw new UnauthorizedAccessException(
-                            "فقط المكتب المسند إليه الطلب يمكنه إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
+
+            boolean ownerFreeAccess = (assignedOrg == null) && isOwner;
+
+            if (!ownerFreeAccess) {
+                if (newStatus == OrderStatus.IN_TRANSIT) {
+                    if (assignedOrg == null || !orderAssignmentService.isUserMemberOfOrganization(changedBy, assignedOrg)) {
+                        throw new UnauthorizedAccessException(
+                                "فقط المكتب المسند إليه الطلب يمكنه إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
+                    }
+                    order.setProcessedByCourier(false);
+                } else {
+                    throw new BusinessLogicException("لا يمكن تغيير حالة طلب في حالة نهائية ("
+                            + currentStatus.getArabicName() + "). يمكن فقط إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
                 }
+            } else if (newStatus == OrderStatus.IN_TRANSIT) {
                 order.setProcessedByCourier(false);
-            } else {
-                throw new BusinessLogicException("لا يمكن تغيير حالة طلب في حالة نهائية ("
-                        + currentStatus.getArabicName() + "). يمكن فقط إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
             }
         }
 
@@ -92,7 +101,6 @@ public class OrderStatusService {
             throw new BusinessLogicException("المندوب قام بتحديث هذا الطلب مسبقاً");
         }
 
-        Organization assignedOrg = order.getAssignedToOrganization();
         if (assignedOrg != null) {
             boolean isAssignedCourier = order.getAssignedToCourier() != null
                     && changedBy.getId().equals(order.getAssignedToCourier().getId());

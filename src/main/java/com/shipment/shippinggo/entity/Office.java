@@ -3,6 +3,7 @@ package com.shipment.shippinggo.entity;
 import com.shipment.shippinggo.enums.OrganizationType;
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "offices")
@@ -14,6 +15,7 @@ public class Office extends Organization {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_company_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "offices"})
     private Company parentCompany;
 
     @Builder

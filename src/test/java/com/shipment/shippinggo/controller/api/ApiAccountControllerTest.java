@@ -9,6 +9,7 @@ import com.shipment.shippinggo.enums.Role;
 import com.shipment.shippinggo.service.AccountService;
 import com.shipment.shippinggo.service.OrganizationService;
 import com.shipment.shippinggo.service.CustomUserDetailsService;
+import com.shipment.shippinggo.service.SubscriptionService;
 import com.shipment.shippinggo.security.JwtAuthenticationFilter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,6 +54,9 @@ class ApiAccountControllerTest {
 
     @MockBean
     private com.shipment.shippinggo.service.NotificationService notificationService;
+
+    @MockBean
+    private SubscriptionService subscriptionService;
 
     private User testUser;
     private Organization testOrg;

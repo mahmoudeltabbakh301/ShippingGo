@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "invoice_receipts", uniqueConstraints = {
@@ -21,11 +22,13 @@ public class InvoiceReceipt {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "invoice_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "receipts"})
     private Invoice invoice;
 
     // المنظمة التي يجب أن تؤكد الاستلام
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Organization organization;
 
     // ترتيب التأكيد في السلسة (1 = آخر طرف مسند إليه، الرقم الأكبر = المالك الأصلي)
@@ -43,5 +46,6 @@ public class InvoiceReceipt {
     // المستخدم الذي أكد الاستلام
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "confirmed_by_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User confirmedBy;
 }

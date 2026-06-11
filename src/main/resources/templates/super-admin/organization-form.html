@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${editMode ? 'تعديل المنظمة' : 'إنشاء منظمة جديدة'} + ' - ShippingGo'">إنشاء منظمة - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <style>
+        .form-container { max-width: 700px; }
+        .form-group { margin-bottom: var(--space-4); }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-1); }
+        .form-input, .form-select, .form-textarea { width: 100%; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-secondary); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .form-textarea { min-height: 100px; resize: vertical; }
+        .form-section { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-4); }
+        .form-section-title { font-size: 1rem; font-weight: 700; margin-bottom: var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--border-color); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+        @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
+        .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-1); }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" th:text="${editMode ? '✏️ تعديل المنظمة' : '➕ إنشاء منظمة جديدة'}"></h1>
+                    <p class="page-subtitle" th:if="${editMode}" th:text="'تعديل بيانات: ' + ${org.name}"></p>
+                </div>
+                <a th:href="${editMode ? '/super-admin/organizations/' + org.id : '/super-admin/organizations'}" class="btn btn-secondary">↩ رجوع</a>
+            </div>
+
+            <div class="form-container">
+                <form th:action="${editMode ? '/super-admin/organizations/' + org.id + '/update' : '/super-admin/organizations/create'}" method="post">
+
+                    <div class="form-section">
+                        <div class="form-section-title">📋 البيانات الأساسية</div>
+
+                        <div th:if="${!editMode}" class="form-group">
+                            <label class="form-label">نوع المنظمة *</label>
+                            <select class="form-select" name="type" required>
+                                <option value="">-- اختر النوع --</option>
+                                <option th:each="t : ${orgTypes}" th:value="${t}" th:text="${t.arabicName}"></option>
+                            </select>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">اسم المنظمة *</label>
+                                <input class="form-input" type="text" name="name" th:value="${orgDto.name}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">البريد الإلكتروني *</label>
+                                <input class="form-input" type="email" name="email" th:value="${orgDto.email}" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">رقم الهاتف *</label>
+                                <input class="form-input" type="text" name="phone" th:value="${orgDto.phone}" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">المحافظة</label>
+                                <select class="form-select" name="governorate">
+                                    <option value="">-- اختر المحافظة --</option>
+                                    <option th:each="g : ${governorates}" th:value="${g}" th:text="${g.arabicName}"
+                                            th:selected="${orgDto.governorate != null && orgDto.governorate == g}"></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">العنوان *</label>
+                            <input class="form-input" type="text" name="address" th:value="${orgDto.address}" required>
+                        </div>
+                    </div>
+
+                    <div th:if="${!editMode}" class="form-section">
+                        <div class="form-section-title">👤 المدير (اختياري)</div>
+                        <div class="form-group">
+                            <label class="form-label">البريد الإلكتروني للمدير</label>
+                            <input class="form-input" type="email" name="adminEmail" th:value="${orgDto.adminEmail}" placeholder="أدخل البريد الإلكتروني لمستخدم موجود">
+                            <p class="form-hint">يجب أن يكون المستخدم مسجلاً مسبقاً في المنصة. اتركه فارغاً لإنشاء منظمة بدون مدير.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title">ℹ️ معلومات إضافية</div>
+                        <div class="form-group">
+                            <label class="form-label">نبذة عن المنظمة</label>
+                            <textarea class="form-textarea" name="about" th:text="${orgDto.about}"></textarea>
+                        </div>
+
+                        <div th:if="${editMode}">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">رقم الواتساب</label>
+                                    <input class="form-input" type="text" name="whatsappNumber" th:value="${orgDto.whatsappNumber}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">الموقع الإلكتروني</label>
+                                    <input class="form-input" type="url" name="websiteUrl" th:value="${orgDto.websiteUrl}">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">مدة التوصيل المتوقعة (أيام)</label>
+                                    <input class="form-input" type="number" name="estimatedDeliveryDays" th:value="${orgDto.estimatedDeliveryDays}">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">شروط الدفع</label>
+                                    <input class="form-input" type="text" name="paymentTerms" th:value="${orgDto.paymentTerms}">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">سياسة البيك أب</label>
+                                <textarea class="form-textarea" name="pickupPolicy" th:text="${orgDto.pickupPolicy}"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">سياسة المرتجعات</label>
+                                <textarea class="form-textarea" name="returnPolicy" th:text="${orgDto.returnPolicy}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span th:text="${editMode ? '💾 حفظ التعديلات' : '➕ إنشاء المنظمة'}"></span>
+                    </button>
+                </form>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

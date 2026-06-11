@@ -5,6 +5,7 @@ import com.shipment.shippinggo.entity.Order;
 import com.shipment.shippinggo.entity.StoreIntegration;
 import com.shipment.shippinggo.enums.Governorate;
 import com.shipment.shippinggo.enums.OrderStatus;
+import com.shipment.shippinggo.service.PaymobService;
 import com.shipment.shippinggo.service.WebhookService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +22,11 @@ public class WebhookController {
     private static final Logger log = LoggerFactory.getLogger(WebhookController.class);
 
     private final WebhookService webhookService;
+    private final PaymobService paymobService;
 
-    public WebhookController(WebhookService webhookService) {
+    public WebhookController(WebhookService webhookService, PaymobService paymobService) {
         this.webhookService = webhookService;
+        this.paymobService = paymobService;
     }
 
     // ============================
@@ -249,6 +252,29 @@ public class WebhookController {
             statuses.add(entry);
         }
         return ResponseEntity.ok(Map.of("success", true, "statuses", statuses));
+    }
+
+    // ============================
+    // Paymob Payment Webhook
+    // ============================
+
+    /**
+     * Webhook من Paymob بعد الدفع (Server-to-Server)
+     *
+     * POST /api/webhooks/paymob
+     */
+    @PostMapping("/paymob")
+    public ResponseEntity<?> paymobWebhook(
+            @RequestBody Map<String, Object> payload,
+            @RequestParam(required = false) String hmac) {
+        try {
+            boolean success = paymobService.handleWebhook(payload, hmac);
+            return ResponseEntity.ok(Map.of("success", success));
+        } catch (Exception e) {
+            log.error("Error processing Paymob webhook: {}", e.getMessage(), e);
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("success", false, "error", e.getMessage()));
+        }
     }
 
     // ============================

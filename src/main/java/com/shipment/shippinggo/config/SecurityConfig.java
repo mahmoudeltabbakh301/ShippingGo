@@ -60,7 +60,7 @@ public class SecurityConfig {
                                                                 .policyDirectives(
                                                                                 "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://shipping-go.com;")))
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**")) // Disable CSRF for APIs
+                                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/api/webhooks/**")) // Disable CSRF for APIs and webhooks
 
                                 .authenticationProvider(authenticationProvider())
                                 .authorizeHttpRequests(authz -> authz
@@ -76,7 +76,9 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 // Auth pages & Health checks
                                                 .requestMatchers("/", "/login", "/register", "/register/**", "/verify",
-                                                                "/forgot-password", "/reset-password", "/downloads", "/actuator/**")
+                                                                "/forgot-password", "/reset-password", "/downloads", "/actuator/**",
+                                                                "/payment/callback", "/payment/success", "/payment/failed",
+                                                                "/pages/**")
                                                 .permitAll()
                                                 // Member Invitations (Accessible to all authenticated users)
                                                 .requestMatchers("/members/invitations",
@@ -115,6 +117,11 @@ public class SecurityConfig {
                                                 .hasAnyRole("ADMIN", "MANAGER", "DATA_ENTRY")
                                                 // Settings - all authenticated users
                                                 .requestMatchers("/settings/**").authenticated()
+                                                // Auto Distribution - ADMIN and MANAGER only
+                                                .requestMatchers("/auto-distribution/**")
+                                                .hasAnyRole("ADMIN", "MANAGER")
+                                                // Zone API - all authenticated users
+                                                .requestMatchers("/api/zones/**").authenticated()
                                                 // Store Integrations (ADMIN, MANAGER)
                                                 .requestMatchers("/store/**").hasAnyRole("ADMIN", "MANAGER")
                                                 // User pages (for MEMBER role)
@@ -122,7 +129,7 @@ public class SecurityConfig {
                                                 // API Auth
                                                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/verify", "/api/auth/refresh").permitAll()
                                                 // API endpoints for authenticated users
-                                                .requestMatchers("/api/v1/**", "/api/auth/me").authenticated()
+                                                .requestMatchers("/api/v1/**", "/api/auth/me", "/api/auth/fcm-token").authenticated()
                                                 .requestMatchers("/api/**").authenticated()
                                                 // Dashboard
                                                 .requestMatchers("/dashboard/**").authenticated()

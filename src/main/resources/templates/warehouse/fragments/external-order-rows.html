@@ -69,9 +69,12 @@
                     </span>
                 </th:block>
             </td>
-            <td
-                th:text="${order.assignedToCourier != null ? order.assignedToCourier.fullName : '-'}">
-                -</td>
+            <td>
+                <span
+                    th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
+                <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
+                    style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+            </td>
             <td>
                 <a th:href="@{/orders/{id}(id=${order.id}, businessDayId=${businessDay.id})}"
                     class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}">👁

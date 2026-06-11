@@ -63,11 +63,28 @@
                     <div class="dashboard-header-text">
                         <h1 th:text="${organization.name}">اسم المنظمة</h1>
                         <p class="dashboard-date">
-                            <span class="live-dot"></span>
+                            <span class="live-dot" th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() == today.toString()}"></span>
                             <span th:text="#{dashboard.admin.title}">لوحة التحكم</span>
                             <span> — </span>
-                            <span th:text="${today}">2026-03-16</span>
+                            <span th:if="${selectedBusinessDay != null}" th:text="${selectedBusinessDay.name} + ' (' + ${selectedBusinessDay.date} + ')'">يوم العمل</span>
+                            <span th:if="${selectedBusinessDay == null}" th:text="${today}">2026-03-16</span>
                         </p>
+                    </div>
+                </div>
+                <!-- Business Day Selector -->
+                <div class="business-day-selector" th:if="${businessDays != null && !businessDays.isEmpty()}">
+                    <div class="bd-selector-wrapper">
+                        <label class="bd-selector-label" th:text="'📅 ' + #{dashboard.select_business_day}">📅 اختر يوم العمل</label>
+                        <select id="businessDaySelector" class="bd-selector-dropdown" onchange="onBusinessDayChange(this)">
+                            <option value="" th:text="#{dashboard.select_day_placeholder}">-- اختر يوم العمل --</option>
+                            <option th:each="bd : ${businessDays}"
+                                    th:value="${bd.id}"
+                                    th:selected="${selectedBusinessDayId != null && selectedBusinessDayId == bd.id}"
+                                    th:text="${bd.name} + ' — ' + ${bd.date}"
+                                    th:classappend="${bd.date.toString() == today.toString() ? 'bd-today-option' : ''}">
+                            </option>
+                        </select>
+                        <a th:href="@{/dashboard}" class="bd-btn-today" th:text="'📌 ' + #{dashboard.btn_today}" th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() != today.toString()}">📌 اليوم</a>
                     </div>
                 </div>
             </div>
@@ -581,6 +598,18 @@
             }
             requestAnimationFrame(animate);
         });
+    </script>
+
+    <script>
+        // ===== Business Day Selector =====
+        function onBusinessDayChange(select) {
+            const value = select.value;
+            if (value) {
+                window.location.href = '/dashboard?businessDayId=' + value;
+            } else {
+                window.location.href = '/dashboard';
+            }
+        }
     </script>
 
     <script th:src="@{/js/preferences.js}"></script>

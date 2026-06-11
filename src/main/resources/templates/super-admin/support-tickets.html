@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تذاكر الدعم الفني - ShippingGo</title>
+    <script>(function(){var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <style>
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-3); margin-bottom: var(--space-5); }
+        .stat-mini { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); text-align: center; }
+        .stat-mini-value { font-size: 1.5rem; font-weight: 700; color: var(--primary); }
+        .stat-mini-label { font-size: 0.75rem; color: var(--text-muted); }
+        .filter-bar { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); flex-wrap: wrap; }
+        .filter-btn { padding: var(--space-1) var(--space-3); border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-primary); color: var(--text-muted); cursor: pointer; font-family: inherit; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; }
+        .filter-btn:hover, .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .priority-badge { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+        .priority-LOW { background: #e0e7ff; color: #3730a3; }
+        .priority-MEDIUM { background: #fef3c7; color: #92400e; }
+        .priority-HIGH { background: #fed7aa; color: #9a3412; }
+        .priority-URGENT { background: #fecaca; color: #991b1b; }
+        .status-badge { padding: 2px 8px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 600; }
+        .status-OPEN { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_PROGRESS { background: #fef3c7; color: #92400e; }
+        .status-RESOLVED { background: #dcfce7; color: #166534; }
+        .status-CLOSED { background: #e5e7eb; color: #374151; }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+        <main class="main-content">
+            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">🎫 تذاكر الدعم الفني</h1>
+                    <p class="page-subtitle">إدارة استفسارات وشكاوى المنظمات</p>
+                </div>
+            </div>
+
+            <!-- إحصائيات -->
+            <div class="stats-row">
+                <div class="stat-mini">
+                    <div class="stat-mini-value" th:text="${ticketStats.total}">0</div>
+                    <div class="stat-mini-label">إجمالي التذاكر</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-value" style="color: #2563eb;" th:text="${ticketStats.open}">0</div>
+                    <div class="stat-mini-label">مفتوحة</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-value" style="color: #d97706;" th:text="${ticketStats.inProgress}">0</div>
+                    <div class="stat-mini-label">قيد المعالجة</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-value" style="color: #16a34a;" th:text="${ticketStats.resolved}">0</div>
+                    <div class="stat-mini-label">تم الحل</div>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-value" style="color: #6b7280;" th:text="${ticketStats.closed}">0</div>
+                    <div class="stat-mini-label">مغلقة</div>
+                </div>
+            </div>
+
+            <!-- فلاتر -->
+            <div class="filter-bar">
+                <a th:href="@{/super-admin/support}" class="filter-btn" th:classappend="${selectedStatus == null ? 'active' : ''}">الكل</a>
+                <a th:each="s : ${statuses}" th:href="@{/super-admin/support(status=${s})}" class="filter-btn"
+                   th:classappend="${selectedStatus != null && selectedStatus == s ? 'active' : ''}"
+                   th:text="${s.arabicName}"></a>
+            </div>
+
+            <!-- جدول التذاكر -->
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الرقم</th>
+                            <th>الموضوع</th>
+                            <th>المنظمة</th>
+                            <th>الأولوية</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${tickets.isEmpty()}">
+                            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: var(--space-6);">لا توجد تذاكر</td>
+                        </tr>
+                        <tr th:each="ticket : ${tickets}">
+                            <td th:text="${ticket.ticketNumber}">TKT-00001</td>
+                            <td>
+                                <a th:href="@{'/super-admin/support/' + ${ticket.id}}" style="color: var(--primary); font-weight: 600;"
+                                   th:text="${ticket.subject}">موضوع</a>
+                            </td>
+                            <td th:text="${ticket.organization != null ? ticket.organization.name : '—'}">منظمة</td>
+                            <td><span class="priority-badge" th:classappend="'priority-' + ${ticket.priority}" th:text="${ticket.priority.arabicName}">متوسطة</span></td>
+                            <td><span class="status-badge" th:classappend="'status-' + ${ticket.status}" th:text="${ticket.status.arabicName}">مفتوحة</span></td>
+                            <td th:text="${#temporals.format(ticket.createdAt, 'yyyy/MM/dd')}">2026/06/01</td>
+                            <td><a th:href="@{'/super-admin/support/' + ${ticket.id}}" class="btn btn-sm btn-secondary">عرض</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div th:if="${tickets.totalPages > 1}" style="display: flex; justify-content: center; gap: var(--space-2); margin-top: var(--space-4);">
+                <a th:each="i : ${#numbers.sequence(0, tickets.totalPages - 1)}"
+                   th:href="@{/super-admin/support(page=${i}, status=${selectedStatus})}"
+                   class="filter-btn" th:classappend="${tickets.number == i ? 'active' : ''}"
+                   th:text="${i + 1}">1</a>
+            </div>
+        </main>
+    </div>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+</body>
+</html>

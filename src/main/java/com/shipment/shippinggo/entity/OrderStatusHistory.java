@@ -42,7 +42,7 @@ public class OrderStatusHistory {
     @JoinColumn(name = "changed_by_id")
     private User changedBy;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 65535)
     private String notes;
 
     @Column(nullable = false, updatable = false)
