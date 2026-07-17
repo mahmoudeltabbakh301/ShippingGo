@@ -468,7 +468,9 @@ public class NotificationService {
                 .replace("دعوة عمل جديدة", "New Work Invitation")
                 .replace("دعوة عميل جديدة", "New Client Invitation")
                 .replace("تم قبول الدعوة", "Invitation Accepted")
-                .replace("تم رفض الدعوة", "Invitation Declined");
+                .replace("تم رفض الدعوة", "Invitation Declined")
+                .replace("رحلة شحن في الطريق", "Shipment Trip in Transit")
+                .replace("الشاحنة في الرجوع", "Vehicle is Returning");
     }
 
     private String translateBody(String body, Locale locale) {
@@ -542,6 +544,14 @@ public class NotificationService {
         
         if (res.contains("رفض الانضمام إلى")) {
             res = res.replace(" رفض الانضمام إلى ", " declined joining ");
+            return res;
+        }
+
+        if (res.contains("الشاحنة")) {
+            res = res.replace("الشاحنة ", "Vehicle ")
+                     .replace(" في طريقها إليكم من ", " is on its way to you from ")
+                     .replace(" في طريق الرجوع ", " is on its way back ")
+                     .replace(" — كود الرحلة: ", " - Trip Code: ");
             return res;
         }
 

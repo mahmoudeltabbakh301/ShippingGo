@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,17 +35,17 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">🏠 <span th:text="#{dashboard.dataentry.title}">لوحة التحكم - موظف إدخال
+                <h1 class="page-title"><i data-lucide="layout-dashboard" class="inline-icon"></i> <span th:text="#{dashboard.dataentry.title}">لوحة التحكم - موظف إدخال
                         بيانات</span></h1>
                 <div class="btn-group">
-                    <a th:href="@{/orders/new}" class="btn btn-primary">➕ <span
+                    <a th:href="@{/orders/new}" class="btn btn-primary"><i data-lucide="plus" class="inline-icon"></i> <span
                             th:text="#{dashboard.dataentry.new_order}">طلب جديد</span></a>
-                    <a th:href="@{/orders/import}" class="btn btn-secondary">📥 <span
+                    <a th:href="@{/orders/import}" class="btn btn-secondary"><i data-lucide="inbox" class="inline-icon"></i> <span
                             th:text="#{dashboard.dataentry.import_excel}">استيراد Excel</span></a>
                 </div>
             </div>
@@ -52,17 +53,17 @@
             <!-- Statistics -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-icon waiting"><i data-lucide="hourglass"></i></div>
                     <div class="stat-value" th:text="${waitingCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.dataentry.waiting}">في الانتظار</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-icon transit"><i data-lucide="truck"></i></div>
                     <div class="stat-value" th:text="${inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.dataentry.in_transit}">في الطريق</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value" th:text="${deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.dataentry.delivered}">تم التسليم</div>
                 </div>
@@ -71,14 +72,14 @@
             <!-- Recent Orders -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📋 <span th:text="#{dashboard.dataentry.recent_orders}">آخر الطلبات</span>
+                    <h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{dashboard.dataentry.recent_orders}">آخر الطلبات</span>
                     </h3>
                     <a th:href="@{/orders}" class="btn btn-sm btn-secondary"
                         th:text="#{dashboard.dataentry.view_all}">عرض الكل</a>
                 </div>
 
                 <div th:if="${recentOrders.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📋</div>
+                    <div class="table-empty-icon"><i data-lucide="clipboard-list"></i></div>
                     <div class="table-empty-text" th:text="#{dashboard.dataentry.no_orders}">لا توجد طلبات بعد</div>
                 </div>
 
@@ -115,9 +116,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

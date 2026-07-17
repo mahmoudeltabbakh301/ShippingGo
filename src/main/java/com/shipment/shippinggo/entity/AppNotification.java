@@ -25,6 +25,7 @@ public class AppNotification {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "primaryOrganization", "password", "authorities", "verificationToken", "fcmToken"})
     private User user;
 
     @Column(nullable = false)

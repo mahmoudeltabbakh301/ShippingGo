@@ -24,6 +24,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -32,8 +33,8 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Breadcrumb -->
             <div class="breadcrumb">
@@ -44,7 +45,7 @@
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📥 <span th:text="#{orders.import.title}">استيراد الطلبات من Excel</span></h1>
+                <h1 class="page-title"><i data-lucide="inbox" class="inline-icon"></i> <span th:text="#{orders.import.title}">استيراد الطلبات من Excel</span></h1>
             </div>
 
             <div class="card" style="max-width: 700px;">
@@ -52,7 +53,7 @@
                 <div
                     style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-lg); padding: var(--space-4); margin-bottom: var(--space-6);">
                     <h4 style="color: var(--primary-400); margin-bottom: var(--space-2);"
-                        th:text="#{orders.import.format_title}">📋 تنسيق الملف المطلوب:</h4>
+                        th:text="#{orders.import.format_title}"><i data-lucide="clipboard-list" class="inline-icon"></i> تنسيق الملف المطلوب:</h4>
                     <p style="color: var(--text-tertiary); margin: 0;">
                         <span th:text="#{orders.import.format_desc}">يجب أن يحتوي ملف Excel على الأعمدة التالية بالترتيب
                             (من اليسار لليمين):</span>
@@ -78,7 +79,7 @@
                         <div style="margin-top: var(--space-2);">
                             <a th:href="@{/business-days/new}" style="color: var(--primary-400); font-size: 0.875rem;"
                                 th:text="#{orders.import.bd_new}">
-                                ➕ إنشاء يوم عمل جديد
+                                <i data-lucide="plus" class="inline-icon"></i> إنشاء يوم عمل جديد
                             </a>
                         </div>
                     </div>
@@ -122,7 +123,7 @@
                             <input type="file" id="file" name="file" class="form-file-input" accept=".xlsx,.xls"
                                 required onchange="updateFileName(this)">
                             <label class="form-file-label" for="file">
-                                <div class="form-file-icon">📎</div>
+                                <div class="form-file-icon"><i data-lucide="paperclip"></i></div>
                                 <div>
                                     <div id="fileLabel" style="color: var(--text-secondary);"
                                         th:text="#{orders.import.file_placeholder}">اضغط لاختيار الملف أو اسحبه هنا
@@ -138,8 +139,8 @@
 
                     <button type="submit" id="importSubmitBtn" class="btn btn-primary btn-lg"
                         style="margin-bottom: var(--space-4);">
-                        <span id="btnText" th:text="#{orders.btn.import}">📥 استيراد الطلبات</span>
-                        <span id="btnSpinner" style="display: none;" th:text="#{orders.import.importing}">⏳ جاري الاستيراد...</span>
+                        <span id="btnText" th:text="#{orders.btn.import}"><i data-lucide="inbox" class="inline-icon"></i> استيراد الطلبات</span>
+                        <span id="btnSpinner" style="display: none;" th:text="#{orders.import.importing}"><i data-lucide="hourglass" class="inline-icon"></i> جاري الاستيراد...</span>
                     </button>
                     <a th:href="@{/business-days}" class="btn btn-secondary btn-lg" id="importCancelBtn"
                         th:text="#{orders.btn.cancel}">إلغاء</a>
@@ -149,7 +150,7 @@
     </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
 
     <script th:inline="javascript">
@@ -217,6 +218,7 @@
             document.getElementById('importCancelBtn').style.opacity = '0.5';
         });
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

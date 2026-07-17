@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,7 +35,7 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🏢 <span th:text="#{network.companies.title}">تصفح الشركات</span></h1>
+                    <h1 class="page-title"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="#{network.companies.title}">تصفح الشركات</span></h1>
                     <p class="text-muted" th:text="#{network.companies.desc}">جميع الشركات المتاحة للانضمام</p>
                 </div>
                 <div class="page-header-actions">
@@ -44,11 +45,11 @@
             </div>
 
             <div th:if="${success}" class="alert alert-success">
-                <span class="alert-icon">✓</span>
+                <span class="alert-icon"><i data-lucide="check" class="inline-icon"></i></span>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span class="alert-icon">✕</span>
+                <span class="alert-icon"><i data-lucide="x" class="inline-icon"></i></span>
                 <span th:text="${error}"></span>
             </div>
 
@@ -65,11 +66,11 @@
 
             <div class="card">
                 <div th:if="${query == null or query.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🔍</div>
+                    <div class="table-empty-icon"><i data-lucide="search"></i></div>
                     <div class="table-empty-text" th:text="#{network.companies.search_prompt}">قم بالبحث عن شركة لعرض النتائج</div>
                 </div>
                 <div th:if="${query != null and !query.isEmpty() and (allCompanies == null or allCompanies.isEmpty())}" class="table-empty">
-                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                     <div class="table-empty-text" th:text="#{network.companies.empty_search}">لا توجد شركات مطابقة للبحث</div>
                 </div>
                 <div class="table-container" th:if="${allCompanies != null and !allCompanies.isEmpty()}">
@@ -109,6 +110,7 @@
         </main>
     </div>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

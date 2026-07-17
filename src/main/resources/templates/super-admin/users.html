@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -35,15 +36,15 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">👥 <span th:text="#{super_admin.users.title}">إدارة المستخدمين</span></h1>
+                    <h1 class="page-title"><i data-lucide="users" class="inline-icon"></i> <span th:text="#{super_admin.users.title}">إدارة المستخدمين</span></h1>
                     <p class="page-subtitle" th:text="#{super_admin.users.subtitle}">عرض وإدارة جميع المستخدمين على المنصة</p>
                 </div>
             </div>
@@ -63,7 +64,7 @@
             <!-- Users Table -->
             <div class="card">
                 <div th:if="${users.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">👥</div>
+                    <div class="table-empty-icon"><i data-lucide="users"></i></div>
                     <div class="table-empty-text" th:text="#{super_admin.users.empty}">لا يوجد مستخدمين</div>
                 </div>
 
@@ -124,8 +125,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

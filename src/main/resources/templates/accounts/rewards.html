@@ -76,6 +76,7 @@
             }
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -85,17 +86,17 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">🏆 إعدادات التارجت والمكافآت</h1>
+                <h1 class="page-title"><i data-lucide="trophy" class="inline-icon"></i> إعدادات التارجت والمكافآت</h1>
                 <div class="page-actions">
                     <a th:href="@{/accounts}" class="btn btn-secondary">← العودة للحسابات</a>
                 </div>
@@ -113,8 +114,8 @@
             </div>
 
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('organizations')">🏢 تارجت المنظمات</button>
-                <button class="tab-btn" onclick="switchTab('couriers')">🚚 تارجت المناديب</button>
+                <button class="tab-btn active" onclick="switchTab('organizations')"><i data-lucide="building-2" class="inline-icon"></i> تارجت المنظمات</button>
+                <button class="tab-btn" onclick="switchTab('couriers')"><i data-lucide="truck" class="inline-icon"></i> تارجت المناديب</button>
             </div>
 
             <!-- Tab: Organizations Target -->
@@ -185,7 +186,7 @@
                                 <tr th:each="setting : ${settings}" th:if="${setting.targetOrganization != null}">
                                     <td>
                                         <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                            <span>🏢</span>
+                                            <span><i data-lucide="building-2"></i></span>
                                             <span th:text="${setting.targetOrganization.name}">الاسم</span>
                                         </div>
                                     </td>
@@ -290,7 +291,7 @@
                                 <tr th:each="setting : ${settings}" th:if="${setting.courier != null}">
                                     <td>
                                         <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                            <span>🚚</span>
+                                            <span><i data-lucide="truck"></i></span>
                                             <span th:text="${setting.courier.fullName}">الاسم</span>
                                         </div>
                                     </td>
@@ -330,7 +331,7 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script>
         function switchTab(tabId) {
@@ -341,6 +342,7 @@
             event.currentTarget.classList.add('active');
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

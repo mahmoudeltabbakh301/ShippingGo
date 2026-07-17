@@ -176,11 +176,13 @@ public class InvoiceController {
     @PostMapping("/generate-for-orders")
     public String generateForOrders(@RequestParam Long businessDayId,
                                      @RequestParam String orderIds,
+                                     @RequestParam(required = false) String redirectUrl,
                                      @CurrentOrganization Organization org,
                                      @AuthenticationPrincipal User user,
                                      RedirectAttributes redirectAttributes) {
         if (user.getRole() != Role.ADMIN && user.getRole() != Role.MANAGER && user.getRole() != Role.ACCOUNTANT) {
             redirectAttributes.addFlashAttribute("error", "غير مصرح بإنشاء الفواتير");
+            if (redirectUrl != null && !redirectUrl.isEmpty()) return "redirect:" + redirectUrl;
             return "redirect:/business-days/" + businessDayId;
         }
 
@@ -191,6 +193,7 @@ public class InvoiceController {
         BusinessDay businessDay = businessDayService.getById(businessDayId);
         if (businessDay == null) {
             redirectAttributes.addFlashAttribute("error", "يوم العمل غير موجود");
+            if (redirectUrl != null && !redirectUrl.isEmpty()) return "redirect:" + redirectUrl;
             return "redirect:/business-days";
         }
 
@@ -208,6 +211,9 @@ public class InvoiceController {
             redirectAttributes.addFlashAttribute("error", "فشل إنشاء الفواتير: " + e.getMessage());
         }
 
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            return "redirect:" + redirectUrl;
+        }
         return "redirect:/business-days/" + businessDayId;
     }
 

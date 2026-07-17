@@ -125,6 +125,7 @@
             justify-content: center;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -133,7 +134,7 @@
 
         <main class="main-content">
             <div class="page-header">
-                <h1 class="page-title">📄 إدارة الفواتير</h1>
+                <h1 class="page-title"><i data-lucide="file-text" class="inline-icon"></i> إدارة الفواتير</h1>
                 <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                     اختر يوم عمل لعرض الفواتير الخاصة به
                 </p>
@@ -148,16 +149,16 @@
                     <div th:each="summary : ${summaries}" class="bd-card">
                         <div class="bd-card-header">
                             <div class="bd-card-title">
-                                📅 <span th:text="${summary.businessDayName}">يوم العمل</span>
+                                <i data-lucide="calendar-days" class="inline-icon"></i> <span th:text="${summary.businessDayName}">يوم العمل</span>
                             </div>
                             <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                <span th:if="${summary.active}" class="bd-status-badge bd-status-active">🟢 مفتوح</span>
-                                <span th:unless="${summary.active}" class="bd-status-badge bd-status-closed">⚪ مُغلق</span>
+                                <span th:if="${summary.active}" class="bd-status-badge bd-status-active"><i data-lucide="circle-dot" class="inline-icon"></i> مفتوح</span>
+                                <span th:unless="${summary.active}" class="bd-status-badge bd-status-closed"><i data-lucide="circle" class="inline-icon"></i> مُغلق</span>
                             </div>
                         </div>
                         <div class="bd-card-body">
                             <div class="bd-card-date" style="margin-bottom: var(--space-3);">
-                                🗓️ <span th:text="${#temporals.format(summary.date, 'dd/MM/yyyy')}">01/01/2026</span>
+                                <i data-lucide="calendar" class="inline-icon"></i> <span th:text="${#temporals.format(summary.date, 'dd/MM/yyyy')}">01/01/2026</span>
                             </div>
                             <div class="bd-stats">
                                 <div class="bd-stat">
@@ -172,7 +173,7 @@
                         </div>
                         <div class="bd-card-footer">
                             <a th:href="@{/invoices/day/{id}(id=${summary.businessDayId})}" class="btn btn-primary">
-                                📋 عرض التفاصيل
+                                <i data-lucide="clipboard-list" class="inline-icon"></i> عرض التفاصيل
                             </a>
                         </div>
                     </div>
@@ -181,18 +182,19 @@
 
             <div th:if="${summaries == null || summaries.isEmpty()}" 
                  class="card" style="text-align: center; padding: var(--space-8);">
-                <div style="font-size: 3rem; margin-bottom: var(--space-4);">📄</div>
+                <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="file-text"></i></div>
                 <p style="color: var(--text-tertiary);">لا توجد فواتير حالياً. قم بإنشاء فواتير من داخل صفحة يوم العمل.</p>
                 <a th:href="@{/business-days}" class="btn btn-primary" style="margin-top: var(--space-4);">
-                    📅 الذهاب لأيام العمل
+                    <i data-lucide="calendar-days" class="inline-icon"></i> الذهاب لأيام العمل
                 </a>
             </div>
 
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

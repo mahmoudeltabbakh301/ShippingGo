@@ -31,8 +31,8 @@
             z-index: 1100;
             left: 0; top: 0;
             width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.15);
-            backdrop-filter: none;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
         }
         .vc-modal-overlay.show {
             display: flex;
@@ -42,7 +42,7 @@
 
         /* ===== Modal Box ===== */
         .vc-modal-box {
-            background-color: var(--bg-primary);
+            background-color: var(--surface-card);
             border-radius: 12px;
             padding: 28px;
             max-width: 480px;
@@ -121,15 +121,15 @@
             width: 100%;
             padding: 8px 10px;
             border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-primary);
+            border: 1px solid var(--surface-border);
+            background: var(--surface-bg);
             color: var(--text-primary);
             font-size: 14px;
         }
         .vc-form-input:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 99, 102, 241), 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
         }
         .vc-form-actions {
             display: flex;
@@ -137,7 +137,7 @@
             justify-content: flex-end;
             margin-top: 18px;
             padding-top: 14px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--surface-border);
         }
 
         .vc-virtual-badge {
@@ -157,6 +157,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -166,18 +167,18 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${successMessage}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${successMessage}"></span>
             </div>
             <div th:if="${errorMessage}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${errorMessage}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🚚 <span th:text="#{virtual_couriers.title}">المناديب الافتراضيون</span></h1>
+                    <h1 class="page-title"><i data-lucide="truck" class="inline-icon"></i> <span th:text="#{virtual_couriers.title}">المناديب الافتراضيون</span></h1>
                     <p class="text-muted" th:text="#{virtual_couriers.description}">إنشاء مناديب افتراضيين للشركات التي ليس لديها مندوبين مسجلين</p>
                 </div>
                 <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
@@ -188,7 +189,7 @@
 
             <!-- Info Alert -->
             <div class="alert" style="background: rgba(33, 150, 243, 0.08); border: 1px solid rgba(33, 150, 243, 0.25); color: var(--text-primary); margin-bottom: var(--space-4);">
-                <span>ℹ️</span>
+                <i data-lucide="info" style="width:18px;height:18px;flex-shrink:0;"></i>
                 <span th:text="#{virtual_couriers.info_message}">المندوب الافتراضي يعمل كمندوب عادي (إسناد أوردرات، حسابات، مخازن) لكن لا يمكنه تسجيل الدخول. تحديث الحالات يتم من قبل موظف المتابعة أو الأدمن.</span>
             </div>
 
@@ -213,7 +214,7 @@
                                 <td>
                                     <div style="font-weight: 600;" th:text="${vc.fullName}"></div>
                                     <small>
-                                        <span class="vc-virtual-badge">🚫 <span th:text="#{virtual_couriers.badge}">مندوب افتراضي</span></span>
+                                        <span class="vc-virtual-badge"><i data-lucide="ban" class="inline-icon"></i> <span th:text="#{virtual_couriers.badge}">مندوب افتراضي</span></span>
                                     </small>
                                 </td>
                                 <td th:text="${#temporals.format(vc.createdAt, 'yyyy-MM-dd HH:mm')}"></td>
@@ -222,7 +223,7 @@
                                         <button type="button" class="btn btn-sm btn-secondary"
                                             th:data-id="${vc.id}"
                                             th:data-name="${vc.fullName}"
-                                            onclick="openEditModal(this)">✏️</button>
+                                            onclick="openEditModal(this)"><i data-lucide="pencil" class="inline-icon"></i></button>
                                         <button type="button" class="btn btn-sm btn-danger"
                                             th:data-id="${vc.id}"
                                             th:data-name="${vc.fullName}"
@@ -241,7 +242,7 @@
             <!-- ====================  -->
             <div id="deleteModal" class="vc-modal-overlay" onclick="if(event.target===this) closeDeleteModal()">
                 <div class="vc-modal-box">
-                    <div class="vc-delete-icon">⚠️</div>
+                    <div class="vc-delete-icon"><i data-lucide="alert-triangle"></i></div>
                     <div class="vc-delete-title"
                         th:text="#{virtual_couriers.delete.modal.title}">تأكيد حذف المندوب الافتراضي</div>
                     <div class="vc-delete-message">
@@ -249,7 +250,7 @@
                         <strong id="deleteVcName" style="color: var(--primary-color);"></strong>؟
                     </div>
                     <div class="vc-delete-warning">
-                        <strong>⚠️ <span th:text="#{virtual_couriers.delete.modal.warning_title}">تنبيه</span>:</strong><br>
+                        <strong><i data-lucide="alert-triangle" class="inline-icon"></i> <span th:text="#{virtual_couriers.delete.modal.warning_title}">تنبيه</span>:</strong><br>
                         <span th:text="#{virtual_couriers.delete.modal.warning1}">• لن يمكن إسناد أي طلبات جديدة لهذا المندوب بعد الحذف.</span><br>
                         <span th:text="#{virtual_couriers.delete.modal.warning2}">• سيتم الاحتفاظ باسم المندوب في جميع السجلات التاريخية.</span><br>
                         <span th:text="#{virtual_couriers.delete.modal.warning3}">• هذا الإجراء لا يمكن التراجع عنه.</span>
@@ -297,7 +298,7 @@
             <div id="editModal" class="vc-modal-overlay" onclick="if(event.target===this) closeEditModal()">
                 <div class="vc-modal-box">
                     <div class="vc-modal-header">
-                        <h2>✏️ <span th:text="#{virtual_couriers.modal.edit_title}">تعديل المندوب الافتراضي</span></h2>
+                        <h2><i data-lucide="pencil" class="inline-icon"></i> <span th:text="#{virtual_couriers.modal.edit_title}">تعديل المندوب الافتراضي</span></h2>
                         <button type="button" class="vc-modal-close" onclick="closeEditModal()">&times;</button>
                     </div>
                     <form id="editForm" method="post">
@@ -320,7 +321,7 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
 
@@ -372,6 +373,7 @@
         });
         /*]]>*/
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

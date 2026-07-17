@@ -155,11 +155,12 @@
             font-size: 0.9rem;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
     <div class="subscribe-card">
-        <div class="subscribe-icon">🔒</div>
+        <div class="subscribe-icon"><i data-lucide="lock"></i></div>
 
         <div th:if="${subscription != null && subscription.status.name() == 'EXPIRED'}" class="status-badge status-expired">
             انتهت الفترة التجريبية
@@ -194,7 +195,7 @@
         </div>
 
         <div th:if="${subscription == null || subscription.monthlyPrice == null}" class="no-price-msg">
-            ⏳ لم يتم تحديد سعر اشتراك لمنظمتك بعد. يرجى التواصل مع إدارة المنصة.
+            <i data-lucide="hourglass" class="inline-icon"></i> لم يتم تحديد سعر اشتراك لمنظمتك بعد. يرجى التواصل مع إدارة المنصة.
         </div>
 
         <!-- معلومات المنظمة -->
@@ -218,7 +219,7 @@
             <form th:if="${subscription != null && subscription.monthlyPrice != null}"
                   th:action="@{/payment/create-intention}" method="post">
                 <button type="submit" class="btn-subscribe" style="width: 100%;">
-                    💳 ادفع الآن
+                    <i data-lucide="credit-card" class="inline-icon"></i> ادفع الآن
                 </button>
             </form>
 
@@ -229,5 +230,6 @@
             </form>
         </div>
     </div>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

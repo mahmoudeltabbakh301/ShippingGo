@@ -25,17 +25,18 @@
         @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
         .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-1); }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title" th:text="${editMode ? '✏️ تعديل المنظمة' : '➕ إنشاء منظمة جديدة'}"></h1>
+                    <h1 class="page-title" th:utext="${editMode ? '<i data-lucide=&quot;pencil&quot; class=&quot;inline-icon&quot;></i> تعديل المنظمة' : '<i data-lucide="plus" class="inline-icon"></i> إنشاء منظمة جديدة'}"></h1>
                     <p class="page-subtitle" th:if="${editMode}" th:text="'تعديل بيانات: ' + ${org.name}"></p>
                 </div>
                 <a th:href="${editMode ? '/super-admin/organizations/' + org.id : '/super-admin/organizations'}" class="btn btn-secondary">↩ رجوع</a>
@@ -45,7 +46,7 @@
                 <form th:action="${editMode ? '/super-admin/organizations/' + org.id + '/update' : '/super-admin/organizations/create'}" method="post">
 
                     <div class="form-section">
-                        <div class="form-section-title">📋 البيانات الأساسية</div>
+                        <div class="form-section-title"><i data-lucide="clipboard-list" class="inline-icon"></i> البيانات الأساسية</div>
 
                         <div th:if="${!editMode}" class="form-group">
                             <label class="form-label">نوع المنظمة *</label>
@@ -88,7 +89,7 @@
                     </div>
 
                     <div th:if="${!editMode}" class="form-section">
-                        <div class="form-section-title">👤 المدير (اختياري)</div>
+                        <div class="form-section-title"><i data-lucide="user" class="inline-icon"></i> المدير (اختياري)</div>
                         <div class="form-group">
                             <label class="form-label">البريد الإلكتروني للمدير</label>
                             <input class="form-input" type="email" name="adminEmail" th:value="${orgDto.adminEmail}" placeholder="أدخل البريد الإلكتروني لمستخدم موجود">
@@ -97,7 +98,7 @@
                     </div>
 
                     <div class="form-section">
-                        <div class="form-section-title">ℹ️ معلومات إضافية</div>
+                        <div class="form-section-title"><i data-lucide="info" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-left:4px;"></i> معلومات إضافية</div>
                         <div class="form-group">
                             <label class="form-label">نبذة عن المنظمة</label>
                             <textarea class="form-textarea" name="about" th:text="${orgDto.about}"></textarea>
@@ -136,14 +137,15 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary" style="width: 100%;">
-                        <span th:text="${editMode ? '💾 حفظ التعديلات' : '➕ إنشاء المنظمة'}"></span>
+                        <span th:utext="${editMode ? '<i data-lucide=&quot;save&quot; class=&quot;inline-icon&quot;></i> حفظ التعديلات' : '<i data-lucide="plus" class="inline-icon"></i> إنشاء المنظمة'}"></span>
                     </button>
                 </form>
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

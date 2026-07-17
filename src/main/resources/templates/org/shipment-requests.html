@@ -27,6 +27,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -38,7 +39,7 @@
             <div class="page-header flex justify-between align-center"
                 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
-                    <h1 class="page-title">📥 <span th:text="#{org.shipment_requests.title}">طلبات الشحن الواردة</span>
+                    <h1 class="page-title"><i data-lucide="inbox" class="inline-icon"></i> <span th:text="#{org.shipment_requests.title}">طلبات الشحن الواردة</span>
                     </h1>
                     <p class="text-secondary" th:text="#{org.shipment_requests.subtitle}">إدارة طلبات الشحن المقدمة من
                         المستخدمين والمكاتب الأخرى</p>
@@ -70,8 +71,8 @@
                 </div>
             </div>
 
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Requests Table -->
             <div class="card">
@@ -189,7 +190,7 @@
 
                     <!-- Empty State -->
                     <div class="table-empty" th:if="${#lists.isEmpty(requests)}">
-                        <div class="table-empty-icon">📭</div>
+                        <div class="table-empty-icon"><i data-lucide="mail-x"></i></div>
                         <div class="table-empty-text" th:text="#{org.shipment_requests.empty}">لا توجد طلبات شحن واردة
                             حالياً</div>
                     </div>
@@ -199,7 +200,7 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script>
 
@@ -235,6 +236,7 @@
             }
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

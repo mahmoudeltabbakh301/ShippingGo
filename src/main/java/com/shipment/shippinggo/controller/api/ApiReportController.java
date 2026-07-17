@@ -126,12 +126,17 @@ public class ApiReportController {
     @GetMapping("/performance/couriers")
     public ResponseEntity<PerformanceComparison> getCourierPerformance(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) Long businessDayId) {
+            @RequestParam(required = false) Long businessDayId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         Organization org = organizationService.getOrganizationByUser(user);
         if (org == null) return ResponseEntity.badRequest().build();
 
-        PerformanceComparison comparison = reportingService.getCourierPerformanceComparison(org, businessDayId);
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+
+        PerformanceComparison comparison = reportingService.getCourierPerformanceComparison(org, businessDayId, from, to);
         java.util.Map<Long, String> displayNames = organizationService.buildCourierDisplayNameMap(org);
         
         if (comparison != null && comparison.getEntries() != null) {
@@ -161,12 +166,17 @@ public class ApiReportController {
     @GetMapping("/performance/organizations")
     public ResponseEntity<PerformanceComparison> getOrganizationPerformance(
             @AuthenticationPrincipal User user,
-            @RequestParam(required = false) Long businessDayId) {
+            @RequestParam(required = false) Long businessDayId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
 
         Organization org = organizationService.getOrganizationByUser(user);
         if (org == null) return ResponseEntity.badRequest().build();
 
-        return ResponseEntity.ok(reportingService.getOrganizationPerformanceComparison(org, businessDayId));
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+
+        return ResponseEntity.ok(reportingService.getOrganizationPerformanceComparison(org, businessDayId, from, to));
     }
 
     // =====================================================================
@@ -208,5 +218,94 @@ public class ApiReportController {
         if (from == null) from = LocalDate.now().minusDays(30);
         if (to == null) to = LocalDate.now();
         return ResponseEntity.ok(reportingService.getTrendsReport(org.getId(), from, to));
+    }
+
+    // =====================================================================
+    // 9. تقرير وقت التوصيل
+    // =====================================================================
+
+    @GetMapping("/delivery-time")
+    public ResponseEntity<DeliveryTimeReport> getDeliveryTimeReport(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        Organization org = organizationService.getOrganizationByUser(user);
+        if (org == null) return ResponseEntity.badRequest().build();
+
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+        return ResponseEntity.ok(reportingService.getDeliveryTimeReport(org.getId(), from, to));
+    }
+
+    // =====================================================================
+    // 10. مقارنة الفترات
+    // =====================================================================
+
+    @GetMapping("/comparison")
+    public ResponseEntity<PeriodComparisonReport> getPeriodComparison(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        Organization org = organizationService.getOrganizationByUser(user);
+        if (org == null) return ResponseEntity.badRequest().build();
+
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+        return ResponseEntity.ok(reportingService.getPeriodComparison(org.getId(), from, to));
+    }
+
+    // =====================================================================
+    // 11. تقرير المرتجعات
+    // =====================================================================
+
+    @GetMapping("/returns")
+    public ResponseEntity<ReturnsReport> getReturnsReport(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        Organization org = organizationService.getOrganizationByUser(user);
+        if (org == null) return ResponseEntity.badRequest().build();
+
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+        return ResponseEntity.ok(reportingService.getReturnsReport(org.getId(), from, to));
+    }
+
+    // =====================================================================
+    // 12. تقرير الرحلات
+    // =====================================================================
+
+    @GetMapping("/trips")
+    public ResponseEntity<TripReport> getTripReport(
+            @AuthenticationPrincipal User user,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+
+        Organization org = organizationService.getOrganizationByUser(user);
+        if (org == null) return ResponseEntity.badRequest().build();
+
+        if (from == null) from = LocalDate.now().minusDays(30);
+        if (to == null) to = LocalDate.now();
+        return ResponseEntity.ok(reportingService.getTripReport(org.getId(), from, to));
+    }
+
+    // =====================================================================
+    // 13. قائمة أسباب الرفض (للفرونت)
+    // =====================================================================
+
+    @GetMapping("/rejection-reasons")
+    public ResponseEntity<java.util.List<java.util.Map<String, String>>> getRejectionReasons() {
+        java.util.List<java.util.Map<String, String>> reasons = new java.util.ArrayList<>();
+        for (com.shipment.shippinggo.enums.RejectionReason reason : com.shipment.shippinggo.enums.RejectionReason.values()) {
+            java.util.Map<String, String> map = new java.util.HashMap<>();
+            map.put("value", reason.name());
+            map.put("label", reason.getArabicName());
+            map.put("requiresNotes", String.valueOf(reason == com.shipment.shippinggo.enums.RejectionReason.OTHER));
+            reasons.add(map);
+        }
+        return ResponseEntity.ok(reasons);
     }
 }

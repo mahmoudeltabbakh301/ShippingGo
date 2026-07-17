@@ -24,6 +24,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -40,7 +41,7 @@
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title"><span th:text="#{business_days.new.h1_title}">➕ إنشاء يوم عمل جديد</span></h1>
+                <h1 class="page-title"><span th:text="#{business_days.new.h1_title}"><i data-lucide="plus" class="inline-icon"></i> إنشاء يوم عمل جديد</span></h1>
             </div>
 
             <div class="card" style="max-width: 500px;">
@@ -69,8 +70,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

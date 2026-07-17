@@ -704,6 +704,8 @@ public class OrderController {
             @RequestParam(required = false) Integer deliveredPieces,
             @RequestParam(required = false) java.math.BigDecimal partialDeliveryAmount,
             @RequestParam(required = false) String notes,
+            @RequestParam(required = false) com.shipment.shippinggo.enums.RejectionReason rejectionReason,
+            @RequestParam(required = false) String rejectionReasonNotes,
             @AuthenticationPrincipal User user,
             RedirectAttributes redirectAttributes) {
 
@@ -722,7 +724,7 @@ public class OrderController {
 
         try {
             orderService.updateStatusAdvanced(id, status, amount, rejectionPayment, deliveredPieces,
-                    partialDeliveryAmount, user, notes);
+                    partialDeliveryAmount, user, notes, rejectionReason, rejectionReasonNotes);
             redirectAttributes.addFlashAttribute("success", "تم تحديث حالة الطلب بنجاح");
 
             if (user.getRole() == com.shipment.shippinggo.enums.Role.COURIER) {
@@ -757,6 +759,8 @@ public class OrderController {
             @RequestParam(required = false) String center,
             @RequestParam(required = false) String area,
             @RequestParam(required = false) Integer quantity,
+            @RequestParam(required = false) com.shipment.shippinggo.enums.RejectionReason rejectionReason,
+            @RequestParam(required = false) String rejectionReasonNotes,
             @AuthenticationPrincipal User user,
             RedirectAttributes redirectAttributes) {
 
@@ -787,6 +791,8 @@ public class OrderController {
             dto.setCenter(center);
             dto.setArea(area);
             dto.setQuantity(quantity);
+            dto.setRejectionReason(rejectionReason);
+            dto.setRejectionReasonNotes(rejectionReasonNotes);
 
             orderService.updateOrderDetails(id, dto, user);
 

@@ -6,5 +6,6 @@ import java.math.BigDecimal;
 public interface TrendStatsQueryResult {
     LocalDate getCreationDate();
     Long getTotalOrders();
+    Long getDeliveredOrders();
     BigDecimal getTotalRevenue();
 }

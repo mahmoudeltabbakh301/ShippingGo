@@ -168,6 +168,7 @@
             margin-bottom: 12px;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -176,10 +177,10 @@
 
         <main class="main-content">
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
@@ -192,7 +193,7 @@
                             <p>
                                 <span th:text="#{auto_dist.courier_details_subtitle}">المناطق المربوطة بالمندوب</span>
                                 <span th:if="${courier.phone}" style="margin-inline-start: 12px;">
-                                    📱 <span th:text="${courier.phone}"></span>
+                                    <i data-lucide="smartphone" class="inline-icon"></i> <span th:text="${courier.phone}"></span>
                                 </span>
                             </p>
                         </div>
@@ -216,7 +217,7 @@
 
             <!-- Empty State -->
             <div th:if="${courierZones.isEmpty()}" class="card empty-state">
-                <div class="empty-icon">📍</div>
+                <div class="empty-icon"><i data-lucide="map-pin"></i></div>
                 <h3 th:text="#{auto_dist.courier_no_zones}">لا توجد مناطق مربوطة بهذا المندوب</h3>
                 <p th:text="#{auto_dist.courier_no_zones_desc}">اربط مناطق للمندوب من صفحة التوزيع التلقائي</p>
                 <a th:href="@{/auto-distribution}" class="btn btn-primary" style="margin-top: 12px;"
@@ -226,13 +227,13 @@
             <!-- Zones grouped by Governorate -->
             <div th:each="entry : ${groupedByGov}" class="gov-section">
                 <div class="gov-header">
-                    <span class="gov-icon">🏛️</span>
+                    <span class="gov-icon"><i data-lucide="landmark"></i></span>
                     <span class="gov-name" th:text="${entry.key.getArabicName()}">المحافظة</span>
                     <span class="gov-count" th:text="${entry.value.size()} + ' ' + #{auto_dist.courier_zone_count}">3 منطقة</span>
                 </div>
                 <div class="zone-list">
                     <div th:each="zone : ${entry.value}" class="zone-item">
-                        <span class="zone-icon" th:text="${zone.center != null ? '📍' : '🗺️'}">📍</span>
+                        <span class="zone-icon" th:utext="${zone.center != null ? '<i data-lucide=&quot;map-pin&quot; class=&quot;inline-icon&quot;></i>' : '<i data-lucide="map" class="inline-icon"></i>'}"><i data-lucide="map-pin"></i></span>
                         <div class="zone-details">
                             <div class="zone-center">
                                 <span th:if="${zone.center != null}" th:text="${zone.center}">المركز</span>
@@ -253,7 +254,7 @@
                                 style="display: inline;">
                                 <button type="submit" class="btn btn-sm btn-danger"
                                     th:title="#{auto_dist.btn_remove}"
-                                    onclick="return confirm('هل أنت متأكد من إزالة هذا الربط؟')">✕</button>
+                                    onclick="return confirm('هل أنت متأكد من إزالة هذا الربط؟')"><i data-lucide="x" class="inline-icon"></i></button>
                             </form>
                         </div>
                     </div>
@@ -263,9 +264,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشاحنات - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .vehicle-modal-overlay {
+            display: none; position: fixed; z-index: 1100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+        .vehicle-modal-overlay.show {
+            display: flex; align-items: center; justify-content: center;
+        }
+        .vehicle-modal-box {
+            background-color: var(--surface-card); border-radius: 12px;
+            padding: 28px; max-width: 580px; width: 92%;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
+            color: var(--text-primary); animation: vSlideUp 0.25s ease;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .vehicle-modal-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
+        }
+        .vehicle-modal-header h2 { margin: 0; font-size: 18px; }
+        .vehicle-modal-close {
+            cursor: pointer; font-size: 22px; color: var(--text-secondary);
+            background: none; border: none; padding: 4px 8px; line-height: 1;
+        }
+        .vehicle-modal-close:hover { color: var(--text-primary); }
+        .v-form-group { margin-bottom: 14px; }
+        .v-form-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 13px; }
+        .v-form-input {
+            width: 100%; padding: 8px 10px; border-radius: 6px;
+            border: 1px solid var(--surface-border); background: var(--surface-bg);
+            color: var(--text-primary); font-size: 14px;
+        }
+        .v-form-input:focus {
+            outline: none; border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+        }
+        .v-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .v-form-actions {
+            display: flex; gap: 10px; justify-content: flex-end;
+            margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--surface-border);
+        }
+        .vehicle-status-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+        }
+        .vehicle-status-badge.available { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+        .vehicle-status-badge.on-trip { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .vehicle-status-badge.maintenance { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .vehicle-code { font-family: monospace; font-size: 12px; color: var(--text-tertiary); }
+        .qr-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 8px; border-radius: 6px; font-size: 11px;
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            color: var(--text-secondary); cursor: pointer; text-decoration: none;
+        }
+        .qr-btn:hover { background: var(--bg-tertiary); }
+        @keyframes vSlideUp {
+            from { transform: translateY(16px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><i data-lucide="truck" class="inline-icon"></i> الشاحنات</h1>
+                    <p class="text-muted">إدارة أسطول شاحنات منظمتك وتتبع حالاتها</p>
+                </div>
+                <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <button type="button" class="btn btn-primary" onclick="openCreateModal()">+ إضافة شاحنة</button>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon waiting"><i data-lucide="truck"></i></div>
+                    <div class="stat-value" th:text="${totalVehicles}">0</div>
+                    <div class="stat-label">إجمالي الشاحنات</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
+                    <div class="stat-value" th:text="${availableCount}">0</div>
+                    <div class="stat-label">متاحة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon transit"><i data-lucide="route"></i></div>
+                    <div class="stat-value" th:text="${onTripCount}">0</div>
+                    <div class="stat-label">في رحلة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cancelled"><i data-lucide="wrench"></i></div>
+                    <div class="stat-value" th:text="${maintenanceCount}">0</div>
+                    <div class="stat-label">تحت الصيانة</div>
+                </div>
+            </div>
+
+            <!-- Vehicles Table -->
+            <div class="card">
+                <div th:if="${vehicles == null or vehicles.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    لا توجد شاحنات مسجلة. أضف أول شاحنة لبدء إدارة أسطولك.
+                </div>
+                <div th:if="${vehicles != null and !vehicles.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>الشاحنة</th>
+                                <th>رقم اللوحة</th>
+                                <th>السائق</th>
+                                <th>السعة</th>
+                                <th>الحالة</th>
+                                <th>الكود</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="v : ${vehicles}">
+                                <td>
+                                    <div style="font-weight: 600;" th:text="${v.vehicleType.arabicName}"></div>
+                                    <small th:if="${v.model}" th:text="${v.model}" style="color: var(--text-tertiary);"></small>
+                                    <small th:if="${v.color}" th:text="' — ' + ${v.color}" style="color: var(--text-tertiary);"></small>
+                                </td>
+                                <td style="font-weight: 600; font-size: 15px;" th:text="${v.plateNumber}"></td>
+                                <td>
+                                    <span th:if="${v.driverName}" th:text="${v.driverName}"></span>
+                                    <br th:if="${v.driverPhone}">
+                                    <small th:if="${v.driverPhone}" th:text="${v.driverPhone}" style="color: var(--text-tertiary);"></small>
+                                    <span th:if="${v.driverName == null}" style="color: var(--text-tertiary);">—</span>
+                                </td>
+                                <td>
+                                    <span th:if="${v.capacity}" th:text="${v.capacity}"></span>
+                                    <span th:if="${v.capacity == null}" style="color: var(--text-tertiary);">—</span>
+                                </td>
+                                <td>
+                                    <span class="vehicle-status-badge available" th:if="${v.status.name() == 'AVAILABLE'}" th:text="${v.status.arabicName}">متاحة</span>
+                                    <span class="vehicle-status-badge on-trip" th:if="${v.status.name() == 'ON_TRIP'}" th:text="${v.status.arabicName}">في رحلة</span>
+                                    <span class="vehicle-status-badge maintenance" th:if="${v.status.name() == 'MAINTENANCE'}" th:text="${v.status.arabicName}">تحت الصيانة</span>
+                                </td>
+                                <td>
+                                    <div class="vehicle-code" th:text="${v.code}"></div>
+                                    <a th:href="@{/vehicles/{id}/qr(id=${v.id})}" class="qr-btn" target="_blank" title="طباعة QR"><i data-lucide="smartphone" class="inline-icon"></i> QR</a>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                        <a th:href="@{/vehicles/{id}(id=${v.id})}" class="btn btn-sm btn-secondary" title="تفاصيل وتقارير"><i data-lucide="bar-chart-3" class="inline-icon"></i></a>
+                                        <button type="button" class="btn btn-sm btn-secondary"
+                                            th:data-id="${v.id}"
+                                            th:data-plate="${v.plateNumber}"
+                                            th:data-type="${v.vehicleType.name()}"
+                                            th:data-model="${v.model}"
+                                            th:data-color="${v.color}"
+                                            th:data-capacity="${v.capacity}"
+                                            th:data-driver="${v.driverName}"
+                                            th:data-phone="${v.driverPhone}"
+                                            th:data-notes="${v.notes}"
+                                            onclick="openEditModal(this)"><i data-lucide="pencil" class="inline-icon"></i></button>
+                                        <form th:action="@{/vehicles/{id}/status(id=${v.id})}" method="post" style="display: inline;" th:if="${v.status.name() != 'ON_TRIP'}">
+                                            <input type="hidden" name="status" th:value="${v.status.name() == 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'}">
+                                            <button type="submit" class="btn btn-sm"
+                                                th:classappend="${v.status.name() == 'AVAILABLE' ? 'btn-warning' : 'btn-primary'}">
+                                                <i th:if="${v.status.name() == 'AVAILABLE'}" data-lucide="wrench" class="inline-icon"></i>
+                                                <i th:unless="${v.status.name() == 'AVAILABLE'}" data-lucide="check-circle-2" class="inline-icon"></i>
+                                            </button>
+                                        </form>
+                                        <form th:action="@{/vehicles/{id}/delete(id=${v.id})}" method="post" style="display: inline;"
+                                              onsubmit="return confirm('هل أنت متأكد من حذف هذه الشاحنة؟');">
+                                            <button type="submit" class="btn btn-sm btn-danger"><i data-lucide="trash-2"></i></button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ==================== CREATE MODAL ==================== -->
+            <div id="createModal" class="vehicle-modal-overlay" onclick="if(event.target===this) closeCreateModal()">
+                <div class="vehicle-modal-box">
+                    <div class="vehicle-modal-header">
+                        <h2><i data-lucide="truck" class="inline-icon"></i> إضافة شاحنة جديدة</h2>
+                        <button type="button" class="vehicle-modal-close" onclick="closeCreateModal()">&times;</button>
+                    </div>
+                    <form th:action="@{/vehicles/create}" method="post">
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>رقم اللوحة *</label>
+                                <input type="text" name="plateNumber" class="v-form-input" required autocomplete="off">
+                            </div>
+                            <div class="v-form-group">
+                                <label>نوع الشاحنة *</label>
+                                <select name="vehicleType" class="v-form-input" required>
+                                    <option th:each="t : ${vehicleTypes}" th:value="${t.name()}" th:text="${t.arabicName}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>الموديل</label>
+                                <input type="text" name="model" class="v-form-input" autocomplete="off">
+                            </div>
+                            <div class="v-form-group">
+                                <label>اللون</label>
+                                <input type="text" name="color" class="v-form-input" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="v-form-group">
+                            <label>السعة (عدد الطلبات)</label>
+                            <input type="number" name="capacity" class="v-form-input" min="1">
+                        </div>
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>اسم السائق</label>
+                                <input type="text" name="driverName" class="v-form-input" autocomplete="off">
+                            </div>
+                            <div class="v-form-group">
+                                <label>رقم هاتف السائق</label>
+                                <input type="text" name="driverPhone" class="v-form-input" autocomplete="off">
+                            </div>
+                        </div>
+                        <div class="v-form-group">
+                            <label>ملاحظات</label>
+                            <textarea name="notes" class="v-form-input" rows="2"></textarea>
+                        </div>
+                        <div class="v-form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">إلغاء</button>
+                            <button type="submit" class="btn btn-primary">حفظ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ==================== EDIT MODAL ==================== -->
+            <div id="editModal" class="vehicle-modal-overlay" onclick="if(event.target===this) closeEditModal()">
+                <div class="vehicle-modal-box">
+                    <div class="vehicle-modal-header">
+                        <h2><i data-lucide="pencil" class="inline-icon"></i> تعديل الشاحنة</h2>
+                        <button type="button" class="vehicle-modal-close" onclick="closeEditModal()">&times;</button>
+                    </div>
+                    <form id="editForm" method="post">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>رقم اللوحة *</label>
+                                <input type="text" id="editPlate" name="plateNumber" class="v-form-input" required>
+                            </div>
+                            <div class="v-form-group">
+                                <label>نوع الشاحنة *</label>
+                                <select id="editType" name="vehicleType" class="v-form-input" required>
+                                    <option th:each="t : ${vehicleTypes}" th:value="${t.name()}" th:text="${t.arabicName}"></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>الموديل</label>
+                                <input type="text" id="editModel" name="model" class="v-form-input">
+                            </div>
+                            <div class="v-form-group">
+                                <label>اللون</label>
+                                <input type="text" id="editColor" name="color" class="v-form-input">
+                            </div>
+                        </div>
+                        <div class="v-form-group">
+                            <label>السعة</label>
+                            <input type="number" id="editCapacity" name="capacity" class="v-form-input" min="1">
+                        </div>
+                        <div class="v-form-grid">
+                            <div class="v-form-group">
+                                <label>اسم السائق</label>
+                                <input type="text" id="editDriver" name="driverName" class="v-form-input">
+                            </div>
+                            <div class="v-form-group">
+                                <label>رقم هاتف السائق</label>
+                                <input type="text" id="editPhone" name="driverPhone" class="v-form-input">
+                            </div>
+                        </div>
+                        <div class="v-form-group">
+                            <label>ملاحظات</label>
+                            <textarea id="editNotes" name="notes" class="v-form-input" rows="2"></textarea>
+                        </div>
+                        <div class="v-form-actions">
+                            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">إلغاء</button>
+                            <button type="submit" class="btn btn-primary">حفظ</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var editBaseUrl = /*[[@{/vehicles/}]]*/ '/vehicles/';
+
+        function openCreateModal() {
+            document.getElementById('createModal').classList.add('show');
+        }
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.remove('show');
+        }
+        function openEditModal(btn) {
+            document.getElementById('editPlate').value = btn.getAttribute('data-plate') || '';
+            document.getElementById('editType').value = btn.getAttribute('data-type') || '';
+            document.getElementById('editModel').value = btn.getAttribute('data-model') || '';
+            document.getElementById('editColor').value = btn.getAttribute('data-color') || '';
+            document.getElementById('editCapacity').value = btn.getAttribute('data-capacity') || '';
+            document.getElementById('editDriver').value = btn.getAttribute('data-driver') || '';
+            document.getElementById('editPhone').value = btn.getAttribute('data-phone') || '';
+            document.getElementById('editNotes').value = btn.getAttribute('data-notes') || '';
+            document.getElementById('editForm').action = editBaseUrl + btn.getAttribute('data-id') + '/update';
+            document.getElementById('editModal').classList.add('show');
+        }
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { closeCreateModal(); closeEditModal(); }
+        });
+        /*]]>*/
+    </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
+</body>
+</html>

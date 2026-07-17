@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -35,34 +36,34 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <h1 class="page-title">
-                    🚚 <span th:text="#{dashboard.courier.title}">طلبات التوصيل</span>
+                    <i data-lucide="truck" class="inline-icon"></i> <span th:text="#{dashboard.courier.title}">طلبات التوصيل</span>
                     <small th:if="${today}" th:text="' - ' + ${today}"
                         style="font-size: 0.6em; color: var(--text-tertiary);"></small>
                 </h1>
                 <a th:href="@{/dashboard/courier/history}" class="btn btn-secondary">
-                    📅 <span th:text="#{dashboard.courier.day_history}">سجل الأيام</span>
+                    <i data-lucide="calendar-days" class="inline-icon"></i> <span th:text="#{dashboard.courier.day_history}">سجل الأيام</span>
                 </a>
             </div>
 
 
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span>
             </div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Inactive Organization Message -->
             <div th:if="${organizationInactive}" class="alert alert-danger" style="background-color: var(--danger-500); color: white; font-weight: bold; border: none; box-shadow: var(--shadow-md); margin-bottom: var(--space-4);">
-                <span>⚠️</span>
+                <span><i data-lucide="alert-triangle"></i></span>
                 <span>يرجي التواصل مع الدعم للمساعده</span>
             </div>
 
@@ -73,22 +74,22 @@
             <!-- Statistics -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-icon transit"><i data-lucide="truck"></i></div>
                     <div class="stat-value" th:text="${inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.in_transit}">في الطريق</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value" th:text="${deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.delivered}">تم التسليم</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-icon cancelled"><i data-lucide="x-circle"></i></div>
                     <div class="stat-value" th:text="${cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.cancelled}">ملغي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-icon refused"><i data-lucide="ban"></i></div>
                     <div class="stat-value" th:text="${refusedCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.refused}">رفض الاستلام</div>
                 </div>
@@ -97,12 +98,12 @@
             <!-- Orders List -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📋 <span th:text="#{dashboard.courier.assigned_orders}">الطلبات المسندة
+                    <h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{dashboard.courier.assigned_orders}">الطلبات المسندة
                             إليك</span></h3>
                 </div>
 
                 <div th:if="${orders.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📦</div>
+                    <div class="table-empty-icon"><i data-lucide="package"></i></div>
                     <div class="table-empty-text" th:text="#{dashboard.courier.no_orders}">لا توجد طلبات مسندة إليك
                         حالياً</div>
                 </div>
@@ -215,6 +216,34 @@
                             <input type="number" name="partialDeliveryAmount" class="form-control" step="0.01" min="0">
                         </div>
 
+                        <div class="form-group" id="courierRejectionReasonGroup" style="display: none;">
+                            <label class="form-label" style="color: var(--danger-400);">سبب الرفض/الإلغاء/التأجيل</label>
+                            <select name="rejectionReason" class="form-control" id="courierRejectionReasonSelect"
+                                onchange="toggleCourierReasonNotes()">
+                                <option value="">-- اختر السبب --</option>
+                                <option value="CUSTOMER_NOT_AVAILABLE">العميل غير متاح</option>
+                                <option value="WRONG_ADDRESS">عنوان خاطئ</option>
+                                <option value="CUSTOMER_REFUSED">العميل رفض الاستلام</option>
+                                <option value="CUSTOMER_CHANGED_MIND">العميل غيّر رأيه</option>
+                                <option value="DAMAGED_PRODUCT">المنتج تالف</option>
+                                <option value="WRONG_PRODUCT">منتج خاطئ</option>
+                                <option value="PRICE_DISPUTE">خلاف على السعر</option>
+                                <option value="DUPLICATE_ORDER">طلب مكرر</option>
+                                <option value="OUT_OF_AREA">خارج النطاق</option>
+                                <option value="PHONE_UNREACHABLE">الهاتف مغلق</option>
+                                <option value="DEFERRED_BY_CUSTOMER">العميل طلب تأجيل</option>
+                                <option value="DEFERRED_BY_COURIER">المندوب طلب تأجيل</option>
+                                <option value="EVASION">التهرب</option>
+                                <option value="OTHER">سبب آخر</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="courierRejectionNotesGroup" style="display: none;">
+                            <label class="form-label" style="color: var(--danger-400);">تفاصيل السبب</label>
+                            <textarea name="rejectionReasonNotes" class="form-control" rows="2"
+                                placeholder="اكتب تفاصيل السبب هنا..."></textarea>
+                        </div>
+
                         <div class="form-group">
                             <label class="form-label" th:text="#{dashboard.courier.notes}">ملاحظات</label>
                             <textarea name="notes" class="form-control" rows="3"></textarea>
@@ -248,12 +277,16 @@
                     const amountGroup = document.getElementById('amountGroup');
                     const rejectionPaymentGroup = document.getElementById('rejectionPaymentGroup');
                     const partialDeliveryGroup = document.getElementById('partialDeliveryGroup');
+                    const rejReasonGroup = document.getElementById('courierRejectionReasonGroup');
+                    const rejNotesGroup = document.getElementById('courierRejectionNotesGroup');
+
+                    const isRejection = ['REFUSED', 'CANCELLED', 'DEFERRED'].includes(status);
 
                     if (status === 'DELIVERED') {
                         amountGroup.style.display = 'block';
                         rejectionPaymentGroup.style.display = 'none';
                         if (partialDeliveryGroup) partialDeliveryGroup.style.display = 'none';
-                    } else if (status === 'REFUSED') {
+                    } else if (isRejection) {
                         amountGroup.style.display = 'none';
                         rejectionPaymentGroup.style.display = 'block';
                         if (partialDeliveryGroup) partialDeliveryGroup.style.display = 'none';
@@ -265,6 +298,18 @@
                         amountGroup.style.display = 'none';
                         rejectionPaymentGroup.style.display = 'none';
                         if (partialDeliveryGroup) partialDeliveryGroup.style.display = 'none';
+                    }
+
+                    // إظهار/إخفاء سبب الرفض
+                    if (rejReasonGroup) rejReasonGroup.style.display = isRejection ? 'block' : 'none';
+                    if (rejNotesGroup) rejNotesGroup.style.display = 'none';
+                }
+
+                function toggleCourierReasonNotes() {
+                    const select = document.getElementById('courierRejectionReasonSelect');
+                    const notesGroup = document.getElementById('courierRejectionNotesGroup');
+                    if (select && notesGroup) {
+                        notesGroup.style.display = select.value === 'OTHER' ? 'block' : 'none';
                     }
                 }
 
@@ -278,9 +323,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

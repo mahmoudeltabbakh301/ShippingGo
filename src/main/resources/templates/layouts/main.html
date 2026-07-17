@@ -24,6 +24,9 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap"
         rel="stylesheet">
 
+    <!-- Lucide Icons -->
+    <script th:src="@{/js/lucide.min.js}"></script>
+
     <!-- CSS Files -->
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
@@ -42,15 +45,15 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
             <div th:if="${warning}" class="alert alert-warning">
-                <span>⚠</span>
+                <i data-lucide="alert-triangle" class="alert-icon"></i>
                 <span th:text="${warning}"></span>
             </div>
 
@@ -60,10 +63,11 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
 
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

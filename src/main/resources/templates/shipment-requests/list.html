@@ -27,6 +27,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -36,18 +37,18 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <div class="page-header flex justify-between align-center"
                 style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <div>
-                    <h1 class="page-title">📋 <span th:text="#{shipment_requests.list.title}">الطلبيات</span></h1>
+                    <h1 class="page-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{shipment_requests.list.title}">الطلبيات</span></h1>
                     <span th:if="${!isToday}" class="badge badge-warning"
                         style="margin-top: 0.5rem; display: inline-block;"><span
                             th:text="#{shipment_requests.list.archive_date}">أرشيف يوم:</span> <span
@@ -79,12 +80,12 @@
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-icon waiting"><i data-lucide="hourglass"></i></div>
                     <div class="stat-value" th:text="${#lists.size(pendingRequests)}">0</div>
                     <div class="stat-label" th:text="#{shipment_requests.list.stat_pending}">بانتظار القبول</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✓</div>
+                    <div class="stat-icon delivered"><i data-lucide="check" class="inline-icon"></i></div>
                     <div class="stat-value" th:text="${#lists.size(acceptedRequests)}">0</div>
                     <div class="stat-label" th:text="#{shipment_requests.list.stat_accepted}">مقبولة</div>
                 </div>
@@ -149,13 +150,13 @@
                                         <form th:action="@{/shipment-requests/{id}/accept(id=${order.id})}"
                                             method="post" style="display:inline;">
                                             <button type="submit" class="btn btn-success btn-sm"
-                                                th:text="#{shipment_requests.list.btn_accept}">✓ قبول</button>
+                                                th:text="#{shipment_requests.list.btn_accept}"><i data-lucide="check" class="inline-icon"></i> قبول</button>
                                         </form>
                                         <form th:action="@{/shipment-requests/{id}/reject(id=${order.id})}"
                                             method="post" style="display:inline;"
                                             th:onsubmit="|return confirm('#{shipment_requests.list.confirm_reject}');|">
                                             <button type="submit" class="btn btn-danger btn-sm"
-                                                th:text="#{shipment_requests.list.btn_reject}">✕
+                                                th:text="#{shipment_requests.list.btn_reject}"><i data-lucide="x" class="inline-icon"></i>
                                                 رفض</button>
                                         </form>
                                     </div>
@@ -239,7 +240,7 @@
             <!-- Empty State -->
             <div class="card" th:if="${#lists.isEmpty(pendingRequests) && #lists.isEmpty(acceptedRequests)}">
                 <div class="table-empty">
-                    <div class="table-empty-icon">📋</div>
+                    <div class="table-empty-icon"><i data-lucide="clipboard-list"></i></div>
                     <div class="table-empty-text" th:text="#{shipment_requests.list.empty}">لا توجد طلبيات حالياً</div>
                 </div>
             </div>
@@ -247,8 +248,9 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

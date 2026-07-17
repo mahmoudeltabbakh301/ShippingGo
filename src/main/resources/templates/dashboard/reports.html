@@ -5,8 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="#{dashboard.reports.title} + ' - ' + #{app.title}">التقارير - ShippingGo</title>
+    <title>التقارير والإحصائيات - ShippingGo</title>
 
+    <!-- Early theme apply to prevent flash -->
     <script>
         (function () {
             var theme = localStorage.getItem('theme');
@@ -18,263 +19,17 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" th:href="@{/css/main.css}">
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
-    <link rel="stylesheet" th:href="@{/css/components/cards.css}">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        .tabs-header {
-            display: flex;
-            gap: 0.25rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--border-color);
-            overflow-x: auto;
-            padding-bottom: 0;
-        }
-
-        .tab-btn {
-            padding: 0.75rem 1.25rem;
-            background: none;
-            border: none;
-            border-bottom: 3px solid transparent;
-            color: var(--text-muted);
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-            font-size: 0.9rem;
-            margin-bottom: -2px;
-        }
-
-        .tab-btn:hover {
-            color: var(--primary-color);
-            background: var(--bg-secondary);
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-            background: var(--bg-secondary);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .filters-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: center;
-            background: var(--bg-secondary);
-            padding: 1rem 1.25rem;
-            border-radius: var(--radius-lg);
-            margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
-        }
-
-        .filter-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .filter-group label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .quick-filters {
-            display: flex;
-            gap: 0.35rem;
-        }
-
-        .quick-btn {
-            padding: 0.4rem 0.8rem;
-            border: 1px solid var(--border-color);
-            background: var(--bg-primary);
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            font-size: 0.85rem;
-            color: var(--text-color);
-            transition: all 0.15s;
-        }
-
-        .quick-btn.active,
-        .quick-btn:hover {
-            background: var(--primary-color);
-            color: white;
-            border-color: var(--primary-color);
-        }
-
-        .form-control {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            background: var(--bg-primary);
-            color: var(--text-color);
-            font-size: 0.9rem;
-        }
-
-        .chart-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .finance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .finance-card {
-            padding: 1.5rem;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-color);
-            background: var(--bg-secondary);
-        }
-
-        .finance-card h4 {
-            margin: 0 0 1rem 0;
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .finance-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-
-        .finance-sub {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .positive { color: var(--success-color, #10b981); }
-        .negative { color: var(--danger-color, #ef4444); }
-        .neutral { color: var(--text-color); }
-
-        .detail-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-        }
-
-        .detail-table th,
-        .detail-table td {
-            padding: 0.65rem 0.75rem;
-            text-align: right;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .detail-table th {
-            background: var(--bg-secondary);
-            font-weight: 600;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .detail-table tr:hover td {
-            background: var(--bg-secondary);
-        }
-
-        .perf-card {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            background: var(--bg-secondary);
-        }
-
-        .perf-rank {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.1rem;
-            flex-shrink: 0;
-        }
-
-        .perf-rank.gold { background: #fef3c7; color: #92400e; }
-        .perf-rank.silver { background: #f3f4f6; color: #4b5563; }
-        .perf-rank.bronze { background: #fed7aa; color: #9a3412; }
-        .perf-rank.normal { background: var(--bg-primary); color: var(--text-muted); }
-
-        .perf-info { flex: 1; }
-        .perf-name { font-weight: 600; margin-bottom: 0.25rem; }
-
-        .perf-stats {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-        }
-
-        .perf-bar {
-            width: 120px;
-            height: 8px;
-            background: var(--border-color);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .perf-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        .loading-spinner {
-            text-align: center;
-            padding: 3rem;
-            color: var(--text-muted);
-        }
-
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .section-header h3 {
-            font-size: 1.05rem;
-            font-weight: 700;
-        }
-
-        @media (max-width: 768px) {
-            .chart-grid, .finance-grid { grid-template-columns: 1fr; }
-            .filters-bar { flex-direction: column; align-items: stretch; }
-            .perf-stats { flex-wrap: wrap; }
-        }
-    </style>
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/reports.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
+    <!-- ApexCharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 </head>
 
 <body>
@@ -282,868 +37,442 @@
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
 
         <main class="main-content">
-            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap: wrap; gap: 1rem;">
-                <h1 class="page-title">📊 <span>التقارير والإحصائيات</span></h1>
-                <button class="btn btn-outline" onclick="window.print()">🖨️ طباعة</button>
-            </div>
-
-            <!-- Tabs -->
-            <div class="tabs-header">
-                <button class="tab-btn active" onclick="switchTab('financial')">💰 الملخص المالي</button>
-                <button class="tab-btn" onclick="switchTab('dashboard')">📦 الأداء العام</button>
-                <button class="tab-btn" onclick="switchTab('couriers')">🚴 أداء المناديب</button>
-                <button class="tab-btn" onclick="switchTab('orgs')" th:if="${!linkedOrgs.isEmpty()}">🏢 أداء المنظمات</button>
-                <button class="tab-btn" onclick="switchTab('geo')">🗺️ المحافظات</button>
-            </div>
-
-            <!-- Global Filters -->
-            <div class="filters-bar">
-                <div class="filter-group">
-                    <label>الفترة:</label>
-                    <div class="quick-filters">
-                        <button class="quick-btn" onclick="setDateRange('today', this)">اليوم</button>
-                        <button class="quick-btn" onclick="setDateRange('week', this)">أسبوع</button>
-                        <button class="quick-btn active" onclick="setDateRange('month', this)">شهر</button>
+            <!-- ===== Header ===== -->
+            <div class="reports-header">
+                <div class="reports-header-info">
+                    <div class="reports-header-icon">
+                        <i data-lucide="bar-chart-3"></i>
+                    </div>
+                    <div class="reports-header-text">
+                        <h1>التقارير والإحصائيات</h1>
+                        <p th:text="${organization.name}">اسم المنظمة</p>
                     </div>
                 </div>
+            </div>
+
+            <!-- ===== Filter Bar ===== -->
+            <div class="reports-filter-bar">
                 <div class="filter-group">
-                    <label>يوم عمل:</label>
-                    <select id="businessDaySelect" class="form-control" onchange="onFilterChange()">
-                        <option value="">-- كل الأيام --</option>
+                    <label><i data-lucide="calendar-days" style="width:14px;height:14px;display:inline;vertical-align:middle"></i> يوم العمل</label>
+                    <select id="filterBusinessDay">
+                        <option value="">-- فترة زمنية --</option>
                         <option th:each="bd : ${businessDays}" th:value="${bd.id}"
-                            th:text="${bd.name != null ? bd.name : bd.date}"></option>
+                            th:text="${bd.name} + ' — ' + ${bd.date}"></option>
                     </select>
                 </div>
+
+                <div class="filter-divider"></div>
+
+                <div class="filter-group quick-dates" style="display: flex; gap: 8px;">
+                    <button class="btn-filter btn-outline btn-sm" onclick="ReportsMain.setQuickDate('today')">اليوم</button>
+                    <button class="btn-filter btn-outline btn-sm" onclick="ReportsMain.setQuickDate('7days')">آخر 7 أيام</button>
+                    <button class="btn-filter btn-outline btn-sm" onclick="ReportsMain.setQuickDate('30days')">آخر 30 يوم</button>
+                    <button class="btn-filter btn-outline btn-sm" onclick="ReportsMain.setQuickDate('thisMonth')">هذا الشهر</button>
+                </div>
+
+                <div class="filter-divider"></div>
+
                 <div class="filter-group">
-                    <label>من:</label>
-                    <input type="date" id="dateFrom" class="form-control" onchange="onFilterChange()">
+                    <label>من</label>
+                    <input type="date" id="filterFrom" th:value="${#temporals.format(T(java.time.LocalDate).now().minusDays(30), 'yyyy-MM-dd')}">
                 </div>
+
                 <div class="filter-group">
-                    <label>إلى:</label>
-                    <input type="date" id="dateTo" class="form-control" onchange="onFilterChange()">
+                    <label>إلى</label>
+                    <input type="date" id="filterTo" th:value="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}">
+                </div>
+
+                <div class="filter-actions">
+                    <button class="btn-filter" id="btnApplyFilter" onclick="ReportsMain.applyFilters()">
+                        <i data-lucide="search"></i> تطبيق
+                    </button>
+                    <button class="btn-filter btn-outline" id="btnExport" onclick="ReportsMain.exportCurrentTab()">
+                        <i data-lucide="download"></i> تصدير Excel
+                    </button>
                 </div>
             </div>
 
-            <!-- Tab 1: Financial Summary -->
-            <div id="tab-financial" class="tab-content active">
-                <div id="financialLoading" class="loading-spinner">⏳ جاري تحميل البيانات المالية...</div>
-                <div id="financialContent" style="display:none;">
+            <!-- ===== Tabs Navigation ===== -->
+            <div class="reports-tabs" id="reportsTabs">
+                <button class="reports-tab active" data-tab="overview" onclick="ReportsMain.switchTab('overview')">
+                    <i data-lucide="layout-dashboard"></i> نظرة عامة
+                </button>
+                <button class="reports-tab" data-tab="financial" onclick="ReportsMain.switchTab('financial')">
+                    <i data-lucide="wallet"></i> التقرير المالي
+                </button>
+                <button class="reports-tab" data-tab="couriers" onclick="ReportsMain.switchTab('couriers')">
+                    <i data-lucide="bike"></i> أداء المناديب
+                </button>
+                <button class="reports-tab" data-tab="organizations" onclick="ReportsMain.switchTab('organizations')">
+                    <i data-lucide="building-2"></i> أداء المنظمات
+                </button>
+                <button class="reports-tab" data-tab="geographic" onclick="ReportsMain.switchTab('geographic')">
+                    <i data-lucide="map-pin"></i> التوزيع الجغرافي
+                </button>
+                <button class="reports-tab" data-tab="speed" onclick="ReportsMain.switchTab('speed')">
+                    <i data-lucide="timer"></i> وقت التوصيل
+                </button>
+                <button class="reports-tab" data-tab="returns" onclick="ReportsMain.switchTab('returns')">
+                    <i data-lucide="undo-2"></i> المرتجعات
+                </button>
+                <button class="reports-tab" data-tab="trips" onclick="ReportsMain.switchTab('trips')">
+                    <i data-lucide="truck"></i> الرحلات
+                </button>
+            </div>
 
-                    <!-- صافي الربح -->
-                    <div class="card" style="text-align:center; padding:2rem; margin-bottom:1.5rem; border: 2px solid var(--primary-color);">
-                        <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.5rem;">💎 صافي ربح المنظمة</div>
-                        <div id="fin-net-profit" class="finance-value" style="font-size:2.5rem;">0 ج.م</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;">= إجمالي إيرادات العمولات − عمولات المناديب</div>
-                        <div style="display:flex; justify-content:center; gap:2rem; margin-top:1rem; flex-wrap: wrap;">
-                            <div>
-                                <span style="font-size:0.85rem; color:var(--text-muted);">إجمالي إيرادات العمولات</span><br>
-                                <span id="fin-total-revenue" class="positive" style="font-weight:700;">0 ج.م</span>
-                            </div>
-                            <div>
-                                <span style="font-size:0.85rem; color:var(--text-muted);">عمولات المناديب (مصروف)</span><br>
-                                <span id="fin-courier-total" class="negative" style="font-weight:700;">0 ج.م</span>
-                            </div>
+            <!-- ===== Tab 1: Overview ===== -->
+            <div class="tab-panel active" id="panel-overview">
+                <div class="kpi-grid" id="overviewKpis">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="comparison-grid" id="overviewComparison">
+                    <div class="skeleton skeleton-card" style="height:80px"></div>
+                    <div class="skeleton skeleton-card" style="height:80px"></div>
+                    <div class="skeleton skeleton-card" style="height:80px"></div>
+                    <div class="skeleton skeleton-card" style="height:80px"></div>
+                    <div class="skeleton skeleton-card" style="height:80px"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="pie-chart"></i> توزيع حالات الطلبات</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartStatusDonut"></div>
+                    </div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="trending-up"></i> اتجاهات الطلبات اليومية</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartTrends"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 2: Financial ===== -->
+            <div class="tab-panel" id="panel-financial">
+                <div class="kpi-grid" id="financialKpis">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="bar-chart-3"></i> تقسيم العمولات</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartCommissions"></div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="bar-chart-horizontal"></i> الإيرادات مقابل مصروفات المناديب</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartRevenueVsExpense"></div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="arrow-up-right"></i> تفاصيل المنظمات الصادرة</h3>
+                    </div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableOutgoingOrgs">
+                            <thead>
+                                <tr>
+                                    <th>المنظمة</th><th>إجمالي</th><th>مسلمة</th><th>مرفوضة</th>
+                                    <th>مبلغ المسلم</th><th>العمولة</th><th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="arrow-down-left"></i> تفاصيل المنظمات الواردة</h3>
+                    </div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableIncomingOrgs">
+                            <thead>
+                                <tr>
+                                    <th>المنظمة</th><th>إجمالي</th><th>مسلمة</th><th>مرفوضة</th>
+                                    <th>مبلغ المسلم</th><th>العمولة</th><th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="users"></i> تفاصيل عمولات المناديب</h3>
+                    </div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableCourierFinancial">
+                            <thead>
+                                <tr>
+                                    <th>المندوب</th><th>إجمالي</th><th>مسلمة</th>
+                                    <th>ع. توصيل</th><th>ع. رفض</th><th>ع. إلغاء</th><th>إجمالي العمولة</th><th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 3: Couriers ===== -->
+            <div class="tab-panel" id="panel-couriers">
+                <div class="highlight-grid" id="courierHighlights">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="bar-chart-horizontal"></i> ترتيب المناديب</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartCourierRank"></div>
+                    </div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="radar"></i> مقارنة أفضل 5 مناديب</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartCourierRadar"></div>
+                    </div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="table"></i> جدول تفصيلي لأداء المناديب</h3>
+                    </div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableCourierPerf">
+                            <thead>
+                                <tr>
+                                    <th>#</th><th>المندوب</th><th>إجمالي</th><th>مسلمة</th><th>مرفوضة</th>
+                                    <th>ملغاة</th><th>نسبة التوصيل</th><th>المحصّل</th><th>العمولة</th><th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 4: Organizations ===== -->
+            <div class="tab-panel" id="panel-organizations">
+                <div class="highlight-grid" id="orgHighlights">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="bar-chart-3"></i> مقارنة أداء المنظمات</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartOrgComparison"></div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="table"></i> جدول مقارنة الأداء</h3>
+                    </div>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableOrgPerf">
+                            <thead>
+                                <tr>
+                                    <th>#</th><th>المنظمة</th><th>إجمالي</th><th>مسلمة</th><th>مرفوضة</th>
+                                    <th>نسبة التوصيل</th><th>المحصّل</th><th>الصافي</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 5: Geographic ===== -->
+            <div class="tab-panel" id="panel-geographic">
+                <div class="rpt-grid-3-1">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="map"></i> خريطة مصر التفاعلية</h3>
+                        </div>
+                        <div class="map-mode-switch" id="mapModeSwitch">
+                            <button class="map-mode-btn active" data-mode="orders" onclick="ReportsGeographic.setMapMode('orders')">عدد الطلبات</button>
+                            <button class="map-mode-btn" data-mode="rate" onclick="ReportsGeographic.setMapMode('rate')">نسبة التوصيل</button>
+                            <button class="map-mode-btn" data-mode="revenue" onclick="ReportsGeographic.setMapMode('revenue')">الإيرادات</button>
+                        </div>
+                        <div class="egypt-map-container" id="egyptMapContainer">
+                            <div class="map-tooltip" id="mapTooltip"></div>
+                        </div>
+                        <div class="map-legend">
+                            <span>أقل</span>
+                            <div class="map-legend-bar"></div>
+                            <span>أكثر</span>
                         </div>
                     </div>
-
-                    <!-- إحصائيات الأوردرات السريعة -->
-                    <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;">
-                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">الأوردرات</div>
-                            <div id="fin-total-orders" style="font-weight:700; font-size:1.1rem;">0</div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="bar-chart-horizontal"></i> أعلى المحافظات</h3>
                         </div>
-                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">✅ مسلم</div>
-                            <div id="fin-delivered-orders" style="font-weight:700; font-size:1.1rem; color:var(--success-color, #10b981);">0</div>
-                        </div>
-                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">❌ مرفوض</div>
-                            <div id="fin-refused-orders" style="font-weight:700; font-size:1.1rem; color:var(--danger-color, #ef4444);">0</div>
-                        </div>
-                        <div style="background:var(--bg-secondary); padding:0.6rem 1.2rem; border-radius:var(--radius-md); border:1px solid var(--border-color); text-align:center;">
-                            <div style="font-size:0.75rem; color:var(--text-muted);">⛔ ملغي</div>
-                            <div id="fin-cancelled-orders" style="font-weight:700; font-size:1.1rem; color:#f59e0b;">0</div>
-                        </div>
+                        <div class="rpt-chart-body" id="chartTopGovernorates"></div>
                     </div>
-
-                    <!-- كروت العمولات الأربعة -->
-                    <div class="finance-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
-                        <div class="finance-card">
-                            <h4>📤 عمولات الصادر</h4>
-                            <div class="finance-value positive" id="fin-out-org">0 ج.م</div>
-                            <div class="finance-sub">
-                                توصيل: <span id="fin-out-del">0</span> •
-                                رفض: <span id="fin-out-rej">0</span> •
-                                إلغاء: <span id="fin-out-can">0</span>
-                            </div>
-                            <div class="finance-sub" id="fin-out-org-count" style="margin-top:0.25rem;">0 منظمة</div>
-                        </div>
-                        <div class="finance-card">
-                            <h4>📥 عمولات الوارد</h4>
-                            <div class="finance-value positive" id="fin-in-org">0 ج.م</div>
-                            <div class="finance-sub">
-                                توصيل: <span id="fin-in-del">0</span> •
-                                رفض: <span id="fin-in-rej">0</span> •
-                                إلغاء: <span id="fin-in-can">0</span>
-                            </div>
-                            <div class="finance-sub" id="fin-in-org-count" style="margin-top:0.25rem;">0 منظمة</div>
-                        </div>
-                        <div class="finance-card">
-                            <h4>📋 عمولات غير مسندة</h4>
-                            <div class="finance-value positive" id="fin-unassigned">0 ج.م</div>
-                            <div class="finance-sub">
-                                توصيل: <span id="fin-ua-del">0</span> •
-                                رفض: <span id="fin-ua-rej">0</span> •
-                                إلغاء: <span id="fin-ua-can">0</span>
-                            </div>
-                        </div>
-                        <div class="finance-card" style="border: 2px solid var(--danger-color, #ef4444);">
-                            <h4>🚴 عمولات المناديب <small style="color:var(--danger-color, #ef4444);">(مصروف)</small></h4>
-                            <div class="finance-value negative" id="fin-courier-comm">0 ج.م</div>
-                            <div class="finance-sub">
-                                توصيل: <span id="fin-c-del">0</span> •
-                                رفض: <span id="fin-c-rej">0</span> •
-                                إلغاء: <span id="fin-c-can">0</span>
-                            </div>
-                            <div class="finance-sub" id="fin-courier-count" style="margin-top:0.25rem;">0 مندوب</div>
-                        </div>
+                </div>
+                <div class="rpt-table-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="table"></i> جدول تفصيلي للمحافظات</h3>
                     </div>
-
-                    <!-- تفاصيل المنظمات الصادرة -->
-                    <div class="section-header">
-                        <h3>📤 تفاصيل عمولات الصادر</h3>
+                    <div class="rpt-table-wrapper">
+                        <table class="rpt-table" id="tableGeo">
+                            <thead>
+                                <tr>
+                                    <th>المحافظة</th><th>عدد الطلبات</th><th>نسبة التوصيل</th><th>الإيرادات</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
                     </div>
-                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
-                        <div id="fin-outgoing-wrap" style="max-height:none; overflow:hidden;">
-                            <table class="detail-table">
+                </div>
+            </div>
+
+            <!-- ===== Tab 6: Speed ===== -->
+            <div class="tab-panel" id="panel-speed">
+                <div class="kpi-grid kpi-grid-3" id="speedKpis">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="clock"></i> توزيع فئات الوقت</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartTimeDistribution"></div>
+                    </div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="trophy"></i> ترتيب المناديب حسب السرعة</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartCourierSpeed"></div>
+                    </div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="map-pin"></i> سرعة التوصيل حسب المحافظة</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartGovSpeed"></div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 7: Returns ===== -->
+            <div class="tab-panel" id="panel-returns">
+                <div class="kpi-grid" id="returnsKpis">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="pie-chart"></i> أسباب الرفض</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartReturnReasons"></div>
+                    </div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="bar-chart-3"></i> المرتجعات حسب المندوب</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartReturnsByCourier"></div>
+                    </div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="grid-3x3"></i> المرتجعات حسب المحافظة</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartReturnsTreemap"></div>
+                </div>
+            </div>
+
+            <!-- ===== Tab 8: Trips ===== -->
+            <div class="tab-panel" id="panel-trips">
+                <div class="kpi-grid kpi-grid-3" id="tripsKpis">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="pie-chart"></i> حالات الرحلات</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartTripStatus"></div>
+                    </div>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="truck"></i> أداء الشاحنات</h3>
+                        </div>
+                        <div class="rpt-chart-body" id="chartVehiclePerf"></div>
+                    </div>
+                </div>
+                <div class="rpt-chart-card">
+                    <div class="rpt-chart-header">
+                        <h3 class="rpt-chart-title"><i data-lucide="trending-up"></i> اتجاه الرحلات عبر الزمن</h3>
+                    </div>
+                    <div class="rpt-chart-body" id="chartTripTrend"></div>
+                </div>
+                <div class="rpt-grid-2">
+                    <div class="rpt-table-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="arrow-up-right"></i> وجهات الرحلات الصادرة</h3>
+                        </div>
+                        <div class="rpt-table-wrapper">
+                            <table class="rpt-table" id="tableTripDest">
                                 <thead>
-                                    <tr>
-                                        <th>المنظمة/المندوب</th>
-                                        <th>الأوردرات</th>
-                                        <th>مسلم</th>
-                                        <th>ع. توصيل</th>
-                                        <th>ع. رفض</th>
-                                        <th>ع. إلغاء</th>
-                                        <th>الإجمالي</th>
-                                    </tr>
+                                    <tr><th>الوجهة</th><th>الرحلات</th><th>الأوردرات</th><th>المكتملة</th></tr>
                                 </thead>
-                                <tbody id="fin-outgoing-details"></tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
-                        <button id="fin-outgoing-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('outgoing')">⬇️ عرض المزيد</button>
                     </div>
-
-                    <!-- تفاصيل المنظمات الواردة -->
-                    <div class="section-header">
-                        <h3>📥 تفاصيل عمولات الوارد</h3>
-                    </div>
-                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
-                        <div id="fin-incoming-wrap" style="max-height:none; overflow:hidden;">
-                            <table class="detail-table">
+                    <div class="rpt-table-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="arrow-down-left"></i> مصادر الرحلات الواردة</h3>
+                        </div>
+                        <div class="rpt-table-wrapper">
+                            <table class="rpt-table" id="tableTripOrigin">
                                 <thead>
-                                    <tr>
-                                        <th>المنظمة</th>
-                                        <th>الأوردرات</th>
-                                        <th>مسلم</th>
-                                        <th>ع. توصيل</th>
-                                        <th>ع. رفض</th>
-                                        <th>ع. إلغاء</th>
-                                        <th>الإجمالي</th>
-                                    </tr>
+                                    <tr><th>المصدر</th><th>الرحلات</th><th>الأوردرات</th><th>المكتملة</th></tr>
                                 </thead>
-                                <tbody id="fin-incoming-details"></tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
-                        <button id="fin-incoming-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('incoming')">⬇️ عرض المزيد</button>
                     </div>
-
-                    <!-- تفاصيل المناديب -->
-                    <div class="section-header">
-                        <h3>🚴 تفاصيل عمولات المناديب</h3>
-                    </div>
-                    <div class="card" style="margin-bottom:1.5rem; overflow-x: auto;">
-                        <div id="fin-courier-wrap" style="max-height:none; overflow:hidden;">
-                            <table class="detail-table">
-                                <thead>
-                                    <tr>
-                                        <th>المندوب</th>
-                                        <th>الأوردرات</th>
-                                        <th>مسلم</th>
-                                        <th>ع. توصيل</th>
-                                        <th>ع. رفض</th>
-                                        <th>ع. إلغاء</th>
-                                        <th>الإجمالي</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="fin-courier-details"></tbody>
-                            </table>
-                        </div>
-                        <button id="fin-courier-more" class="quick-btn" style="display:none; width:100%; margin-top:0.5rem; padding:0.6rem; text-align:center;" onclick="showMoreRows('courier')">⬇️ عرض المزيد</button>
-                    </div>
-                </div>
-            </div>
-
-
-            <!-- Tab 2: Dashboard (Period) -->
-            <div id="tab-dashboard" class="tab-content">
-                <div class="stats-grid" style="margin-bottom: var(--space-6);">
-                    <div class="stat-card">
-                        <div class="stat-icon new">📦</div>
-                        <div class="stat-value" id="dash-total">0</div>
-                        <div class="stat-label">إجمالي الطلبات</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon delivered">✅</div>
-                        <div class="stat-value" id="dash-delivered">0</div>
-                        <div class="stat-label">تم التسليم</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon refused">❌</div>
-                        <div class="stat-value" id="dash-refused">0</div>
-                        <div class="stat-label">مرفوض</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon cancelled">⛔</div>
-                        <div class="stat-value" id="dash-cancelled">0</div>
-                        <div class="stat-label">ملغي</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon in-progress">🎯</div>
-                        <div class="stat-value" id="dash-success-rate">0%</div>
-                        <div class="stat-label">نسبة التوصيل</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon waiting">💰</div>
-                        <div class="stat-value" id="dash-revenue">0 ج.م</div>
-                        <div class="stat-label">إجمالي المحصّل</div>
-                    </div>
-                </div>
-
-                <div class="chart-grid">
-                    <div class="card">
-                        <div class="card-header"><h3 class="card-title">اتجاه الطلبات والمبالغ</h3></div>
-                        <div style="padding: 20px;"><canvas id="trendChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header"><h3 class="card-title">توزيع الحالات</h3></div>
-                        <div style="padding: 20px; max-width:400px; margin:auto;"><canvas id="statusChart"></canvas></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 3: Couriers Performance -->
-            <div id="tab-couriers" class="tab-content">
-                <div class="section-header">
-                    <h3>ترتيب المناديب حسب الأداء</h3>
-                </div>
-                <div id="courierPerfLoading" class="loading-spinner">⏳ جاري تحميل بيانات الأداء...</div>
-                <div id="courierPerfContent" style="display:none;">
-                    <!-- ملخص -->
-                    <div class="finance-grid" style="margin-bottom:1.5rem;">
-                        <div class="finance-card">
-                            <h4>🏆 أفضل أداء</h4>
-                            <div class="finance-value positive" id="cperf-top-name">-</div>
-                            <div class="finance-sub" id="cperf-top-rate">0%</div>
-                        </div>
-                        <div class="finance-card">
-                            <h4>📊 متوسط الأداء</h4>
-                            <div class="finance-value neutral" id="cperf-avg-rate">0%</div>
-                            <div class="finance-sub" id="cperf-avg-count">0 أوردر</div>
-                        </div>
-                    </div>
-
-                    <!-- الترتيب -->
-                    <div id="courierPerfList" style="display:grid; gap:0.75rem; margin-bottom:1.5rem;"></div>
-
-                    <!-- chart -->
-                    <div class="card">
-                        <div class="card-header"><h3 class="card-title">مقارنة أداء المناديب</h3></div>
-                        <div style="padding:20px;"><canvas id="courierCompChart"></canvas></div>
-                    </div>
-
-                    <!-- تقرير مندوب فردي -->
-                    <div class="section-header" style="margin-top:2rem;">
-                        <h3>تقرير مندوب فردي</h3>
-                    </div>
-                    <div class="filter-group" style="margin-bottom:1rem;">
-                        <select id="courierSelect" class="form-control" style="min-width:250px;" onchange="loadCourierDetail()">
-                            <option value="">-- اختر المندوب --</option>
-                            <option th:each="c : ${couriers}" th:value="${c.id}" th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(c.id) ? courierDisplayNames.get(c.id) : c.fullName}"></option>
-                        </select>
-                    </div>
-                    <div id="courierDetailSection" style="display:none;">
-                        <div class="finance-grid">
-                            <div class="finance-card">
-                                <h4>📦 الأوردرات</h4>
-                                <div class="finance-value" id="cd-total">0</div>
-                                <div class="finance-sub"><span id="cd-delivered">0</span> مسلم • <span id="cd-refused">0</span> مرفوض • <span id="cd-cancelled">0</span> ملغي</div>
-                            </div>
-                            <div class="finance-card">
-                                <h4>💵 إجمالي المحصّل</h4>
-                                <div class="finance-value" id="cd-collected">0 ج.م</div>
-                                <div class="finance-sub">
-                                    تسليم: <span id="cd-col-del">0</span> • جزئي: <span id="cd-col-par">0</span> • رفض: <span id="cd-col-rej">0</span>
-                                </div>
-                            </div>
-                            <div class="finance-card">
-                                <h4>🏷️ العمولات المستحقة</h4>
-                                <div class="finance-value positive" id="cd-commission">0 ج.م</div>
-                                <div class="finance-sub">
-                                    توصيل: <span id="cd-com-del">0</span> • رفض: <span id="cd-com-rej">0</span> • إلغاء: <span id="cd-com-can">0</span>
-                                </div>
-                            </div>
-                            <div class="finance-card" style="border: 2px solid var(--primary-color);">
-                                <h4>💰 المطلوب تسليمه</h4>
-                                <div class="finance-value" id="cd-due" style="color:var(--primary-color);">0 ج.م</div>
-                                <div class="finance-sub">= المحصّل − العمولات</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 4: Organizations Performance -->
-            <div id="tab-orgs" class="tab-content" th:if="${!linkedOrgs.isEmpty()}">
-                <div class="section-header">
-                    <h3>ترتيب المنظمات حسب الأداء</h3>
-                </div>
-                <div id="orgPerfLoading" class="loading-spinner">⏳ جاري تحميل بيانات المنظمات...</div>
-                <div id="orgPerfContent" style="display:none;">
-                    <div id="orgPerfList" style="display:grid; gap:0.75rem; margin-bottom:1.5rem;"></div>
-                    <div class="card">
-                        <div class="card-header"><h3 class="card-title">مقارنة أداء المنظمات</h3></div>
-                        <div style="padding:20px;"><canvas id="orgCompChart"></canvas></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab 5: Geographic -->
-            <div id="tab-geo" class="tab-content">
-                <div class="card">
-                    <div class="card-header"><h3 class="card-title">توزيع الطلبات على المحافظات</h3></div>
-                    <div style="padding: 20px;"><canvas id="geoChart"></canvas></div>
-                </div>
-                <div class="card" style="margin-top:1.5rem; overflow-x:auto;">
-                    <table class="detail-table" id="geoTable">
-                        <thead>
-                            <tr>
-                                <th>المحافظة</th>
-                                <th>الطلبات</th>
-                                <th>نسبة التوصيل</th>
-                                <th>الإيرادات</th>
-                            </tr>
-                        </thead>
-                        <tbody id="geoTableBody"></tbody>
-                    </table>
                 </div>
             </div>
 
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+    <!-- Scripts -->
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script th:src="@{/js/reports/reports-main.js}"></script>
+    <script th:src="@{/js/reports/reports-overview.js}"></script>
+    <script th:src="@{/js/reports/reports-financial.js}"></script>
+    <script th:src="@{/js/reports/reports-couriers.js}"></script>
+    <script th:src="@{/js/reports/reports-orgs.js}"></script>
+    <script th:src="@{/js/reports/reports-geographic.js}"></script>
+    <script th:src="@{/js/reports/reports-speed.js}"></script>
+    <script th:src="@{/js/reports/reports-returns.js}"></script>
+    <script th:src="@{/js/reports/reports-trips.js}"></script>
 
     <script>
-        // ===================== Chart instances =====================
-        let trendChartObj = null, statusChartObj = null;
-        let geoChartObj = null, courierCompChartObj = null, orgCompChartObj = null;
-
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDark ? '#f3f4f6' : '#1f2937';
-        const gridColor = isDark ? '#374151' : '#e5e7eb';
-        const chartFont = { family: "'Cairo', sans-serif" };
-
-        // ===================== Filter State =====================
-        function getFilterParams() {
-            const bdId = document.getElementById('businessDaySelect').value;
-            const f = document.getElementById('dateFrom').value;
-            const t = document.getElementById('dateTo').value;
-
-            let params = [];
-            if (bdId) params.push('businessDayId=' + bdId);
-            if (f) params.push('from=' + f);
-            if (t) params.push('to=' + t);
-            return params.length > 0 ? '?' + params.join('&') : '';
-        }
-
-        function initDates() {
-            setDateRange('month', document.querySelector('.quick-btn.active'));
-        }
-
-        function setDateRange(range, btn) {
-            document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
-            if (btn) btn.classList.add('active');
-
-            // مسح يوم العمل عند إختيار فترة
-            document.getElementById('businessDaySelect').value = '';
-
-            const to = new Date();
-            let from = new Date();
-            if (range === 'week') from.setDate(to.getDate() - 7);
-            else if (range === 'month') from.setMonth(to.getMonth() - 1);
-
-            document.getElementById('dateTo').value = to.toISOString().split('T')[0];
-            document.getElementById('dateFrom').value = from.toISOString().split('T')[0];
-            onFilterChange();
-        }
-
-        function onFilterChange() {
-            const bdId = document.getElementById('businessDaySelect').value;
-            const datesDisabled = !!bdId;
-            document.getElementById('dateFrom').disabled = datesDisabled;
-            document.getElementById('dateTo').disabled = datesDisabled;
-
-            loadAllData();
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabId).classList.add('active');
-
-            // Lazy load
-            if (tabId === 'financial' && !window._financialLoaded) loadFinancialData();
-            if (tabId === 'dashboard' && !window._dashboardLoaded) loadDashboardData();
-            if (tabId === 'couriers' && !window._couriersLoaded) loadCourierPerformance();
-            if (tabId === 'orgs' && !window._orgsLoaded) loadOrgPerformance();
-            if (tabId === 'geo' && !window._geoLoaded) loadGeoData();
-        }
-
-        function loadAllData() {
-            window._financialLoaded = false;
-            window._dashboardLoaded = false;
-            window._couriersLoaded = false;
-            window._orgsLoaded = false;
-            window._geoLoaded = false;
-
-            // Load active tab
-            const activeTab = document.querySelector('.tab-content.active');
-            if (activeTab) {
-                const tabId = activeTab.id.replace('tab-', '');
-                if (tabId === 'financial') loadFinancialData();
-                else if (tabId === 'dashboard') loadDashboardData();
-                else if (tabId === 'couriers') loadCourierPerformance();
-                else if (tabId === 'orgs') loadOrgPerformance();
-                else if (tabId === 'geo') loadGeoData();
-            }
-        }
-
-        function fmt(n) {
-            if (n == null) return '0';
-            return Number(n).toLocaleString('ar-EG', { maximumFractionDigits: 2 });
-        }
-
-        // ===================== Lazy Loading State =====================
-        const ROWS_PER_PAGE = 20;
-        const _tableData = { outgoing: [], incoming: [], courier: [] };
-        const _tableShown = { outgoing: 0, incoming: 0, courier: 0 };
-
-        function renderTableRows(tableId, rows, start, count) {
-            const tbody = document.getElementById('fin-' + tableId + '-details');
-            const fragment = document.createDocumentFragment();
-            const end = Math.min(start + count, rows.length);
-            for (let i = start; i < end; i++) {
-                const e = rows[i];
-                const tr = document.createElement('tr');
-                const typeLabel = e.entityType === 'courier' ? 'مندوب' : 'منظمة';
-                tr.innerHTML = `
-                    <td>${e.entityName} <small style="color:var(--text-muted)">(${typeLabel})</small></td>
-                    <td>${e.totalOrders}</td>
-                    <td>${e.deliveredOrders}</td>
-                    <td>${fmt(e.deliveryCommission)}</td>
-                    <td>${fmt(e.rejectionCommission)}</td>
-                    <td>${fmt(e.cancellationCommission)}</td>
-                    <td><strong>${fmt(e.totalCommission)}</strong></td>`;
-                fragment.appendChild(tr);
-            }
-            tbody.appendChild(fragment);
-            _tableShown[tableId] = end;
-
-            const moreBtn = document.getElementById('fin-' + tableId + '-more');
-            if (end >= rows.length) {
-                moreBtn.style.display = 'none';
-            } else {
-                moreBtn.style.display = 'block';
-                moreBtn.innerText = `⬇️ عرض المزيد (${rows.length - end} متبقي)`;
-            }
-        }
-
-        function showMoreRows(tableId) {
-            renderTableRows(tableId, _tableData[tableId], _tableShown[tableId], ROWS_PER_PAGE);
-        }
-
-        function initTable(tableId, rows) {
-            _tableData[tableId] = rows;
-            _tableShown[tableId] = 0;
-            const tbody = document.getElementById('fin-' + tableId + '-details');
-            tbody.innerHTML = '';
-            if (rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
-                document.getElementById('fin-' + tableId + '-more').style.display = 'none';
-            } else {
-                renderTableRows(tableId, rows, 0, ROWS_PER_PAGE);
-            }
-        }
-
-        // ===================== Financial Summary =====================
-        async function loadFinancialData() {
-            const loadEl = document.getElementById('financialLoading');
-            const contentEl = document.getElementById('financialContent');
-            loadEl.style.display = 'block';
-            contentEl.style.display = 'none';
-
-            try {
-                const res = await fetch('/api/reports/financial' + getFilterParams());
-                const d = await res.json();
-
-                // صافي الربح
-                const netProfit = d.netProfit || 0;
-                const npEl = document.getElementById('fin-net-profit');
-                npEl.innerText = fmt(netProfit) + ' ج.م';
-                npEl.className = 'finance-value ' + (netProfit > 0 ? 'positive' : netProfit < 0 ? 'negative' : 'neutral');
-
-                // إجمالي الإيرادات وعمولات المناديب
-                document.getElementById('fin-total-revenue').innerText = fmt(d.totalCommissionRevenue) + ' ج.م';
-                document.getElementById('fin-courier-total').innerText = fmt(d.courierCommissions) + ' ج.م';
-
-                // إحصائيات الأوردرات
-                document.getElementById('fin-total-orders').innerText = d.totalOrders || 0;
-                document.getElementById('fin-delivered-orders').innerText = d.deliveredOrders || 0;
-                document.getElementById('fin-refused-orders').innerText = d.refusedOrders || 0;
-                document.getElementById('fin-cancelled-orders').innerText = d.cancelledOrders || 0;
-
-                // كارد عمولات الصادر
-                document.getElementById('fin-out-org').innerText = fmt(d.outgoingOrgCommissions) + ' ج.م';
-                document.getElementById('fin-out-del').innerText = fmt(d.outgoingDeliveryComm);
-                document.getElementById('fin-out-rej').innerText = fmt(d.outgoingRejectionComm);
-                document.getElementById('fin-out-can').innerText = fmt(d.outgoingCancellationComm);
-                document.getElementById('fin-out-org-count').innerText = (d.outgoingOrgDetails?.length || 0) + ' منظمة';
-
-                // كارد عمولات الوارد
-                document.getElementById('fin-in-org').innerText = fmt(d.incomingOrgCommissions) + ' ج.م';
-                document.getElementById('fin-in-del').innerText = fmt(d.incomingDeliveryComm);
-                document.getElementById('fin-in-rej').innerText = fmt(d.incomingRejectionComm);
-                document.getElementById('fin-in-can').innerText = fmt(d.incomingCancellationComm);
-                document.getElementById('fin-in-org-count').innerText = (d.incomingOrgDetails?.length || 0) + ' منظمة';
-
-                // كارد عمولات غير مسندة
-                document.getElementById('fin-unassigned').innerText = fmt(d.unassignedCommissions) + ' ج.م';
-                document.getElementById('fin-ua-del').innerText = fmt(d.unassignedDeliveryComm);
-                document.getElementById('fin-ua-rej').innerText = fmt(d.unassignedRejectionComm);
-                document.getElementById('fin-ua-can').innerText = fmt(d.unassignedCancellationComm);
-
-                // كارد عمولات المناديب
-                document.getElementById('fin-courier-comm').innerText = fmt(d.courierCommissions) + ' ج.م';
-                document.getElementById('fin-c-del').innerText = fmt(d.courierDeliveryComm);
-                document.getElementById('fin-c-rej').innerText = fmt(d.courierRejectionComm);
-                document.getElementById('fin-c-can').innerText = fmt(d.courierCancellationComm);
-                document.getElementById('fin-courier-count').innerText = (d.courierDetails?.length || 0) + ' مندوب';
-
-                // جداول التفاصيل مع lazy loading
-                initTable('outgoing', d.outgoingOrgDetails || []);
-                initTable('incoming', d.incomingOrgDetails || []);
-                initTable('courier', d.courierDetails || []);
-
-                window._financialLoaded = true;
-            } catch (e) { console.error('Error loading financial data', e); }
-            loadEl.style.display = 'none';
-            contentEl.style.display = 'block';
-        }
-
-
-        // ===================== Dashboard (Period) =====================
-        async function loadDashboardData() {
-            try {
-                const res = await fetch('/api/reports/period' + getFilterParams());
-                const d = await res.json();
-
-                document.getElementById('dash-total').innerText = d.totalOrders;
-                document.getElementById('dash-delivered').innerText = (d.delivered || 0) + (d.partial || 0);
-                document.getElementById('dash-refused').innerText = d.refused;
-                document.getElementById('dash-cancelled').innerText = d.cancelled;
-                document.getElementById('dash-success-rate').innerText = d.deliveryRate + '%';
-                document.getElementById('dash-revenue').innerText = fmt(d.totalCollected) + ' ج.م';
-
-                updateStatusChart(d);
-
-                // Trends only for date range (not BD)
-                if (!document.getElementById('businessDaySelect').value) {
-                    const tRes = await fetch('/api/reports/trends' + getFilterParams());
-                    const tData = await tRes.json();
-                    updateTrendChart(tData);
-                }
-
-                window._dashboardLoaded = true;
-            } catch (e) { console.error('Error loading dashboard', e); }
-        }
-
-        // ===================== Courier Performance =====================
-        async function loadCourierPerformance() {
-            const loadEl = document.getElementById('courierPerfLoading');
-            const contentEl = document.getElementById('courierPerfContent');
-            loadEl.style.display = 'block';
-            contentEl.style.display = 'none';
-
-            try {
-                const res = await fetch('/api/reports/performance/couriers' + getFilterParams());
-                const d = await res.json();
-
-                if (d.topPerformer) {
-                    document.getElementById('cperf-top-name').innerText = d.topPerformer.entityName;
-                    document.getElementById('cperf-top-rate').innerText = d.topPerformer.deliveryRate + '% نسبة توصيل';
-                }
-                document.getElementById('cperf-avg-rate').innerText = d.averageDeliveryRate + '%';
-                document.getElementById('cperf-avg-count').innerText = Math.round(d.averageOrderCount) + ' أوردر/مندوب';
-
-                // List
-                const listEl = document.getElementById('courierPerfList');
-                listEl.innerHTML = '';
-                (d.entries || []).forEach(e => {
-                    const rankClass = e.rank === 1 ? 'gold' : e.rank === 2 ? 'silver' : e.rank === 3 ? 'bronze' : 'normal';
-                    const barColor = e.deliveryRate >= 70 ? '#10b981' : e.deliveryRate >= 40 ? '#f59e0b' : '#ef4444';
-                    listEl.innerHTML += `
-                        <div class="perf-card">
-                            <div class="perf-rank ${rankClass}">${e.rank}</div>
-                            <div class="perf-info">
-                                <div class="perf-name">${e.entityName}</div>
-                                <div class="perf-stats">
-                                    <span>📦 ${e.totalOrders}</span>
-                                    <span>✅ ${e.deliveredOrders}</span>
-                                    <span>❌ ${e.refusedOrders}</span>
-                                    <span>💰 ${fmt(e.totalCommission)} ج.م</span>
-                                </div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div style="font-weight:700; margin-bottom:4px;">${e.deliveryRate}%</div>
-                                <div class="perf-bar">
-                                    <div class="perf-bar-fill" style="width:${e.deliveryRate}%; background:${barColor};"></div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-
-                updateCourierCompChart(d.entries || []);
-                window._couriersLoaded = true;
-            } catch (e) { console.error('Error loading courier perf', e); }
-            loadEl.style.display = 'none';
-            contentEl.style.display = 'block';
-        }
-
-        async function loadCourierDetail() {
-            const cid = document.getElementById('courierSelect').value;
-            if (!cid) { document.getElementById('courierDetailSection').style.display = 'none'; return; }
-            document.getElementById('courierDetailSection').style.display = 'block';
-
-            try {
-                const res = await fetch(`/api/reports/courier/${cid}` + getFilterParams());
-                const d = await res.json();
-
-                document.getElementById('cd-total').innerText = d.periodStats?.totalOrders || 0;
-                document.getElementById('cd-delivered').innerText = d.periodStats?.delivered || 0;
-                document.getElementById('cd-refused').innerText = d.periodStats?.refused || 0;
-                document.getElementById('cd-cancelled').innerText = d.periodStats?.cancelled || 0;
-
-                document.getElementById('cd-collected').innerText = fmt(d.totalCollected) + ' ج.م';
-                document.getElementById('cd-col-del').innerText = fmt(d.collectedDelivered);
-                document.getElementById('cd-col-par').innerText = fmt(d.collectedPartial);
-                document.getElementById('cd-col-rej').innerText = fmt(d.collectedRejection);
-
-                document.getElementById('cd-commission').innerText = fmt(d.totalCommission) + ' ج.م';
-                document.getElementById('cd-com-del').innerText = fmt(d.deliveryCommission);
-                document.getElementById('cd-com-rej').innerText = fmt(d.rejectionCommission);
-                document.getElementById('cd-com-can').innerText = fmt(d.cancellationCommission);
-
-                document.getElementById('cd-due').innerText = fmt(d.amountDue) + ' ج.م';
-            } catch (e) { console.error('Error loading courier detail', e); }
-        }
-
-        // ===================== Organization Performance =====================
-        async function loadOrgPerformance() {
-            const loadEl = document.getElementById('orgPerfLoading');
-            const contentEl = document.getElementById('orgPerfContent');
-            if (!loadEl || !contentEl) return;
-            loadEl.style.display = 'block';
-            contentEl.style.display = 'none';
-
-            try {
-                const res = await fetch('/api/reports/performance/organizations' + getFilterParams());
-                const d = await res.json();
-
-                const listEl = document.getElementById('orgPerfList');
-                listEl.innerHTML = '';
-                (d.entries || []).forEach(e => {
-                    const rankClass = e.rank === 1 ? 'gold' : e.rank === 2 ? 'silver' : e.rank === 3 ? 'bronze' : 'normal';
-                    const barColor = e.deliveryRate >= 70 ? '#10b981' : e.deliveryRate >= 40 ? '#f59e0b' : '#ef4444';
-                    listEl.innerHTML += `
-                        <div class="perf-card">
-                            <div class="perf-rank ${rankClass}">${e.rank}</div>
-                            <div class="perf-info">
-                                <div class="perf-name">${e.entityName}</div>
-                                <div class="perf-stats">
-                                    <span>📦 ${e.totalOrders}</span>
-                                    <span>✅ ${e.deliveredOrders}</span>
-                                    <span>❌ ${e.refusedOrders}</span>
-                                    <span>💰 ${fmt(e.netAmount)} ج.م صافي</span>
-                                </div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div style="font-weight:700; margin-bottom:4px;">${e.deliveryRate}%</div>
-                                <div class="perf-bar">
-                                    <div class="perf-bar-fill" style="width:${e.deliveryRate}%; background:${barColor};"></div>
-                                </div>
-                            </div>
-                        </div>`;
-                });
-
-                updateOrgCompChart(d.entries || []);
-                window._orgsLoaded = true;
-            } catch (e) { console.error('Error loading org perf', e); }
-            loadEl.style.display = 'none';
-            contentEl.style.display = 'block';
-        }
-
-        // ===================== Geographic =====================
-        async function loadGeoData() {
-            try {
-                const res = await fetch('/api/reports/geographic' + getFilterParams());
-                const d = await res.json();
-                updateGeoChart(d.statsByGovernorate);
-                updateGeoTable(d.statsByGovernorate);
-                window._geoLoaded = true;
-            } catch (e) { console.error('Error loading geo data', e); }
-        }
-
-        function updateGeoTable(dataMap) {
-            const tbody = document.getElementById('geoTableBody');
-            tbody.innerHTML = '';
-            if (!dataMap || Object.keys(dataMap).length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">لا توجد بيانات</td></tr>';
-                return;
-            }
-            const sorted = Object.entries(dataMap).sort((a, b) => b[1].totalOrders - a[1].totalOrders);
-            sorted.forEach(([gov, s]) => {
-                const rateColor = s.deliveryRate >= 70 ? 'positive' : s.deliveryRate >= 40 ? '' : 'negative';
-                tbody.innerHTML += `<tr>
-                    <td><strong>${gov}</strong></td>
-                    <td>${s.totalOrders}</td>
-                    <td class="${rateColor}">${s.deliveryRate}%</td>
-                    <td>${fmt(s.totalRevenue)} ج.م</td>
-                </tr>`;
-            });
-        }
-
-        // ===================== Chart Helpers =====================
-        function updateStatusChart(data) {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            if (statusChartObj) statusChartObj.destroy();
-            statusChartObj = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['تم التسليم', 'مرفوض', 'ملغي', 'استلام جزئي', 'في الطريق', 'مؤجل'],
-                    datasets: [{ data: [data.delivered, data.refused, data.cancelled, data.partial, data.inTransit, data.deferred],
-                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#ec4899', '#3b82f6', '#8b5cf6'],
-                        borderWidth: 2, borderColor: isDark ? '#1f2937' : '#ffffff' }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: textColor, font: chartFont } } } }
-            });
-        }
-
-        function updateTrendChart(data) {
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            if (trendChartObj) trendChartObj.destroy();
-            trendChartObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.labels,
-                    datasets: [
-                        { label: 'الطلبات', data: data.orderCounts, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, yAxisID: 'y' },
-                        { label: 'الإيرادات', data: data.revenues, borderColor: '#10b981', backgroundColor: 'transparent', borderDash: [5,5], tension: 0.4, yAxisID: 'y1' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: textColor, font: chartFont } } },
-                    scales: {
-                        x: { grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { position: 'left', grid: { color: gridColor }, ticks: { color: textColor } },
-                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: textColor } }
-                    }
-                }
-            });
-        }
-
-        function updateCourierCompChart(entries) {
-            const ctx = document.getElementById('courierCompChart').getContext('2d');
-            if (courierCompChartObj) courierCompChartObj.destroy();
-            courierCompChartObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: entries.map(e => e.entityName),
-                    datasets: [
-                        { label: 'مسلم', data: entries.map(e => e.deliveredOrders), backgroundColor: '#10b981' },
-                        { label: 'مرفوض', data: entries.map(e => e.refusedOrders), backgroundColor: '#ef4444' },
-                        { label: 'ملغي', data: entries.map(e => e.cancelledOrders), backgroundColor: '#f59e0b' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: { x: { stacked: true, ticks: { color: textColor } }, y: { stacked: true, ticks: { color: textColor }, beginAtZero: true } },
-                    plugins: { legend: { labels: { color: textColor, font: chartFont } } }
-                }
-            });
-        }
-
-        function updateOrgCompChart(entries) {
-            const ctx = document.getElementById('orgCompChart').getContext('2d');
-            if (orgCompChartObj) orgCompChartObj.destroy();
-            orgCompChartObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: entries.map(e => e.entityName),
-                    datasets: [
-                        { label: 'مسلم', data: entries.map(e => e.deliveredOrders), backgroundColor: '#10b981' },
-                        { label: 'مرفوض', data: entries.map(e => e.refusedOrders), backgroundColor: '#ef4444' },
-                        { label: 'ملغي', data: entries.map(e => e.cancelledOrders), backgroundColor: '#f59e0b' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    scales: { x: { stacked: true, ticks: { color: textColor } }, y: { stacked: true, ticks: { color: textColor }, beginAtZero: true } },
-                    plugins: { legend: { labels: { color: textColor, font: chartFont } } }
-                }
-            });
-        }
-
-        function updateGeoChart(dataMap) {
-            const ctx = document.getElementById('geoChart').getContext('2d');
-            if (geoChartObj) geoChartObj.destroy();
-            const labels = Object.keys(dataMap || {});
-            const counts = labels.map(l => dataMap[l].totalOrders);
-            const rates = labels.map(l => dataMap[l].deliveryRate);
-            geoChartObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'الطلبات', data: counts, backgroundColor: '#3b82f6', yAxisID: 'y' },
-                        { label: 'نسبة النجاح %', data: rates, type: 'line', borderColor: '#10b981', backgroundColor: '#10b981', yAxisID: 'y1' }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { labels: { color: textColor, font: chartFont } } },
-                    scales: {
-                        x: { ticks: { color: textColor } },
-                        y: { position: 'left', ticks: { color: textColor }, beginAtZero: true },
-                        y1: { position: 'right', ticks: { color: textColor }, max: 100, beginAtZero: true }
-                    }
-                }
-            });
-        }
-
-        window.onload = initDates;
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            ReportsMain.init();
+        });
     </script>
 </body>
-
 </html>

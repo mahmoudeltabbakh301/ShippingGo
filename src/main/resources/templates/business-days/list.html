@@ -24,6 +24,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,21 +35,21 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📅 <span th:text="#{business_days.title}">أيام العمل</span></h1>
+                <h1 class="page-title"><i data-lucide="calendar-days" class="inline-icon"></i> <span th:text="#{business_days.title}">أيام العمل</span></h1>
                 <a th:href="@{/business-days/new}" class="btn btn-primary" sec:authorize="hasRole('ADMIN')"
-                    th:text="#{business_days.btn_new_day}">➕ يوم عمل
+                    th:text="#{business_days.btn_new_day}"><i data-lucide="plus" class="inline-icon"></i> يوم عمل
                     جديد</a>
             </div>
 
             <!-- Business Days Table -->
             <div class="card">
                 <div th:if="${businessDays.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📅</div>
+                    <div class="table-empty-icon"><i data-lucide="calendar-days"></i></div>
                     <div class="table-empty-text" th:text="#{business_days.empty}">لا توجد أيام عمل بعد</div>
                 </div>
 
@@ -79,7 +80,7 @@
                                 <td th:text="${#temporals.format(bd.createdAt, 'yyyy/MM/dd HH:mm')}">تاريخ الإنشاء</td>
                                 <td>
                                     <a th:href="@{/business-days/{id}(id=${bd.id})}" class="btn btn-sm btn-primary"
-                                        th:text="#{business_days.btn.view}">👁
+                                        th:text="#{business_days.btn.view}"><i data-lucide="eye" class="inline-icon"></i>
                                         عرض</a>
                                     <form th:action="@{/business-days/{id}/toggle(id=${bd.id})}" method="post"
                                         style="display: inline;" sec:authorize="hasRole('ADMIN')">
@@ -90,7 +91,7 @@
                                     <button class="btn btn-sm btn-secondary" th:data-id="${bd.id}"
                                         th:data-name="${bd.name}"
                                         onclick="renameDay(this.getAttribute('data-id'), this.getAttribute('data-name'))"
-                                        sec:authorize="hasRole('ADMIN')" th:text="#{business_days.btn.edit}">✏️
+                                        sec:authorize="hasRole('ADMIN')" th:text="#{business_days.btn.edit}"><i data-lucide="pencil" class="inline-icon"></i>
                                         تعديل</button>
                                 </td>
                             </tr>
@@ -175,8 +176,9 @@
         }
     </script>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

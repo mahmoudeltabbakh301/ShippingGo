@@ -98,6 +98,7 @@
             color: var(--text-muted);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -108,15 +109,15 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🛡️ <span th:text="#{super_admin.dashboard.title}">لوحة تحكم المدير العام</span></h1>
+                    <h1 class="page-title"><i data-lucide="shield-check" class="inline-icon"></i> <span th:text="#{super_admin.dashboard.title}">لوحة تحكم المدير العام</span></h1>
                     <p class="page-subtitle" th:text="#{super_admin.dashboard.subtitle}">إدارة شاملة لجميع المنظمات والمستخدمين على المنصة</p>
                 </div>
             </div>
@@ -124,7 +125,7 @@
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-card-icon">🏢</div>
+                    <div class="stat-card-icon"><i data-lucide="building-2"></i></div>
                     <div class="stat-card-value" th:text="${stats.totalOrganizations}">0</div>
                     <div class="stat-card-label" th:text="#{super_admin.stats.total_orgs}">إجمالي المنظمات</div>
                     <div class="stat-card-sub">
@@ -133,7 +134,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-icon">👥</div>
+                    <div class="stat-card-icon"><i data-lucide="users"></i></div>
                     <div class="stat-card-value" th:text="${stats.totalUsers}">0</div>
                     <div class="stat-card-label" th:text="#{super_admin.stats.total_users}">إجمالي المستخدمين</div>
                     <div class="stat-card-sub">
@@ -142,7 +143,7 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-icon">📦</div>
+                    <div class="stat-card-icon"><i data-lucide="package"></i></div>
                     <div class="stat-card-value" th:text="${stats.totalOrders}">0</div>
                     <div class="stat-card-label" th:text="#{super_admin.stats.total_orders}">إجمالي الطلبات</div>
                 </div>
@@ -155,7 +156,7 @@
                     </div>
                 </div>
                 <div class="stat-card" th:if="${subStats != null}">
-                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-icon"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-card-value" th:text="${subStats.active}">0</div>
                     <div class="stat-card-label">اشتراكات نشطة</div>
                 </div>
@@ -165,7 +166,7 @@
                     <div class="stat-card-label">اشتراكات منتهية</div>
                 </div>
                 <div class="stat-card" th:if="${totalRevenue != null}">
-                    <div class="stat-card-icon">💰</div>
+                    <div class="stat-card-icon"><i data-lucide="wallet"></i></div>
                     <div class="stat-card-value" th:text="${totalRevenue}">0</div>
                     <div class="stat-card-label">إجمالي الإيرادات (جنيه)</div>
                     <div class="stat-card-sub" th:if="${monthlyRevenue != null}">
@@ -177,28 +178,28 @@
             <!-- Quick Links -->
             <div class="quick-links">
                 <a th:href="@{/super-admin/organizations}" class="quick-link-card">
-                    <div class="quick-link-icon">🏢</div>
+                    <div class="quick-link-icon"><i data-lucide="building-2"></i></div>
                     <div>
                         <div class="quick-link-title" th:text="#{super_admin.nav.organizations}">إدارة المنظمات</div>
                         <div class="quick-link-desc" th:text="#{super_admin.dashboard.orgs_desc}">عرض وإدارة جميع المنظمات على المنصة</div>
                     </div>
                 </a>
                 <a th:href="@{/super-admin/users}" class="quick-link-card">
-                    <div class="quick-link-icon">👥</div>
+                    <div class="quick-link-icon"><i data-lucide="users"></i></div>
                     <div>
                         <div class="quick-link-title" th:text="#{super_admin.nav.users}">إدارة المستخدمين</div>
                         <div class="quick-link-desc" th:text="#{super_admin.dashboard.users_desc}">عرض وإدارة جميع المستخدمين على المنصة</div>
                     </div>
                 </a>
                 <a th:href="@{/super-admin/subscriptions}" class="quick-link-card">
-                    <div class="quick-link-icon">💎</div>
+                    <div class="quick-link-icon"><i data-lucide="gem"></i></div>
                     <div>
                         <div class="quick-link-title">إدارة الاشتراكات</div>
                         <div class="quick-link-desc">عرض وإدارة اشتراكات المنظمات والأسعار</div>
                     </div>
                 </a>
                 <a th:href="@{/super-admin/settings}" class="quick-link-card">
-                    <div class="quick-link-icon">⚙️</div>
+                    <div class="quick-link-icon"><i data-lucide="settings"></i></div>
                     <div>
                         <div class="quick-link-title">إعدادات المنصة</div>
                         <div class="quick-link-desc">إعدادات Paymob والفترة التجريبية والأسعار</div>
@@ -209,13 +210,13 @@
             <!-- Latest Organizations -->
             <div class="card">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin: 0; font-size: 1.1rem;">📋 <span th:text="#{super_admin.dashboard.latest_orgs}">أحدث المنظمات المسجلة</span></h2>
+                    <h2 style="margin: 0; font-size: 1.1rem;"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{super_admin.dashboard.latest_orgs}">أحدث المنظمات المسجلة</span></h2>
                     <a th:href="@{/super-admin/organizations}" class="btn btn-sm btn-outline"
                        th:text="#{super_admin.btn.view_all}">عرض الكل</a>
                 </div>
 
                 <div th:if="${organizations.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                     <div class="table-empty-text" th:text="#{super_admin.orgs.empty}">لا توجد منظمات مسجلة بعد</div>
                 </div>
 
@@ -257,8 +258,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

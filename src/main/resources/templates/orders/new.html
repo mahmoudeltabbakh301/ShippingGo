@@ -39,6 +39,7 @@
             margin-bottom: var(--space-3);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -47,11 +48,11 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <div class="order-container">
                 <div class="page-header">
-                    <h1 class="page-title">➕ <span th:text="#{orders.new.title}">إنشاء طلب جديد</span></h1>
+                    <h1 class="page-title"><i data-lucide="plus" class="inline-icon"></i> <span th:text="#{orders.new.title}">إنشاء طلب جديد</span></h1>
                     <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-secondary btn-sm"
                         th:text="#{orders.new.btn_back_to_day}">⬅ رجوع لليوم</a>
                 </div>
@@ -63,7 +64,7 @@
                         <div style="margin-bottom: var(--space-6);">
                             <div class="badge badge-pending"
                                 style="font-size: 1rem; padding: var(--space-2) var(--space-4);">
-                                <span th:text="#{orders.new.for_business_day}">📅 لليوم العمل:</span> <span
+                                <span th:text="#{orders.new.for_business_day}"><i data-lucide="calendar-days" class="inline-icon"></i> لليوم العمل:</span> <span
                                     th:text="${businessDay.name ?: #temporals.format(businessDay.date, 'yyyy/MM/dd')}"></span>
                             </div>
                         </div>
@@ -183,7 +184,7 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script>
         function calculateTotalAmount() {
@@ -225,6 +226,7 @@
                 }).catch(function(e) { console.error(e); });
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

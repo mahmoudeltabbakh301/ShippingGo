@@ -31,6 +31,7 @@ public class OrganizationService {
     private final UserRepository userRepository;
     private final VirtualOfficeRepository virtualOfficeRepository;
     private final NotificationService notificationService;
+    private final AssignmentPermissionRepository assignmentPermissionRepository;
 
     public OrganizationService(OrganizationRepository organizationRepository,
             CompanyRepository companyRepository,
@@ -41,7 +42,8 @@ public class OrganizationService {
             UserRepository userRepository,
             OrganizationRelationRepository organizationRelationRepository,
             VirtualOfficeRepository virtualOfficeRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            AssignmentPermissionRepository assignmentPermissionRepository) {
         this.organizationRepository = organizationRepository;
         this.companyRepository = companyRepository;
         this.officeRepository = officeRepository;
@@ -52,6 +54,7 @@ public class OrganizationService {
         this.organizationRelationRepository = organizationRelationRepository;
         this.virtualOfficeRepository = virtualOfficeRepository;
         this.notificationService = notificationService;
+        this.assignmentPermissionRepository = assignmentPermissionRepository;
     }
 
     public Organization findById(Long id) {
@@ -357,7 +360,6 @@ public class OrganizationService {
                 office, RelationStatus.PENDING, com.shipment.shippinggo.enums.RelationType.OFFICE_TO_OFFICE);
     }
 
-    // قبول أو رفض طلب الشراكة المعلق
     @Transactional
     public void processLinkRequest(Long relationId, boolean accept) {
         OrganizationRelation relation = organizationRelationRepository.findById(relationId)
@@ -367,9 +369,54 @@ public class OrganizationService {
             relation.setStatus(RelationStatus.ACCEPTED);
             relation.setProcessedAt(LocalDateTime.now());
             organizationRelationRepository.save(relation);
+
+            // Step 9: تعبئة تلقائية لجدول assignment_permissions
+            autoPopulateAssignmentPermission(relation.getParentOrganization(), relation.getChildOrganization());
         } else {
             // Delete rejected requests from database
             organizationRelationRepository.delete(relation);
+        }
+    }
+
+    /**
+     * تعبئة تلقائية لجدول صلاحيات الإسناد عند قبول علاقة بين منظمتين.
+     * يُنشئ سجلين (في الاتجاهين) للسماح بالإسناد المتبادل.
+     */
+    private void autoPopulateAssignmentPermission(Organization parent, Organization child) {
+        // parent → child
+        if (!assignmentPermissionRepository.existsBySourceOrganizationIdAndTargetOrganizationIdAndActiveTrue(
+                parent.getId(), child.getId())) {
+            java.util.Optional<AssignmentPermission> existing = assignmentPermissionRepository
+                    .findBySourceOrganizationIdAndTargetOrganizationId(parent.getId(), child.getId());
+            if (existing.isPresent()) {
+                AssignmentPermission perm = existing.get();
+                perm.setActive(true);
+                assignmentPermissionRepository.save(perm);
+            } else {
+                assignmentPermissionRepository.save(AssignmentPermission.builder()
+                        .sourceOrganization(parent)
+                        .targetOrganization(child)
+                        .active(true)
+                        .build());
+            }
+        }
+
+        // child → parent
+        if (!assignmentPermissionRepository.existsBySourceOrganizationIdAndTargetOrganizationIdAndActiveTrue(
+                child.getId(), parent.getId())) {
+            java.util.Optional<AssignmentPermission> existing = assignmentPermissionRepository
+                    .findBySourceOrganizationIdAndTargetOrganizationId(child.getId(), parent.getId());
+            if (existing.isPresent()) {
+                AssignmentPermission perm = existing.get();
+                perm.setActive(true);
+                assignmentPermissionRepository.save(perm);
+            } else {
+                assignmentPermissionRepository.save(AssignmentPermission.builder()
+                        .sourceOrganization(child)
+                        .targetOrganization(parent)
+                        .active(true)
+                        .build());
+            }
         }
     }
 
@@ -510,9 +557,11 @@ public class OrganizationService {
         membership.setProcessedAt(LocalDateTime.now());
         membership.setProcessedBy(user);
 
-        // Update user role
-        user.setRole(membership.getAssignedRole());
-        userRepository.save(user);
+        // Update user role using attached entity to ensure DB update
+        User attachedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        attachedUser.setRole(membership.getAssignedRole());
+        userRepository.save(attachedUser);
 
         // إشعار المنظمة بقبول الدعوة
         notificationService.sendInvitationResponseNotification(membership.getOrganization(), user, true);
@@ -560,9 +609,11 @@ public class OrganizationService {
                 .build();
         organizationRelationRepository.save(relation);
 
-        // تحديث دور المستخدم ليصبح أدمن
-        user.setRole(Role.ADMIN);
-        userRepository.save(user);
+        // تحديث دور المستخدم ليصبح أدمن باستخدام الكيان المتصل بقاعدة البيانات
+        User attachedUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        attachedUser.setRole(Role.ADMIN);
+        userRepository.save(attachedUser);
 
         // حذف الـ Membership (لأن العميل أصبح أدمن منظمته وليس عضواً)
         membershipRepository.delete(membership);

@@ -137,7 +137,94 @@
         .scroll-end-message.active {
             display: block;
         }
+
+        /* PDF Overlay */
+        .pdf-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9999;
+            display: none;
+        }
+
+        .pdf-overlay.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pdf-overlay-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            animation: fadeIn 0.2s ease;
+        }
+
+        .pdf-overlay-content {
+            position: relative;
+            width: 92%;
+            max-width: 950px;
+            height: 90vh;
+            background: var(--dark-surface, #1a1a2e);
+            border-radius: var(--radius-lg, 16px);
+            overflow: hidden;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+            animation: slideUp 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pdf-overlay-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-3) var(--space-4);
+            background: var(--dark-bg, #0f0f23);
+            border-bottom: 1px solid var(--dark-border, #2a2a4a);
+            flex-shrink: 0;
+        }
+
+        .pdf-overlay-header span {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .pdf-overlay-actions {
+            display: flex;
+            gap: var(--space-2);
+            align-items: center;
+        }
+
+        .pdf-overlay-actions .btn {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+
+        .pdf-overlay iframe {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #525659;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -146,13 +233,13 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📄 فواتير: [[${businessDay.name ?: #temporals.format(businessDay.date,
+                    <h1 class="page-title"><i data-lucide="file-text" class="inline-icon"></i> فواتير: [[${businessDay.name ?: #temporals.format(businessDay.date,
                         'yyyy/MM/dd')}]]</h1>
                     <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                         <span th:text="${#temporals.format(businessDay.date, 'dd/MM/yyyy')}">التاريخ</span>
@@ -160,23 +247,23 @@
                     </p>
                 </div>
                 <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <a th:href="@{/invoices}" class="btn btn-secondary">📄 كل الفواتير</a>
-                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-secondary">📅 يوم العمل</a>
+                    <a th:href="@{/invoices}" class="btn btn-secondary"><i data-lucide="file-text" class="inline-icon"></i> كل الفواتير</a>
+                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-secondary"><i data-lucide="calendar-days" class="inline-icon"></i> يوم العمل</a>
                 </div>
             </div>
 
             <!-- Total Count Bar -->
             <div th:if="${invoices != null && !invoices.isEmpty()}" class="total-count-bar">
-                <span>📊 إجمالي الفواتير: <span class="count-info" th:text="${totalCount}">0</span></span>
+                <span><i data-lucide="bar-chart-3" class="inline-icon"></i> إجمالي الفواتير: <span class="count-info" th:text="${totalCount}">0</span></span>
                 <span th:if="${hasMore}" style="color: var(--text-tertiary); font-size: 0.85rem;">
-                    يتم تحميل المزيد عند التمرير للأسفل ⬇️
+                    يتم تحميل المزيد عند التمرير للأسفل <i data-lucide="arrow-down" class="inline-icon"></i>
                 </span>
             </div>
 
             <!-- Search by Code and Courier -->
             <div class="card" style="margin-bottom: var(--space-4);">
                 <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
-                    <h3 class="card-title">🔍 بحث عن فاتورة</h3>
+                    <h3 class="card-title"><i data-lucide="search" class="inline-icon"></i> بحث عن فاتورة</h3>
                     <form th:action="@{/invoices/day/{id}(id=${businessDay.id})}" method="get"
                           style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
                         <input type="text" name="code" class="form-control" th:value="${code}"
@@ -192,7 +279,7 @@
 
                         <button type="submit" class="btn btn-primary btn-sm">بحث</button>
                         <a th:if="${(code != null && !code.isEmpty()) || courierId != null}"
-                           th:href="@{/invoices/day/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm">✕ إزالة الفلتر</a>
+                           th:href="@{/invoices/day/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm"><i data-lucide="x" class="inline-icon"></i> إزالة الفلتر</a>
                     </form>
                 </div>
             </div>
@@ -204,11 +291,10 @@
                     <span id="selectedInvoiceCount" style="font-weight: 600; color: var(--accent-1);">0 فاتورة
                         محددة</span>
                 </div>
-                <form id="bulkPrintInvoicesForm" th:action="@{/invoices/bulk-print}" method="get" target="_blank"
-                    style="display: flex; gap: var(--space-2); align-items: center;">
-                    <input type="hidden" name="invoiceIds" id="invoiceIdsForPrint" value="">
-                    <button type="submit" class="btn btn-dark btn-sm">🖨️ طباعة المحدد</button>
-                </form>
+                <div style="display: flex; gap: var(--space-2); align-items: center;">
+                    <input type="hidden" id="invoiceIdsForPrint" value="">
+                    <button type="button" class="btn btn-dark btn-sm" onclick="openBulkPrintOverlay()"><i data-lucide="printer" class="inline-icon"></i> طباعة المحدد</button>
+                </div>
             </div>
 
             <!-- Select All Checkbox -->
@@ -234,8 +320,9 @@
                                 </div>
                             </div>
                             <div style="display: flex; gap: var(--space-2); align-items: center;">
-                                <a th:href="@{'/invoices/' + ${invoice.id} + '/print'}" class="btn btn-secondary btn-sm"
-                                    target="_blank">🖨️ طباعة</a>
+                                <button type="button" class="btn btn-secondary btn-sm"
+                                    th:onclick="'openPdfOverlay(\'/invoices/' + ${invoice.id} + '/print\')'">
+                                    <i data-lucide="printer" class="inline-icon"></i> طباعة</button>
                             </div>
                         </div>
                         <div class="invoice-detail-body">
@@ -281,24 +368,43 @@
 
             <!-- End of results message -->
             <div id="scrollEndMessage" class="scroll-end-message">
-                ✅ تم عرض جميع الفواتير
+                <i data-lucide="check-circle-2" class="inline-icon"></i> تم عرض جميع الفواتير
             </div>
 
             <div th:if="${invoices == null || invoices.isEmpty()}" class="card"
                 style="text-align: center; padding: var(--space-8);">
-                <div style="font-size: 3rem; margin-bottom: var(--space-4);">📄</div>
+                <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="file-text"></i></div>
                 <p th:if="${(code != null && !code.isEmpty()) || courierId != null}" style="color: var(--text-tertiary);">
                     لم يتم العثور على فواتير تطابق البحث.
                 </p>
                 <p th:unless="${(code != null && !code.isEmpty()) || courierId != null}" style="color: var(--text-tertiary);">
-                    لا توجد فواتير في هذا اليوم. قم بإنشاء فواتير من صفحة يوم العمل.
+                    لا توجد فواتير في هذا اليوم بعد. ستظهر الفواتير تلقائياً عند إضافة طلبات ليوم العمل.
                 </p>
             </div>
 
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <!-- PDF Viewer Overlay -->
+    <div id="pdfOverlay" class="pdf-overlay">
+        <div class="pdf-overlay-backdrop" onclick="closePdfOverlay()"></div>
+        <div class="pdf-overlay-content">
+            <div class="pdf-overlay-header">
+                <span><i data-lucide="file-text" class="inline-icon"></i> معاينة الفاتورة</span>
+                <div class="pdf-overlay-actions">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="printPdfFrame()">
+                        <i data-lucide="printer" class="inline-icon"></i> طباعة
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="closePdfOverlay()">
+                        <i data-lucide="x" class="inline-icon"></i> إغلاق
+                    </button>
+                </div>
+            </div>
+            <iframe id="pdfFrame" src=""></iframe>
+        </div>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
 
     <script th:inline="javascript">
@@ -355,15 +461,7 @@
                 }
             });
 
-            var bulkPrintForm = document.getElementById('bulkPrintInvoicesForm');
-            if (bulkPrintForm) {
-                bulkPrintForm.addEventListener('submit', function (e) {
-                    if (!invoiceIdsForPrint || !invoiceIdsForPrint.value) {
-                        e.preventDefault();
-                        alert('يرجى تحديد فواتير أولاً للطباعة');
-                    }
-                });
-            }
+            // Bulk print handled by openBulkPrintOverlay()
 
             // ===== Infinite Scroll Logic =====
             var businessDayId = /*[[${businessDay.id}]]*/ 0;
@@ -393,7 +491,7 @@
                     '<span>كود: ' + (inv.orderCode || '') + '</span></div>' +
                     '</div>' +
                     '<div style="display:flex;gap:var(--space-2);align-items:center;">' +
-                    '<a href="/invoices/' + inv.id + '/print" class="btn btn-secondary btn-sm" target="_blank">🖨️ طباعة</a>' +
+                    '<button type="button" class="btn btn-secondary btn-sm" onclick="openPdfOverlay(\'/invoices/' + inv.id + '/print\')"><i data-lucide="printer" class="inline-icon"></i> طباعة</button>' +
                     '</div>' +
                     '</div>' +
                     '<div class="invoice-detail-body">' +
@@ -466,6 +564,52 @@
             }
         });
     </script>
+    <script>
+        // ===== PDF Overlay Functions =====
+        function openPdfOverlay(url) {
+            var overlay = document.getElementById('pdfOverlay');
+            var frame = document.getElementById('pdfFrame');
+            if (overlay && frame) {
+                frame.src = url;
+                overlay.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closePdfOverlay() {
+            var overlay = document.getElementById('pdfOverlay');
+            var frame = document.getElementById('pdfFrame');
+            if (overlay) {
+                overlay.classList.remove('active');
+                document.body.style.overflow = '';
+                if (frame) frame.src = '';
+            }
+        }
+
+        function printPdfFrame() {
+            var frame = document.getElementById('pdfFrame');
+            if (frame && frame.contentWindow) {
+                frame.contentWindow.print();
+            }
+        }
+
+        function openBulkPrintOverlay() {
+            var idsInput = document.getElementById('invoiceIdsForPrint');
+            if (!idsInput || !idsInput.value) {
+                alert('يرجى تحديد فواتير أولاً للطباعة');
+                return;
+            }
+            openPdfOverlay('/invoices/bulk-print?invoiceIds=' + encodeURIComponent(idsInput.value));
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closePdfOverlay();
+            }
+        });
+    </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

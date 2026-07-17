@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,13 +35,13 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🔍 <span th:text="#{inquiries.title}">الاستعلامات</span> - [[${businessDay.name ?: #temporals.format(businessDay.date,
+                    <h1 class="page-title"><i data-lucide="search" class="inline-icon"></i> <span th:text="#{inquiries.title}">الاستعلامات</span> - [[${businessDay.name ?: #temporals.format(businessDay.date,
                         'yyyy/MM/dd')}]]</h1>
                     <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                         <span th:if="${businessDay.active}" class="badge badge-delivered" th:text="#{inquiries.status_active}">نشط</span>
@@ -52,8 +53,8 @@
                     </p>
                 </div>
                 <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-primary" th:text="'📅 ' + #{inquiries.btn_business_day}">📅 يوم العمل</a>
-                    <a th:href="@{/business-days}" class="btn btn-secondary" th:text="'📅 ' + #{inquiries.btn_all_days}">📅 كل الأيام</a>
+                    <a th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-primary" th:utext="'<i data-lucide=&quot;calendar-days&quot; class=&quot;inline-icon&quot;></i> ' + #{inquiries.btn_business_day}"><i data-lucide="calendar-days" class="inline-icon"></i> يوم العمل</a>
+                    <a th:href="@{/business-days}" class="btn btn-secondary" th:utext="'<i data-lucide=&quot;calendar-days&quot; class=&quot;inline-icon&quot;></i> ' + #{inquiries.btn_all_days}"><i data-lucide="calendar-days" class="inline-icon"></i> كل الأيام</a>
                 </div>
             </div>
 
@@ -62,7 +63,7 @@
                 style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1)); 
                         border: 1px solid rgba(99, 102, 241, 0.2); border-radius: var(--radius-lg); 
                         padding: var(--space-4); margin-bottom: var(--space-4); display: flex; align-items: center; gap: var(--space-3);">
-                <span style="font-size: 1.5rem;">ℹ️</span>
+                <i data-lucide="info" style="width:24px;height:24px;flex-shrink:0;"></i>
                 <div>
                     <strong style="color: var(--accent-1);" th:text="#{inquiries.mode_title}">وضع الاستعلام (للإطلاع فقط)</strong>
                     <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;" th:text="#{inquiries.mode_desc}">
@@ -75,44 +76,44 @@
             <!-- Statistics -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon waiting">🔍</div>
+                    <div class="stat-icon waiting"><i data-lucide="search"></i></div>
                     <div class="stat-value" th:text="${totalInquiryCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_total_inquiries}">إجمالي الاستعلامات</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-icon waiting"><i data-lucide="hourglass"></i></div>
                     <div class="stat-value" th:text="${waitingCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_pending}">في الانتظار</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-icon transit"><i data-lucide="truck"></i></div>
                     <div class="stat-value" th:text="${inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_in_transit}">في الطريق</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value" th:text="${deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_delivered}">تم التسليم</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-icon cancelled"><i data-lucide="x-circle"></i></div>
                     <div class="stat-value" th:text="${cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_canceled}">ملغي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-icon refused"><i data-lucide="ban"></i></div>
                     <div class="stat-value" th:text="${refusedCount}">0</div>
                     <div class="stat-label" th:text="#{inquiries.stat_refused}">مرفوض</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon transit">💰</div>
+                    <div class="stat-icon transit"><i data-lucide="wallet"></i></div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 2, 'POINT')} + ' ج.م'">
                         0 ج.م</div>
                     <div class="stat-label" th:text="#{inquiries.stat_total_amounts}">إجمالي المبالغ</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(deliveredAmount, 0, 'COMMA', 2, 'POINT')} + ' ج.م'">
                         0 ج.م</div>
@@ -124,7 +125,7 @@
             <div class="card">
                 <div class="card-header"
                     style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
-                    <h3 class="card-title">🔍 <span th:text="#{inquiries.orders_title}">أوردرات الاستعلام</span></h3>
+                    <h3 class="card-title"><i data-lucide="search" class="inline-icon"></i> <span th:text="#{inquiries.orders_title}">أوردرات الاستعلام</span></h3>
                     <!-- Search/Filter Form -->
                     <form th:action="@{/business-days/{id}/inquiries(id=${businessDay.id})}" method="get"
                         style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
@@ -150,12 +151,12 @@
                         <button type="submit" class="btn btn-secondary btn-sm" th:text="#{inquiries.search_btn}">بحث</button>
                         <a th:if="${search != null || code != null || status != null || senderOrgId != null}"
                             th:href="@{/business-days/{id}/inquiries(id=${businessDay.id})}"
-                            class="btn btn-danger btn-sm">✕</a>
+                            class="btn btn-danger btn-sm"><i data-lucide="x" class="inline-icon"></i></a>
                     </form>
                 </div>
 
                 <div th:if="${inquiries.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🔍</div>
+                    <div class="table-empty-icon"><i data-lucide="search"></i></div>
                     <div class="table-empty-text" th:text="#{inquiries.empty_inquiries}">لا توجد استعلامات واردة في هذا اليوم</div>
                 </div>
 
@@ -283,8 +284,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

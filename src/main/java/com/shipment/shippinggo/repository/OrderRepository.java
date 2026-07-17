@@ -63,7 +63,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledCount, " +
                         "SUM(CASE WHEN o.status = 'DEFERRED' THEN 1 ELSE 0 END) as deferredCount, " +
                         "SUM(CASE WHEN o.status = 'PARTIAL_DELIVERY' THEN 1 ELSE 0 END) as partialCount, " +
-                        "SUM(CASE WHEN o.status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as inTransitCount, " +
+                        "SUM(CASE WHEN o.status IN ('IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY') THEN 1 ELSE 0 END) as inTransitCount, " +
                         "COALESCE(SUM(CASE " +
                         "  WHEN o.status = 'DELIVERED' THEN o.amount " +
                         "  WHEN o.status = 'PARTIAL_DELIVERY' THEN o.partialDeliveryAmount " +
@@ -82,7 +82,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledCount, " +
                         "SUM(CASE WHEN o.status = 'DEFERRED' THEN 1 ELSE 0 END) as deferredCount, " +
                         "SUM(CASE WHEN o.status = 'PARTIAL_DELIVERY' THEN 1 ELSE 0 END) as partialCount, " +
-                        "SUM(CASE WHEN o.status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as inTransitCount, " +
+                        "SUM(CASE WHEN o.status IN ('IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY') THEN 1 ELSE 0 END) as inTransitCount, " +
                         "COALESCE(SUM(CASE " +
                         "  WHEN o.status = 'DELIVERED' THEN o.amount " +
                         "  WHEN o.status = 'PARTIAL_DELIVERY' THEN o.partialDeliveryAmount " +
@@ -648,7 +648,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "SUM(CASE WHEN o.status = 'REFUSED' OR o.status = 'CANCELLED' OR o.status = 'DEFERRED' THEN 1 ELSE 0 END) as refusedCount, "
                         +
                         "SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledCount, " +
-                        "SUM(CASE WHEN o.status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as inTransitCount, " +
+                        "SUM(CASE WHEN o.status IN ('IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY') THEN 1 ELSE 0 END) as inTransitCount, " +
                         "COALESCE(SUM(CASE " +
                         "  WHEN o.status = 'DELIVERED' OR o.status = 'PARTIAL_DELIVERY' THEN " +
                         "    COALESCE(o.collectedAmount, CASE WHEN o.status = 'PARTIAL_DELIVERY' THEN o.partialDeliveryAmount ELSE o.amount END) "
@@ -827,6 +827,30 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         long countAllActiveCouriersForOrgDashboard(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId);
 
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true)) " +
+                        "AND o.assignedToCourier IS NOT NULL")
+        long countAllOrdersAssignedToCourierForOrgDashboard(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE o.status IN ('CANCELLED', 'REFUSED', 'DEFERRED', 'PARTIAL_DELIVERY') AND " +
+                        "((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId AND o.returnedToOwner = false) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true " +
+                        "AND oa.returnConfirmed = false))")
+        long countAllWarehouseReturnPendingForOrgDashboard(@Param("orgId") Long orgId, @Param("businessDayId") Long businessDayId);
+
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE o.status IN ('CANCELLED', 'REFUSED', 'DEFERRED', 'PARTIAL_DELIVERY', 'RETURNED_TO_SENDER') AND " +
+                        "((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId AND o.returnedToOwner = true) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true " +
+                        "AND oa.returnConfirmed = true))")
+        long countAllWarehouseReceiptConfirmedForOrgDashboard(@Param("orgId") Long orgId, @Param("businessDayId") Long businessDayId);
+
         @Query("SELECT COUNT(DISTINCT o.assignedToOrganization.id) FROM Order o " +
                         "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
                         "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
@@ -840,6 +864,44 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true) " +
                         "AND o.ownerOrganization.id != :orgId")
         long countAssignedOrdersForOrgDashboard(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        // Unassigned waiting orders (no courier)
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true)) " +
+                        "AND o.status = 'WAITING' AND o.assignedToCourier IS NULL")
+        long countUnassignedWaitingOrdersForOrgDashboard(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        // Total commissions (courier + org) — أي عمولة صادرة أو واردة من المنظمات أو للمندوب
+        @Query("SELECT COALESCE(SUM(COALESCE(o.manualCourierCommission, 0) + COALESCE(o.manualOrgCommission, 0)), 0) FROM Order o " +
+                        "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true))")
+        java.math.BigDecimal sumAllCommissionsForOrgDashboard(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        // Count in-transit orders assigned to a courier (مع المناديب)
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true)) " +
+                        "AND o.status IN ('IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY') " +
+                        "AND o.assignedToCourier IS NOT NULL")
+        long countOrdersWithCouriersForDashboard(@Param("orgId") Long orgId,
+                        @Param("businessDayId") Long businessDayId);
+
+        // Count orders assigned to non-virtual organizations (مع المنظمات)
+        // يشمل حتى لو تم إسناد الأوردر لمندوب — يظل محسوب للمنظمة
+        @Query("SELECT COUNT(DISTINCT o.id) FROM Order o " +
+                        "WHERE ((o.ownerOrganization.id = :orgId AND o.businessDay.id = :businessDayId) " +
+                        "OR EXISTS (SELECT 1 FROM OrderAssignment oa WHERE oa.order = o " +
+                        "AND oa.assigneeOrganization.id = :orgId AND oa.businessDay.id = :businessDayId AND oa.accepted = true)) " +
+                        "AND o.assignedToOrganization IS NOT NULL AND o.assignedToOrganization.isVirtual = false " +
+                        "AND o.assignedToOrganization.id != :orgId")
+        long countOrdersWithNonVirtualOrgsForDashboard(@Param("orgId") Long orgId,
                         @Param("businessDayId") Long businessDayId);
 
         // Courier performance in org dashboard context (owned + assigned)
@@ -946,7 +1008,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                "SUM(CASE WHEN o.status = 'DELIVERED' THEN 1 ELSE 0 END) as deliveredCount, " +
                "SUM(CASE WHEN o.status = 'PARTIAL_DELIVERY' THEN 1 ELSE 0 END) as partialCount, " +
                "SUM(CASE WHEN o.status = 'WAITING' THEN 1 ELSE 0 END) as waitingCount, " +
-               "SUM(CASE WHEN o.status = 'IN_TRANSIT' THEN 1 ELSE 0 END) as inTransitCount, " +
+               "SUM(CASE WHEN o.status IN ('IN_TRANSIT', 'PICKED_UP', 'OUT_FOR_DELIVERY') THEN 1 ELSE 0 END) as inTransitCount, " +
                "SUM(CASE WHEN o.status = 'CANCELLED' THEN 1 ELSE 0 END) as cancelledCount, " +
                "SUM(CASE WHEN o.status = 'REFUSED' THEN 1 ELSE 0 END) as refusedCount, " +
                "SUM(CASE WHEN o.status = 'DEFERRED' THEN 1 ELSE 0 END) as deferredCount, " +

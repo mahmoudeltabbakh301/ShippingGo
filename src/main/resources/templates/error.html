@@ -43,6 +43,7 @@
             max-width: 600px;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -51,7 +52,7 @@
 
         <main class="main-content">
             <div class="error-container">
-                <div class="error-icon">⚠️</div>
+                <div class="error-icon"><i data-lucide="alert-triangle"></i></div>
                 <h1 class="error-title">حدث خطأ</h1>
                 <p class="error-message" th:text="${message} ?: 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقاً.'">
                     وصف الخطأ
@@ -62,8 +63,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

@@ -23,6 +23,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -31,19 +32,19 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <h1 class="page-title">🏭 <span th:text="#{warehouse.list.title}">أيام المخزن</span></h1>
-                <a th:href="@{/warehouse/custody}" class="btn btn-secondary" th:text="#{warehouse.btn.custody}">📦 عرض العهدة</a>
+                <h1 class="page-title"><i data-lucide="warehouse" class="inline-icon"></i> <span th:text="#{warehouse.list.title}">أيام المخزن</span></h1>
+                <a th:href="@{/warehouse/custody}" class="btn btn-secondary" th:text="#{warehouse.btn.custody}"><i data-lucide="package" class="inline-icon"></i> عرض العهدة</a>
             </div>
 
             <!-- Warehouse Days Table -->
             <div class="card">
                 <div th:if="${businessDays.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🏭</div>
+                    <div class="table-empty-icon"><i data-lucide="warehouse"></i></div>
                     <div class="table-empty-text" th:text="#{warehouse.list.empty}">لا توجد أيام مخزن بعد</div>
                 </div>
 
@@ -71,9 +72,9 @@
                                 <td th:text="${bd.createdBy != null ? bd.createdBy.fullName : '-'}">المنشئ</td>
                                 <td>
                                     <a th:href="@{/warehouse/{id}(id=${bd.id})}" class="btn btn-sm btn-primary"
-                                        th:text="#{warehouse.btn.view_warehouse}">🏭 المخزن</a>
+                                        th:text="#{warehouse.btn.view_warehouse}"><i data-lucide="warehouse" class="inline-icon"></i> المخزن</a>
                                     <a th:href="@{/warehouse/{id}/external(id=${bd.id})}"
-                                        class="btn btn-sm btn-secondary" th:text="#{warehouse.btn.view_external}">📤
+                                        class="btn btn-sm btn-secondary" th:text="#{warehouse.btn.view_external}"><i data-lucide="upload" class="inline-icon"></i>
                                         الخارجي</a>
                                 </td>
                             </tr>
@@ -83,19 +84,20 @@
 
                 <!-- Pagination -->
                 <div th:if="${totalPages != null && totalPages > 1}" style="display: flex; justify-content: center; align-items: center; gap: 8px; padding: 16px 0;">
-                    <a th:if="${currentPage > 0}" th:href="@{/warehouse(page=${currentPage - 1})}" class="btn btn-sm btn-secondary">⬅️ السابق</a>
+                    <a th:if="${currentPage > 0}" th:href="@{/warehouse(page=${currentPage - 1})}" class="btn btn-sm btn-secondary"><i data-lucide="arrow-right" class="inline-icon"></i> السابق</a>
                     <span th:each="i : ${#numbers.sequence(0, totalPages > 10 ? 9 : totalPages - 1)}">
                         <a th:if="${i != currentPage}" th:href="@{/warehouse(page=${i})}" class="btn btn-sm btn-secondary" th:text="${i + 1}"></a>
                         <span th:if="${i == currentPage}" class="btn btn-sm btn-primary" th:text="${i + 1}" style="pointer-events: none;"></span>
                     </span>
-                    <a th:if="${currentPage < totalPages - 1}" th:href="@{/warehouse(page=${currentPage + 1})}" class="btn btn-sm btn-secondary">التالي ➡️</a>
+                    <a th:if="${currentPage < totalPages - 1}" th:href="@{/warehouse(page=${currentPage + 1})}" class="btn btn-sm btn-secondary">التالي <i data-lucide="arrow-left" class="inline-icon"></i></a>
                 </div>
             </div>
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

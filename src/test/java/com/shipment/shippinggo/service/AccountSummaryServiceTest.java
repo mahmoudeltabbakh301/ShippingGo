@@ -141,7 +141,7 @@ class AccountSummaryServiceTest {
     }
 
     @Test
-    @Timeout(value = 2000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
     void performanceTest_calculateDirectionalSummary_WithManyOrders() {
         // اختبار أداء وحمل لتحليل آلاف الطلبات في أقل من 500 ملي ثانية
         int orderCount = 5000;

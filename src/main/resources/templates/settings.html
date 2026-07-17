@@ -140,6 +140,7 @@
             cursor: pointer;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -149,17 +150,17 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">⚙️ <span th:text="#{settings.title}">الإعدادات</span></h1>
+                <h1 class="page-title"><i data-lucide="settings" class="inline-icon"></i> <span th:text="#{settings.title}">الإعدادات</span></h1>
             </div>
 
             <div class="settings-container">
@@ -167,7 +168,7 @@
                 <div class="settings-item">
                     <div class="settings-item-header">
                         <div class="settings-item-title">
-                            <span>👤</span>
+                            <span><i data-lucide="user"></i></span>
                             <span th:text="#{settings.section_profile}">الملف الشخصي</span>
                         </div>
                         <a th:href="@{/profile}" class="btn btn-outline"
@@ -180,7 +181,7 @@
                 <div class="settings-item">
                     <div class="settings-item-header">
                         <div class="settings-item-title">
-                            <span>⚙️</span>
+                            <span><i data-lucide="settings"></i></span>
                             <span th:text="#{settings.section_personal}">الملف الشخصي</span>
                         </div>
                         <a th:href="@{/settings/personal}" class="btn btn-outline"
@@ -193,7 +194,7 @@
                 <div class="settings-item">
                     <div class="settings-item-header">
                         <div class="settings-item-title">
-                            <span>🎨</span>
+                            <span><i data-lucide="palette"></i></span>
                             <span th:text="#{settings.label_theme}">الوضع</span>
                         </div>
                         <div class="theme-switch-wrapper">
@@ -213,7 +214,7 @@
                 <div class="settings-item">
                     <div class="settings-item-header">
                         <div class="settings-item-title">
-                            <span>🌐</span>
+                            <span><i data-lucide="globe"></i></span>
                             <span th:text="#{settings.label_language}">اللغة</span>
                         </div>
                         <div
@@ -244,7 +245,7 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script>
         // Apply visual state to buttons on load
@@ -263,6 +264,7 @@
             window.dispatchEvent(new Event('themechange'));
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

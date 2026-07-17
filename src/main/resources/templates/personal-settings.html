@@ -58,6 +58,7 @@
             font-size: 1.5rem;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -67,11 +68,11 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
@@ -83,7 +84,7 @@
                     <span th:if="${#locale.language == 'ar'}">←</span>
                     <span th:unless="${#locale.language == 'ar'}">→</span>
                 </a>
-                <h1 class="page-title" style="margin: 0;">⚙️ <span th:text="#{settings.section_personal}">الإعدادات
+                <h1 class="page-title" style="margin: 0;"><i data-lucide="settings" class="inline-icon"></i> <span th:text="#{settings.section_personal}">الإعدادات
                         الشخصية</span></h1>
             </div>
 
@@ -91,7 +92,7 @@
                 <!-- Change Password -->
                 <div class="settings-card">
                     <div class="settings-title">
-                        <span class="settings-icon">🔒</span>
+                        <span class="settings-icon"><i data-lucide="lock"></i></span>
                         <span th:text="#{settings.section_password}">تغيير كلمة المرور</span>
                     </div>
                     <form th:action="@{/settings/update-password}" method="post">
@@ -118,7 +119,7 @@
                 <div class="settings-card" th:if="${organization != null}"
                     sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
                     <div class="settings-title">
-                        <span class="settings-icon">🏢</span>
+                        <span class="settings-icon"><i data-lucide="building-2"></i></span>
                         <span th:text="#{settings.section_org}">إعدادات المنظمة</span>
                     </div>
                     <form th:action="@{/settings/update-organization}" method="post">
@@ -153,8 +154,9 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

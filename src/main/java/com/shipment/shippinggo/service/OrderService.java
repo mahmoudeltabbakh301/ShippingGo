@@ -142,6 +142,14 @@ public class OrderService {
                 partialDeliveryAmount, changedBy, notes);
     }
 
+    @LogSensitiveOperation(action = "UPDATE_ORDER_STATUS_ADVANCED", entityName = "Order", logArguments = true)
+    public Order updateStatusAdvanced(Long orderId, OrderStatus newStatus, BigDecimal newAmount,
+            BigDecimal rejectionPayment, Integer deliveredPieces, BigDecimal partialDeliveryAmount, User changedBy,
+            String notes, com.shipment.shippinggo.enums.RejectionReason rejectionReason, String rejectionReasonNotes) {
+        return orderStatusService.updateStatusAdvanced(orderId, newStatus, newAmount, rejectionPayment, deliveredPieces,
+                partialDeliveryAmount, changedBy, notes, rejectionReason, rejectionReasonNotes);
+    }
+
     public Order confirmReturn(Long orderId, User confirmedBy) {
         return orderStatusService.confirmReturn(orderId, confirmedBy);
     }
@@ -188,9 +196,9 @@ public class OrderService {
                 incomingFromId, outgoingToId, status, governorate, noGovernorate);
     }
 
-    public List<Long> getWaitingOrderIdsByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
+    public List<Long> getBulkAssignableOrderIdsByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
             Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
-        return orderQueryService.getWaitingOrderIdsByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId,
+        return orderQueryService.getBulkAssignableOrderIdsByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId,
                 incomingFromId, outgoingToId, status, governorate, noGovernorate);
     }
 

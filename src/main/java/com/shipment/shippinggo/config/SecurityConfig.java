@@ -58,7 +58,7 @@ public class SecurityConfig {
                                                 .frameOptions(frame -> frame.sameOrigin()) // Prevent Clickjacking
                                                 .contentSecurityPolicy(csp -> csp
                                                                 .policyDirectives(
-                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://shipping-go.com;")))
+                                                                                "default-src 'self'; script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://tile.openstreetmap.org https://*.tile.openstreetmap.org; connect-src 'self' https://shipping-go.com;")))
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/api/webhooks/**")) // Disable CSRF for APIs and webhooks
 
@@ -213,7 +213,7 @@ public class SecurityConfig {
                 configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
                 configuration.setAllowedHeaders(
                                 java.util.List.of("Authorization", "Content-Type", "X-Requested-With", "Accept"));
-                configuration.setExposedHeaders(java.util.List.of("Authorization"));
+                configuration.setExposedHeaders(java.util.List.of("Authorization", "X-User-Role"));
                 configuration.setAllowCredentials(true);
                 configuration.setMaxAge(3600L);
 

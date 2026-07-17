@@ -20,7 +20,7 @@
             </td>
             <td>
                 <span style="display: inline-flex; align-items: center; gap: 4px;">
-                    <span style="color: var(--accent-1);">🏢</span>
+                    <span style="color: var(--accent-1);"><i data-lucide="building-2"></i></span>
                     <span th:text="${inquiry.order.ownerOrganization.name}">المنظمة</span>
                 </span>
             </td>
@@ -40,5 +40,6 @@
             <td th:text="${inquiry.order.code} ?: '-'">-</td>
         </tr>
     </th:block>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

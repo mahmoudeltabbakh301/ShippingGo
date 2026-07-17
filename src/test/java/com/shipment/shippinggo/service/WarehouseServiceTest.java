@@ -9,6 +9,8 @@ import com.shipment.shippinggo.exception.BusinessLogicException;
 import com.shipment.shippinggo.exception.ResourceNotFoundException;
 import com.shipment.shippinggo.repository.BusinessDayRepository;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.OrganizationRepository;
+import com.shipment.shippinggo.service.OrderEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,12 +31,16 @@ class WarehouseServiceTest {
     private OrderService orderService;
     @Mock
     private BusinessDayRepository businessDayRepository;
+    @Mock
+    private OrderEventService orderEventService;
+    @Mock
+    private OrganizationRepository organizationRepository;
 
     private WarehouseService warehouseService;
 
     @BeforeEach
     void setUp() {
-        warehouseService = new WarehouseService(orderRepository, orderService, businessDayRepository);
+        warehouseService = new WarehouseService(orderRepository, orderService, businessDayRepository, orderEventService, organizationRepository);
     }
 
     private Organization createTestOrg(Long id) {

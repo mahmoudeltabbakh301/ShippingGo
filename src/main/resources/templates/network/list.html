@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,7 +35,7 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🏢 <span th:text="#{network.list.title}">الشبكة</span></h1>
+                    <h1 class="page-title"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="#{network.list.title}">الشبكة</span></h1>
                     <p class="text-muted" th:text="#{network.list.desc}">إدارة الشبكة وطلبات الانضمام</p>
                 </div>
 
@@ -49,11 +50,11 @@
             </div>
 
             <div th:if="${success}" class="alert alert-success">
-                <span class="alert-icon">✓</span>
+                <span class="alert-icon"><i data-lucide="check" class="inline-icon"></i></span>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span class="alert-icon">✕</span>
+                <span class="alert-icon"><i data-lucide="x" class="inline-icon"></i></span>
                 <span th:text="${error}"></span>
             </div>
 
@@ -94,14 +95,14 @@
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="true">
                                                 <button type="submit" class="table-action-btn success"
-                                                    th:title="#{network.btn.accept}">✓</button>
+                                                    th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                             </form>
                                             <form th:action="@{/network/requests/link/process}" method="post"
                                                 class="d-inline">
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="false">
                                                 <button type="submit" class="table-action-btn danger"
-                                                    th:title="#{network.btn.reject}">✕</button>
+                                                    th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -142,14 +143,14 @@
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="true">
                                                 <button type="submit" class="table-action-btn success"
-                                                    th:title="#{network.btn.accept}">✓</button>
+                                                    th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                             </form>
                                             <form th:action="@{/network/requests/link/process}" method="post"
                                                 class="d-inline">
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="false">
                                                 <button type="submit" class="table-action-btn danger"
-                                                    th:title="#{network.btn.reject}">✕</button>
+                                                    th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -190,14 +191,14 @@
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="true">
                                                 <button type="submit" class="table-action-btn success"
-                                                    th:title="#{network.btn.accept}">✓</button>
+                                                    th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                             </form>
                                             <form th:action="@{/network/requests/link/process}" method="post"
                                                 class="d-inline">
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="false">
                                                 <button type="submit" class="table-action-btn danger"
-                                                    th:title="#{network.btn.reject}">✕</button>
+                                                    th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -213,7 +214,7 @@
                                        (outgoingOfficeRequests != null and !outgoingOfficeRequests.isEmpty()) or 
                                        (outgoingStoreRequests != null and !outgoingStoreRequests.isEmpty())}">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{network.list.outgoing_requests}">📤 طلباتي المرسلة</h3>
+                    <h3 class="card-title" th:text="#{network.list.outgoing_requests}"><i data-lucide="upload" class="inline-icon"></i> طلباتي المرسلة</h3>
                 </div>
 
                 <!-- Pending Company Requests -->
@@ -349,10 +350,10 @@
                 <!-- Joined Companies -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{network.list.joined_companies}">🤝 شركاتي</h3>
+                        <h3 class="card-title" th:text="#{network.list.joined_companies}"><i data-lucide="handshake" class="inline-icon"></i> شركاتي</h3>
                     </div>
                     <div th:if="${joinedCompanies == null or joinedCompanies.isEmpty()}" class="table-empty">
-                        <div class="table-empty-icon">🏢</div>
+                        <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                         <div class="table-empty-text" th:text="#{network.list.joined_companies_empty}">لست منضماً
                             لأي شركة بعد</div>
                     </div>
@@ -393,10 +394,10 @@
                 <!-- Linked Offices -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{network.list.linked_offices}">🏬 مكاتبي المشتركة</h3>
+                        <h3 class="card-title" th:text="#{network.list.linked_offices}"><i data-lucide="building" class="inline-icon"></i> مكاتبي المشتركة</h3>
                     </div>
                     <div th:if="${linkedOffices == null or linkedOffices.isEmpty()}" class="table-empty">
-                        <div class="table-empty-icon">🏬</div>
+                        <div class="table-empty-icon"><i data-lucide="building"></i></div>
                         <div class="table-empty-text" th:text="#{network.list.linked_offices_empty}">لست مرتبطاً بأي
                             مكتب بعد</div>
                     </div>
@@ -439,11 +440,11 @@
                 <!-- Joined Stores -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{network.list.joined_stores}">🏪
+                        <h3 class="card-title" th:text="#{network.list.joined_stores}"><i data-lucide="store" class="inline-icon"></i>
                             المتاجر المنضمة</h3>
                     </div>
                     <div th:if="${storeRelations == null or storeRelations.isEmpty()}" class="table-empty">
-                        <div class="table-empty-icon">🏪</div>
+                        <div class="table-empty-icon"><i data-lucide="store"></i></div>
                         <div class="table-empty-text" th:text="#{network.list.joined_stores_empty}">لست مرتبطاً بأي
                             متجر بعد</div>
                     </div>
@@ -489,10 +490,10 @@
                 <!-- Joined Offices -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{network.list.company_joined_offices}">🏬 المكاتب المنضمة</h3>
+                        <h3 class="card-title" th:text="#{network.list.company_joined_offices}"><i data-lucide="building" class="inline-icon"></i> المكاتب المنضمة</h3>
                     </div>
                     <div th:if="${joinedOffices == null or joinedOffices.isEmpty()}" class="table-empty">
-                        <div class="table-empty-icon">🏬</div>
+                        <div class="table-empty-icon"><i data-lucide="building"></i></div>
                         <div class="table-empty-text" th:text="#{network.list.company_joined_offices_empty}">لا توجد
                             مكاتب منضمة بعد</div>
                     </div>
@@ -535,10 +536,10 @@
                 <!-- Joined Stores -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{network.list.joined_stores}">🏪 المتاجر المنضمة</h3>
+                        <h3 class="card-title" th:text="#{network.list.joined_stores}"><i data-lucide="store" class="inline-icon"></i> المتاجر المنضمة</h3>
                     </div>
                     <div th:if="${joinedStores == null or joinedStores.isEmpty()}" class="table-empty">
-                        <div class="table-empty-icon">🏪</div>
+                        <div class="table-empty-icon"><i data-lucide="store"></i></div>
                         <div class="table-empty-text" th:text="#{network.list.joined_stores_empty}">لا توجد
                             متاجر منضمة بعد</div>
                     </div>
@@ -576,7 +577,7 @@
             <!-- ============== STORE VIEW: Incoming Requests ============== -->
             <div th:if="${organization.type.name() == 'STORE' and incomingStoreRequests != null and !incomingStoreRequests.isEmpty()}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📥 <span th:text="#{network.list.incoming_requests}">طلبات الانضمام الواردة</span></h3>
+                    <h3 class="card-title"><i data-lucide="inbox" class="inline-icon"></i> <span th:text="#{network.list.incoming_requests}">طلبات الانضمام الواردة</span></h3>
                 </div>
                 <div class="table-container" style="border: none;">
                     <table class="table">
@@ -599,12 +600,12 @@
                                         <form th:action="@{/network/requests/link/process}" method="post" class="d-inline">
                                             <input type="hidden" name="relationId" th:value="${req.id}">
                                             <input type="hidden" name="accept" value="true">
-                                            <button type="submit" class="table-action-btn success" th:title="#{network.btn.accept}">✓</button>
+                                            <button type="submit" class="table-action-btn success" th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                         </form>
                                         <form th:action="@{/network/requests/link/process}" method="post" class="d-inline">
                                             <input type="hidden" name="relationId" th:value="${req.id}">
                                             <input type="hidden" name="accept" value="false">
-                                            <button type="submit" class="table-action-btn danger" th:title="#{network.btn.reject}">✕</button>
+                                            <button type="submit" class="table-action-btn danger" th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -617,10 +618,10 @@
             <!-- ============== STORE VIEW: Linked Companies & Offices ============== -->
             <div th:if="${organization.type.name() == 'STORE'}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🏪 <span th:text="#{network.list.store_joined_companies}">شركات الشحن المشتركة</span></h3>
+                    <h3 class="card-title"><i data-lucide="store" class="inline-icon"></i> <span th:text="#{network.list.store_joined_companies}">شركات الشحن المشتركة</span></h3>
                 </div>
                 <div th:if="${joinedCompanies == null or joinedCompanies.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                     <div class="table-empty-text" th:text="#{network.list.store_joined_companies_empty}">لم تنضم لأي شركة شحن بعد. اضغط على "تصفح الشركات" للبدء</div>
                 </div>
                 <div class="table-container" style="border: none;"
@@ -658,10 +659,10 @@
             <!-- STORE VIEW: Linked Offices -->
             <div th:if="${organization.type.name() == 'STORE'}" class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🏬 <span th:text="#{network.list.store_joined_offices}">مكاتب الشحن المشتركة</span></h3>
+                    <h3 class="card-title"><i data-lucide="building" class="inline-icon"></i> <span th:text="#{network.list.store_joined_offices}">مكاتب الشحن المشتركة</span></h3>
                 </div>
                 <div th:if="${joinedOffices == null or joinedOffices.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">🏬</div>
+                    <div class="table-empty-icon"><i data-lucide="building"></i></div>
                     <div class="table-empty-text" th:text="#{network.list.store_joined_offices_empty}">لم تنضم لأي مكتب شحن بعد. اضغط على "تصفح المكاتب" للبدء</div>
                 </div>
                 <div class="table-container" style="border: none;"
@@ -702,7 +703,7 @@
                              (linkRequests == null or linkRequests.isEmpty()) and
                              (joinedOffices == null or joinedOffices.isEmpty())}" class="card">
                 <div class="card-body text-center py-5">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">✓</div>
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="check" class="inline-icon"></i></div>
                     <h3 th:text="#{network.list.no_new_requests}">لا توجد طلبات جديدة</h3>
                     <p class="text-muted" th:text="#{network.list.no_new_requests_desc}">جميع الطلبات تمت معالجتها.
                         سنخبرك عند وصول طلبات جديدة.</p>
@@ -713,6 +714,7 @@
     </main>
     </div>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -35,7 +36,7 @@
         <main class="main-content">
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📦 <span
+                <h1 class="page-title"><i data-lucide="package" class="inline-icon"></i> <span
                         th:text="#{dashboard.courier.day.orders_of_day} + ' ' + ${selectedDate}">طلبات اليوم</span></h1>
                 <a th:href="@{/dashboard/courier/history}" class="btn btn-secondary"
                     th:text="#{dashboard.courier.day.back}">
@@ -46,22 +47,22 @@
             <!-- Day Stats (if dayLog exists) -->
             <div th:if="${dayLog}" class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-icon transit"><i data-lucide="truck"></i></div>
                     <div class="stat-value" th:text="${dayLog.inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.in_transit}">في الطريق</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value" th:text="${dayLog.deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.delivered}">تم التسليم</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-icon cancelled"><i data-lucide="x-circle"></i></div>
                     <div class="stat-value" th:text="${dayLog.cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.cancelled}">ملغي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-icon refused"><i data-lucide="ban"></i></div>
                     <div class="stat-value" th:text="${dayLog.refusedCount}">0</div>
                     <div class="stat-label" th:text="#{dashboard.courier.refused}">رفض الاستلام</div>
                 </div>
@@ -70,13 +71,13 @@
             <!-- Orders List -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📋 <span th:text="#{dashboard.courier.day.orders_of_day}">طلبات يوم</span>
+                    <h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{dashboard.courier.day.orders_of_day}">طلبات يوم</span>
                         <span th:text="${selectedDate}">2026-02-06</span>
                     </h3>
                 </div>
 
                 <div th:if="${orders.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📦</div>
+                    <div class="table-empty-icon"><i data-lucide="package"></i></div>
                     <div class="table-empty-text" th:text="#{dashboard.courier.day.no_orders}">لا توجد طلبات في هذا
                         اليوم</div>
                 </div>
@@ -123,9 +124,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

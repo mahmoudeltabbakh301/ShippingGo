@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,18 +35,18 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">💰 [[${pageTitle}]]</h1>
+                    <h1 class="page-title"><i data-lucide="wallet" class="inline-icon"></i> [[${pageTitle}]]</h1>
                     <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                         <span th:if="${accountDay.active}" class="badge badge-delivered"
                             th:text="#{accounts.index.status_active}">نشط</span>
@@ -57,12 +58,12 @@
                 </div>
                 <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <a th:href="@{/business-days/{id}(id=${accountDay.businessDay.id})}" class="btn btn-secondary"
-                        th:text="#{accounts.day.btn_today_orders}">📦
+                        th:text="#{accounts.day.btn_today_orders}"><i data-lucide="package" class="inline-icon"></i>
                         أوردرات اليوم</a>
-                    <a th:href="@{/accounts}" class="btn btn-secondary" th:text="#{accounts.day.btn_all_days}">📅 كل
+                    <a th:href="@{/accounts}" class="btn btn-secondary" th:text="#{accounts.day.btn_all_days}"><i data-lucide="calendar-days" class="inline-icon"></i> كل
                         الأيام</a>
                     <a th:href="@{/accounts/settings}" class="btn btn-secondary"
-                        th:text="#{accounts.day.btn_commission_settings}">⚙️ إعدادات العمولات</a>
+                        th:text="#{accounts.day.btn_commission_settings}"><i data-lucide="settings" class="inline-icon"></i> إعدادات العمولات</a>
                 </div>
             </div>
 
@@ -73,7 +74,7 @@
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                            ⬇️</div>
+                            <i data-lucide="arrow-down" class="inline-icon"></i></div>
                         <div>
                             <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;"><span th:text="#{accounts.day.incoming_commissions}">العمولات الواردة</span>
                                 (<span th:text="${countIncomingTransactions}">0</span>)</p>
@@ -87,7 +88,7 @@
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                            ⬆️</div>
+                            <i data-lucide="arrow-up" class="inline-icon"></i></div>
                         <div>
                             <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;"><span th:text="#{accounts.day.outgoing_commissions}">العمولات الصادرة</span>
                                 (<span th:text="${countOutgoingTransactions}">0</span>)</p>
@@ -101,7 +102,7 @@
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                            📦</div>
+                            <i data-lucide="package" class="inline-icon"></i></div>
                         <div>
                             <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;">عمولة غير مسند
                                 (<span th:text="${countUnassignedOrders}">0</span>)</p>
@@ -115,7 +116,7 @@
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
                             th:style="${commissionDifference != null and commissionDifference.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--success-500), var(--success-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;' : 'width: 40px; height: 40px; background: linear-gradient(135deg, var(--danger-500), var(--danger-400)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;'}">
-                            💵</div>
+                            <i data-lucide="banknote" class="inline-icon"></i></div>
                         <div>
                             <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;" th:text="#{accounts.day.net_difference}">الفرق الصافي (وارد - صادر)</p>
                             <h4 style="margin: 0;"
@@ -129,7 +130,7 @@
                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                         <div
                             style="width: 40px; height: 40px; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center;">
-                            📊</div>
+                            <i data-lucide="bar-chart-3" class="inline-icon"></i></div>
                         <div>
                             <p style="margin: 0; color: var(--text-tertiary); font-size: 0.75rem;"
                                 th:text="#{accounts.day.stat_transaction_count}">عدد المعاملات الكلي</p>
@@ -142,13 +143,13 @@
             <!-- Account Summaries List -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">📋 <span
+                    <h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span
                             th:text="#{accounts.day.summaries_title} + ' ' + ${accountDay.name}">حسابات
                             [[${accountDay.name}]]</span></h3>
                 </div>
 
                 <!-- قسم المكاتب / المنظمات -->
-                <h4 style="margin: 1.5rem 1rem 1rem 1rem; color: var(--text-primary);">🏢 <span th:text="#{accounts.day.org_accounts_title}">حسابات المكاتب والشركات</span> (<span
+                <h4 style="margin: 1.5rem 1rem 1rem 1rem; color: var(--text-primary);"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="#{accounts.day.org_accounts_title}">حسابات المكاتب والشركات</span> (<span
                         th:text="${accountSummaries != null ? accountSummaries.?[type == 'organization'].size() : 0}">0</span>)
                 </h4>
                 <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'organization'].isEmpty()}"
@@ -176,7 +177,7 @@
                             <tr th:each="account : ${accountSummaries}" th:if="${account.type == 'organization'}">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                        <span>🏢</span>
+                                        <span><i data-lucide="building-2"></i></span>
                                         <span th:text="${account.name}">الاسم</span>
                                     </div>
                                 </td>
@@ -243,7 +244,7 @@
                 <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">
 
                 <!-- قسم غير مسند -->
-                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);">📦 أوردرات غير مسندة (<span
+                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);"><i data-lucide="package" class="inline-icon"></i> أوردرات غير مسندة (<span
                         th:text="${accountSummaries != null ? accountSummaries.?[type == 'unassigned'].size() : 0}">0</span>)
                 </h4>
                 <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'unassigned'].isEmpty()}"
@@ -270,7 +271,7 @@
                             <tr th:each="account : ${accountSummaries}" th:if="${account.type == 'unassigned'}">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                        <span>📦</span>
+                                        <span><i data-lucide="package"></i></span>
                                         <span th:text="${account.name}">غير مسند</span>
                                     </div>
                                 </td>
@@ -330,7 +331,7 @@
                 <hr style="border: 0; border-top: 1px solid var(--border-light); margin: 2rem 0;">
 
                 <!-- قسم المناديب -->
-                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);">🚚 <span th:text="#{accounts.day.courier_accounts_title}">حسابات المناديب</span> (<span
+                <h4 style="margin: 0 1rem 1rem 1rem; color: var(--text-primary);"><i data-lucide="truck" class="inline-icon"></i> <span th:text="#{accounts.day.courier_accounts_title}">حسابات المناديب</span> (<span
                         th:text="${accountSummaries != null ? accountSummaries.?[type == 'courier'].size() : 0}">0</span>)
                 </h4>
                 <div th:if="${accountSummaries != null && !accountSummaries.?[type == 'courier'].isEmpty()}"
@@ -357,7 +358,7 @@
                             <tr th:each="account : ${accountSummaries}" th:if="${account.type == 'courier'}">
                                 <td>
                                     <div style="display: flex; align-items: center; gap: var(--space-2);">
-                                        <span>🚚</span>
+                                        <span><i data-lucide="truck"></i></span>
                                         <span th:text="${account.name}">الاسم</span>
                                     </div>
                                 </td>
@@ -412,7 +413,7 @@
 
                 <div th:if="${accountSummaries == null || accountSummaries.isEmpty()}" class="text-center"
                     style="padding: var(--space-8);">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📊</div>
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="bar-chart-3"></i></div>
                     <h3 th:text="#{accounts.day.empty_summaries}">لا توجد حسابات بعد</h3>
                     <p class="text-muted" th:text="#{accounts.day.empty_summaries_desc}">ستظهر الحسابات هنا عند إسناد
                         الأوردرات</p>
@@ -422,8 +423,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

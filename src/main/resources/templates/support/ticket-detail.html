@@ -37,31 +37,32 @@
         .reply-textarea:focus { border-color: var(--primary); outline: none; }
         .closed-notice { text-align: center; padding: var(--space-4); background: var(--bg-secondary); border-radius: var(--radius-lg); color: var(--text-muted); font-weight: 600; }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
-                <div><h1 class="page-title" th:text="'🎫 ' + ${ticket.ticketNumber}">TKT-00001</h1></div>
+                <div><h1 class="page-title" th:utext="'<i data-lucide=&quot;life-buoy&quot; class=&quot;inline-icon&quot;></i> ' + ${ticket.ticketNumber}">TKT-00001</h1></div>
                 <a th:href="@{/support}" class="btn btn-secondary">↩ رجوع</a>
             </div>
 
             <div class="ticket-header">
                 <div class="ticket-title" th:text="${ticket.subject}">الموضوع</div>
                 <div class="ticket-meta">
-                    <span>📅 <span th:text="${#temporals.format(ticket.createdAt, 'yyyy/MM/dd HH:mm')}"></span></span>
-                    <span>📂 <span th:text="${ticket.category.arabicName}"></span></span>
+                    <span><i data-lucide="calendar-days" class="inline-icon"></i> <span th:text="${#temporals.format(ticket.createdAt, 'yyyy/MM/dd HH:mm')}"></span></span>
+                    <span><i data-lucide="folder-open" class="inline-icon"></i> <span th:text="${ticket.category.arabicName}"></span></span>
                     <span class="status-badge" th:classappend="'status-' + ${ticket.status}" th:text="${ticket.status.arabicName}"></span>
                 </div>
                 <div class="ticket-description" th:text="${ticket.description}">الوصف</div>
             </div>
 
             <!-- الردود -->
-            <h2 style="font-size: 1rem; font-weight: 700; margin-bottom: var(--space-3);">💬 المحادثة</h2>
+            <h2 style="font-size: 1rem; font-weight: 700; margin-bottom: var(--space-3);"><i data-lucide="message-circle" class="inline-icon"></i> المحادثة</h2>
 
             <div th:if="${#lists.isEmpty(replies)}" style="text-align: center; padding: var(--space-5); color: var(--text-muted);">
                 لا توجد ردود بعد. سيتم الرد عليك من قبل فريق الدعم.
@@ -82,18 +83,19 @@
             <!-- فورم الرد -->
             <div th:if="${ticket.status.name() != 'CLOSED'}" class="reply-form" style="margin-top: var(--space-4);">
                 <form th:action="@{'/support/' + ${ticket.id} + '/reply'}" method="post">
-                    <label style="font-weight: 700; display: block; margin-bottom: var(--space-2);">✍️ إضافة رد</label>
+                    <label style="font-weight: 700; display: block; margin-bottom: var(--space-2);"><i data-lucide="pen-tool" class="inline-icon"></i> إضافة رد</label>
                     <textarea class="reply-textarea" name="message" required placeholder="اكتب ردك هنا..."></textarea>
-                    <button type="submit" class="btn btn-primary">📤 إرسال</button>
+                    <button type="submit" class="btn btn-primary"><i data-lucide="upload" class="inline-icon"></i> إرسال</button>
                 </form>
             </div>
             <div th:if="${ticket.status.name() == 'CLOSED'}" class="closed-notice">
-                🔒 هذه التذكرة مغلقة. لا يمكن إضافة ردود جديدة.
+                <i data-lucide="lock" class="inline-icon"></i> هذه التذكرة مغلقة. لا يمكن إضافة ردود جديدة.
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

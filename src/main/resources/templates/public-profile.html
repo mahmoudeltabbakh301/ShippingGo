@@ -107,6 +107,7 @@
             color: var(--text-primary);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -115,7 +116,7 @@
 
         <main class="main-content">
             <div class="page-header" style="justify-content: center; text-align: center;">
-                <h1 class="page-title">👤 الملف الشخصي - <span th:text="${targetUser.fullName}"></span></h1>
+                <h1 class="page-title"><i data-lucide="user" class="inline-icon"></i> الملف الشخصي - <span th:text="${targetUser.fullName}"></span></h1>
             </div>
 
             <div class="profile-card">
@@ -165,7 +166,8 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

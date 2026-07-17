@@ -16,14 +16,14 @@
 <div th:fragment="content">
     <!-- Page Header -->
     <div class="page-header">
-        <h1 class="page-title"><span style="margin-right: 5px;">🔔</span> <span th:text="#{notifications.title}">الإشعارات</span></h1>
+        <h1 class="page-title"><span style="margin-right: 5px;"><i data-lucide="bell"></i></span> <span th:text="#{notifications.title}">الإشعارات</span></h1>
         <div class="page-actions" style="display: flex; gap: 0.75rem;">
             <span class="notifications-count-label" th:if="${unreadCount > 0}">
                 <span th:text="${unreadCount}">0</span> <span th:text="#{notifications.unread}">غير مقروء</span>
             </span>
             <form th:action="@{/dashboard/notifications/mark-all-read}" method="post" style="display: inline;">
                 <button type="submit" class="btn btn-secondary" th:if="${unreadCount > 0}">
-                    ✓ <span th:text="#{notifications.mark_all_read}">تعليم الكل كمقروء</span>
+                    <i data-lucide="check" class="inline-icon"></i> <span th:text="#{notifications.mark_all_read}">تعليم الكل كمقروء</span>
                 </button>
             </form>
         </div>
@@ -32,7 +32,7 @@
     <!-- Notifications List -->
     <div class="notifications-page-container">
         <div th:if="${#lists.isEmpty(notifications)}" class="notifications-empty">
-            <div class="notifications-empty-icon">🔕</div>
+            <div class="notifications-empty-icon"><i data-lucide="bell-off"></i></div>
             <h3 th:text="#{notifications.empty_title}">لا توجد إشعارات</h3>
             <p th:text="#{notifications.empty_message}">ستظهر هنا الإشعارات عند حدوث تحديثات على طلباتك ومنظمتك</p>
         </div>
@@ -43,14 +43,14 @@
                 th:data-id="${notif.id}">
 
                 <div class="notification-icon-wrapper">
-                    <span class="notification-type-icon" th:text="${notif.type == 'STATUS_UPDATE' ? '📦' : 
-                                    notif.type == 'ORG_ASSIGNMENT' || notif.type == 'BULK_ORG_ASSIGNMENT' ? '🏢' :
-                                    notif.type == 'ASSIGNMENT' || notif.type == 'BULK_ASSIGNMENT' ? '🚚' :
-                                    notif.type == 'UNASSIGNMENT' ? '❌' :
-                                    notif.type == 'CLIENT_ORDER' || notif.type == 'WEBHOOK_ORDER' ? '📥' :
-                                    notif.type == 'WORK_INVITATION' || notif.type == 'CLIENT_INVITATION' ? '📩' :
-                                    notif.type == 'INVITATION_RESPONSE' ? '✉️' :
-                                    '🔔'}">🔔</span>
+                    <span class="notification-type-icon" th:utext="${notif.type == 'STATUS_UPDATE' ? '<i data-lucide=&quot;package&quot; class=&quot;inline-icon&quot;></i>' : 
+                                    notif.type == 'ORG_ASSIGNMENT' || notif.type == 'BULK_ORG_ASSIGNMENT' ? '<i data-lucide="building-2" class="inline-icon"></i>' :
+                                    notif.type == 'ASSIGNMENT' || notif.type == 'BULK_ASSIGNMENT' ? '<i data-lucide="truck" class="inline-icon"></i>' :
+                                    notif.type == 'UNASSIGNMENT' ? '<i data-lucide="x-circle" class="inline-icon"></i>' :
+                                    notif.type == 'CLIENT_ORDER' || notif.type == 'WEBHOOK_ORDER' ? '<i data-lucide="inbox" class="inline-icon"></i>' :
+                                    notif.type == 'WORK_INVITATION' || notif.type == 'CLIENT_INVITATION' ? '<i data-lucide="mail" class="inline-icon"></i>' :
+                                    notif.type == 'INVITATION_RESPONSE' ? '<i data-lucide="mail" class="inline-icon"></i>' :
+                                    '<i data-lucide="bell" class="inline-icon"></i>'}"><i data-lucide="bell"></i></span>
                     <span class="notification-unread-dot" th:if="${!notif.read}"></span>
                 </div>
 
@@ -96,14 +96,14 @@
         // Helper to get correct icon
         function getNotificationIcon(type) {
             switch (type) {
-                case 'STATUS_UPDATE': return '📦';
-                case 'ORG_ASSIGNMENT': case 'BULK_ORG_ASSIGNMENT': return '🏢';
-                case 'ASSIGNMENT': case 'BULK_ASSIGNMENT': return '🚚';
-                case 'UNASSIGNMENT': return '❌';
-                case 'CLIENT_ORDER': case 'WEBHOOK_ORDER': return '📥';
-                case 'WORK_INVITATION': case 'CLIENT_INVITATION': return '📩';
-                case 'INVITATION_RESPONSE': return '✉️';
-                default: return '🔔';
+                case 'STATUS_UPDATE': return '<i data-lucide="package" class="inline-icon"></i>';
+                case 'ORG_ASSIGNMENT': case 'BULK_ORG_ASSIGNMENT': return '<i data-lucide="building-2" class="inline-icon"></i>';
+                case 'ASSIGNMENT': case 'BULK_ASSIGNMENT': return '<i data-lucide="truck" class="inline-icon"></i>';
+                case 'UNASSIGNMENT': return '<i data-lucide="x-circle" class="inline-icon"></i>';
+                case 'CLIENT_ORDER': case 'WEBHOOK_ORDER': return '<i data-lucide="inbox" class="inline-icon"></i>';
+                case 'WORK_INVITATION': case 'CLIENT_INVITATION': return '<i data-lucide="mail" class="inline-icon"></i>';
+                case 'INVITATION_RESPONSE': return '<i data-lucide="mail" class="inline-icon"></i>';
+                default: return '<i data-lucide="bell" class="inline-icon"></i>';
             }
         }
 

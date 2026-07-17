@@ -1,6 +1,7 @@
 package com.shipment.shippinggo.service;
 
 import com.shipment.shippinggo.entity.*;
+import com.shipment.shippinggo.enums.OrderEventType;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.repository.*;
 import com.shipment.shippinggo.exception.BusinessLogicException;
@@ -32,6 +33,9 @@ public class OrderAssignmentService {
     private final NotificationService notificationService;
     private final OrderInquiryRepository orderInquiryRepository;
     private final ClientOrgRepository clientOrgRepository;
+    private final OrganizationResolverService organizationResolverService;
+    private final OrderEventService orderEventService;
+    private final AssignmentPermissionRepository assignmentPermissionRepository;
 
     public OrderAssignmentService(OrderRepository orderRepository,
             OrderAssignmentRepository orderAssignmentRepository,
@@ -47,7 +51,10 @@ public class OrderAssignmentService {
             @org.springframework.context.annotation.Lazy OrderStatusService orderStatusService,
             NotificationService notificationService,
             OrderInquiryRepository orderInquiryRepository,
-            ClientOrgRepository clientOrgRepository) {
+            ClientOrgRepository clientOrgRepository,
+            OrganizationResolverService organizationResolverService,
+            OrderEventService orderEventService,
+            AssignmentPermissionRepository assignmentPermissionRepository) {
         this.orderRepository = orderRepository;
         this.orderAssignmentRepository = orderAssignmentRepository;
         this.membershipRepository = membershipRepository;
@@ -63,6 +70,9 @@ public class OrderAssignmentService {
         this.notificationService = notificationService;
         this.orderInquiryRepository = orderInquiryRepository;
         this.clientOrgRepository = clientOrgRepository;
+        this.organizationResolverService = organizationResolverService;
+        this.orderEventService = orderEventService;
+        this.assignmentPermissionRepository = assignmentPermissionRepository;
     }
 
     // إسناد طلب محدد إلى مكتب مستلم (منظمة وجهة)، مع التأكد من وجود علاقة عمل
@@ -168,11 +178,18 @@ public class OrderAssignmentService {
         order.setAssignmentDate(java.time.LocalDate.now());
         order.setAssignmentAccepted(false);
         order.setAssignmentAcceptedAt(null);
-        order.setStatus(OrderStatus.WAITING);
+        // Step 3: تغيير الحالة لـ IN_TRANSIT عند الإسناد لمنظمة
+        if (order.getStatus() == OrderStatus.WAITING || order.getStatus() == OrderStatus.PICKED_UP) {
+            order.setStatus(OrderStatus.IN_TRANSIT);
+        }
 
-        String assignmentNote = String.format("تم इسناد الطلب إلى مكتب '%s' عبر '%s'",
+        String assignmentNote = String.format("تم إسناد الطلب إلى مكتب '%s' عبر '%s'",
                 targetOrg.getName(), currentOrg.getName());
-        orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
+        orderStatusService.recordStatusChange(order, previousStatus, order.getStatus(), assignedBy, null, null,
+                assignmentNote);
+
+        // Step 5: Dual-write — تسجيل حدث إسناد لمنظمة
+        orderEventService.recordTypedEvent(order, OrderEventType.ASSIGNED_TO_ORG, assignedBy, targetOrg,
                 assignmentNote);
 
         notificationService.sendSingleOrgAssignmentNotification(targetOrg, order);
@@ -281,11 +298,19 @@ public class OrderAssignmentService {
             order.setAssignmentDate(java.time.LocalDate.now());
             order.setAssignmentAccepted(false);
             order.setAssignmentAcceptedAt(null);
-            order.setStatus(OrderStatus.WAITING);
+            // Step 3: IN_TRANSIT عند الإسناد لمنظمة
+            if (order.getStatus() == OrderStatus.WAITING || order.getStatus() == OrderStatus.PICKED_UP) {
+                order.setStatus(OrderStatus.IN_TRANSIT);
+            }
 
             String assignmentNote = String.format("تم اسناد الطلب متعدد إلى مكتب '%s'", targetOrg.getName());
-            orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, assignedBy, null, null,
+            orderStatusService.recordStatusChange(order, previousStatus, order.getStatus(), assignedBy, null, null,
                     assignmentNote);
+
+            // Step 5: Dual-write — تسجيل حدث إسناد لمنظمة
+            orderEventService.recordTypedEvent(order, OrderEventType.ASSIGNED_TO_ORG, assignedBy, targetOrg,
+                    "إسناد متعدد لـ " + targetOrg.getName());
+
             assignedOrders.add(order);
         }
 
@@ -303,6 +328,25 @@ public class OrderAssignmentService {
     // التحقق من صحة وقابلية الإسناد بناءً على العلاقة بين المنظمة المُرسِلة
     // والمُستقبِلة
     private boolean checkAssignmentRelation(Organization parentOrg, Organization childOrg) {
+        if (parentOrg == null || childOrg == null)
+            return false;
+
+        // Fast path: بحث مباشر في جدول الصلاحيات
+        if (assignmentPermissionRepository
+                .existsBySourceOrganizationIdAndTargetOrganizationIdAndActiveTrue(
+                        parentOrg.getId(), childOrg.getId())) {
+            return true;
+        }
+
+        // Legacy fallback: المنطق القديم (يبقى حتى نتأكد 100%)
+        return checkAssignmentRelationLegacy(parentOrg, childOrg);
+    }
+
+    /**
+     * المنطق القديم للتحقق من صلاحية الإسناد.
+     * يُستخدم كـ fallback عندما لا يوجد سجل في assignment_permissions.
+     */
+    private boolean checkAssignmentRelationLegacy(Organization parentOrg, Organization childOrg) {
         if (parentOrg == null || childOrg == null)
             return false;
 
@@ -373,32 +417,13 @@ public class OrderAssignmentService {
                 parentOrg, childOrg, com.shipment.shippinggo.enums.RelationStatus.ACCEPTED);
     }
 
-    // استنتاج المنظمة التي ينتمي إليها المستخدم (صاحب الحساب)
+    /**
+     * @deprecated استخدم {@link OrganizationResolverService#resolveUserOrganization(User)} بدلاً من هذه الدالة.
+     * تم الإبقاء عليها للتوافقية — تُفوّض للـ service الجديد.
+     */
+    @Deprecated
     public Organization resolveUserOrganization(User user) {
-        if (user == null)
-            return null;
-
-        Organization org = companyRepository.findByAdminId(user.getId()).stream().findFirst()
-                .map(c -> (Organization) c)
-                .orElseGet(() -> officeRepository.findByAdminId(user.getId()).stream().findFirst()
-                        .map(o -> (Organization) o)
-                        .orElseGet(() -> virtualOfficeRepository.findByAdminId(user.getId()).stream().findFirst()
-                                .map(vo -> (Organization) vo)
-                                .orElseGet(() -> storeRepository.findByAdminId(user.getId()).stream().findFirst()
-                                        .map(s -> (Organization) s)
-                                        .orElseGet(() -> clientOrgRepository.findByAdminId(user.getId()).stream().findFirst()
-                                                .map(c -> (Organization) c)
-                                                .orElse(null)))));
-
-        if (org == null) {
-            org = membershipRepository.findByUserAndStatus(user,
-                    com.shipment.shippinggo.enums.MembershipStatus.ACCEPTED)
-                    .stream().findFirst()
-                    .map(m -> m.getOrganization())
-                    .orElse(null);
-        }
-
-        return org;
+        return organizationResolverService.resolveUserOrganization(user);
     }
 
     // إسناد طلب إلى مندوب توصيل لبدء مرحلة "في الطريق"
@@ -519,11 +544,16 @@ public class OrderAssignmentService {
         OrderStatus previousStatus = order.getStatus();
 
         order.setAssignedToCourier(courier);
-        order.setStatus(OrderStatus.IN_TRANSIT);
+        // Step 3: تغيير الحالة لـ OUT_FOR_DELIVERY عند إسناد المندوب
+        order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
         order.setCourierAssignmentDate(LocalDateTime.now());
 
-        orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.IN_TRANSIT, assignedBy, null, null,
+        orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.OUT_FOR_DELIVERY, assignedBy, null, null,
                 "تم الإسناد للمندوب");
+
+        // Step 5: Dual-write — تسجيل حدث إسناد لمندوب
+        orderEventService.recordTypedEvent(order, OrderEventType.ASSIGNED_TO_COURIER, assignedBy, null,
+                "إسناد لمندوب: " + courier.getFullName());
 
         notificationService.sendOrderAssignmentNotification(courier, order);
 
@@ -551,6 +581,22 @@ public class OrderAssignmentService {
         List<Order> orders = orderRepository.findAllById(orderIds);
         Organization assignerOrg = resolveUserOrganization(assignedBy);
 
+        // Step 6: Pre-fetch خارج الحلقة — تجنب N+1 queries
+        // نجمع كل الـ ownerOrg و assignedOrg من الأوردرات مرة واحدة
+        java.util.Set<Long> allOwnerOrgIds = new java.util.HashSet<>();
+        java.util.Set<Long> allAssignedOrgIds = new java.util.HashSet<>();
+        for (Order order : orders) {
+            allOwnerOrgIds.add(order.getOwnerOrganization().getId());
+            if (order.getAssignedToOrganization() != null) {
+                allAssignedOrgIds.add(order.getAssignedToOrganization().getId());
+            }
+        }
+
+        // Pre-fetch courier org IDs set for fast lookup
+        java.util.Set<Long> courierOrgIds = courierMemberships.stream()
+                .map(m -> m.getOrganization().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
         List<Order> assignedOrders = new java.util.ArrayList<>();
         for (Order order : orders) {
             if (order.getStatus() == OrderStatus.DELIVERED ||
@@ -570,60 +616,35 @@ public class OrderAssignmentService {
             Organization ownerOrg = order.getOwnerOrganization();
             Organization assignedOrg = order.getAssignedToOrganization();
 
-            java.util.Set<Long> ownerChildRelationIds = organizationRelationRepository
-                    .findByParentOrganizationAndStatus(ownerOrg, com.shipment.shippinggo.enums.RelationStatus.ACCEPTED)
-                    .stream().map(r -> r.getChildOrganization().getId()).collect(java.util.stream.Collectors.toSet());
-
-            java.util.Set<Long> ownerPeerIds = new java.util.HashSet<>();
-            if (ownerOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
-                organizationRelationRepository.findPeerRelations(
-                        ownerOrg, com.shipment.shippinggo.enums.RelationStatus.ACCEPTED,
-                        com.shipment.shippinggo.enums.RelationType.OFFICE_TO_OFFICE)
-                        .forEach(r -> {
-                            ownerPeerIds.add(r.getParentOrganization().getId());
-                            ownerPeerIds.add(r.getChildOrganization().getId());
-                        });
+            // Step 6: فحص سريع — هل المندوب في نفس منظمة الأوردر؟
+            boolean isValidCourier = false;
+            if (assignedOrg != null && courierOrgIds.contains(assignedOrg.getId())) {
+                isValidCourier = true;
+            } else if (courierOrgIds.contains(ownerOrg.getId())) {
+                isValidCourier = true;
             }
 
-            java.util.Set<Long> assignedPeerIds = new java.util.HashSet<>();
-            if (assignedOrg != null && assignedOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
-                organizationRelationRepository.findPeerRelations(
-                        assignedOrg, com.shipment.shippinggo.enums.RelationStatus.ACCEPTED,
-                        com.shipment.shippinggo.enums.RelationType.OFFICE_TO_OFFICE)
-                        .forEach(r -> {
-                            assignedPeerIds.add(r.getParentOrganization().getId());
-                            assignedPeerIds.add(r.getChildOrganization().getId());
-                        });
+            if (!isValidCourier) {
+                // Fallback: الفحص التفصيلي عبر العلاقات
+                java.util.Set<Long> ownerChildRelationIds = organizationRelationRepository
+                        .findByParentOrganizationAndStatus(ownerOrg, com.shipment.shippinggo.enums.RelationStatus.ACCEPTED)
+                        .stream().map(r -> r.getChildOrganization().getId()).collect(java.util.stream.Collectors.toSet());
+
+                isValidCourier = courierMemberships.stream().anyMatch(membership -> {
+                    Organization courierOrg = membership.getOrganization();
+                    if (ownerChildRelationIds.contains(courierOrg.getId()))
+                        return true;
+
+                    Organization unproxiedCourierOrg = (Organization) Hibernate.unproxy(courierOrg);
+                    if (unproxiedCourierOrg instanceof Office) {
+                        Office office = (Office) unproxiedCourierOrg;
+                        if (office.getParentCompany() != null && office.getParentCompany().getId().equals(ownerOrg.getId()))
+                            return true;
+                    }
+                    return false;
+                });
             }
 
-            boolean isValidCourier = courierMemberships.stream().anyMatch(membership -> {
-                Organization courierOrg = membership.getOrganization();
-                if (assignedOrg != null && courierOrg.getId().equals(assignedOrg.getId()))
-                    return true;
-                if (courierOrg.getId().equals(ownerOrg.getId()))
-                    return true;
-                if (ownerChildRelationIds.contains(courierOrg.getId()))
-                    return true;
-
-                Organization unproxiedCourierOrg = (Organization) Hibernate.unproxy(courierOrg);
-                if (unproxiedCourierOrg instanceof Office) {
-                    Office office = (Office) unproxiedCourierOrg;
-                    if (office.getParentCompany() != null && office.getParentCompany().getId().equals(ownerOrg.getId()))
-                        return true;
-                }
-                if (ownerOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE &&
-                        courierOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
-                    if (ownerPeerIds.contains(courierOrg.getId()))
-                        return true;
-                }
-                if (assignedOrg != null
-                        && assignedOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE &&
-                        courierOrg.getType() == com.shipment.shippinggo.enums.OrganizationType.OFFICE) {
-                    if (assignedPeerIds.contains(courierOrg.getId()))
-                        return true;
-                }
-                return false;
-            });
             if (!isValidCourier)
                 throw new BusinessLogicException("المندوب غير مسجل في المكتب المسند إليه الطلب رقم " + order.getId());
 
@@ -645,10 +666,11 @@ public class OrderAssignmentService {
 
             OrderStatus previousStatus = order.getStatus();
             order.setAssignedToCourier(courier);
-            order.setStatus(OrderStatus.IN_TRANSIT);
+            // Step 3: OUT_FOR_DELIVERY بدل IN_TRANSIT
+            order.setStatus(OrderStatus.OUT_FOR_DELIVERY);
             order.setCourierAssignmentDate(LocalDateTime.now());
 
-            orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.IN_TRANSIT, assignedBy, null, null,
+            orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.OUT_FOR_DELIVERY, assignedBy, null, null,
                     "تم الإسناد للمندوب");
             assignedOrders.add(order);
         }
@@ -693,10 +715,17 @@ public class OrderAssignmentService {
         OrderStatus previousStatus = order.getStatus();
         order.setAssignedToCourier(null);
         order.setCourierAssignmentDate(null);
-        order.setStatus(OrderStatus.WAITING);
+        // Step 3: إذا كان PICKED_UP يرجع IN_TRANSIT، وإلا يرجع WAITING
+        OrderStatus newStatus = (previousStatus == OrderStatus.OUT_FOR_DELIVERY && assignedOrg != null)
+                ? OrderStatus.PICKED_UP : OrderStatus.WAITING;
+        order.setStatus(newStatus);
 
-        orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, removedBy, null, null,
+        orderStatusService.recordStatusChange(order, previousStatus, newStatus, removedBy, null, null,
                 "تم إلغاء إسناد الطلب من المندوب");
+
+        // Step 5: Dual-write — تسجيل حدث إلغاء إسناد مندوب
+        orderEventService.recordTypedEvent(order, OrderEventType.UNASSIGNED_FROM_COURIER, removedBy, assignedOrg,
+                "إلغاء إسناد المندوب: " + courier.getFullName());
 
         // Send notification to the removed courier
         notificationService.sendOrderUnassignmentNotification(courier, order);
@@ -778,6 +807,11 @@ public class OrderAssignmentService {
                         : "غير معروف",
                 removerOrg != null ? removerOrg.getName() : "غير معروف");
         orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, removedBy, null, null,
+                unassignNote);
+
+        // Step 5: Dual-write — تسجيل حدث إلغاء إسناد منظمة
+        orderEventService.recordTypedEvent(order, OrderEventType.UNASSIGNED_FROM_ORG, removedBy,
+                lastAssignmentOpt.isPresent() ? lastAssignmentOpt.get().getAssigneeOrganization() : null,
                 unassignNote);
 
         return orderRepository.save(order);
@@ -881,6 +915,18 @@ public class OrderAssignmentService {
         order.setAssignmentAccepted(true);
         order.setAssignmentAcceptedAt(LocalDateTime.now());
 
+        // Step 3: تغيير الحالة لـ PICKED_UP عند قبول الإسناد
+        if (order.getStatus() == OrderStatus.IN_TRANSIT) {
+            OrderStatus previousStatus = order.getStatus();
+            order.setStatus(OrderStatus.PICKED_UP);
+            orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.PICKED_UP, acceptedBy, null, null,
+                    "تأكيد استلام الشحنة من " + assignedOrg.getName());
+        }
+
+        // Step 5: Dual-write — تسجيل حدث قبول إسناد
+        orderEventService.recordTypedEvent(order, OrderEventType.ASSIGNMENT_ACCEPTED, acceptedBy, assignedOrg,
+                "تم قبول إسناد الطلب");
+
         return orderRepository.save(order);
     }
 
@@ -944,31 +990,20 @@ public class OrderAssignmentService {
         orderStatusService.recordStatusChange(order, previousStatus, OrderStatus.WAITING, rejectedBy, null, null,
                 "تم رفض إسناد الطلب من المكتب المستلم");
 
+        // Step 5: Dual-write — تسجيل حدث رفض إسناد
+        orderEventService.recordTypedEvent(order, OrderEventType.UNASSIGNED_FROM_ORG, rejectedBy, assignedOrg,
+                "رفض إسناد من " + assignedOrg.getName());
+
         return orderRepository.save(order);
     }
 
+    /**
+     * @deprecated استخدم {@link OrganizationResolverService#isUserMemberOfOrganization(User, Organization)} بدلاً من هذه الدالة.
+     * تم الإبقاء عليها للتوافقية — تُفوّض للـ service الجديد.
+     */
+    @Deprecated
     public boolean isUserMemberOfOrganization(User user, Organization org) {
-        if (org == null)
-            return false;
-
-        Organization unproxiedOrg = (Organization) Hibernate.unproxy(org);
-        if (unproxiedOrg instanceof com.shipment.shippinggo.entity.VirtualOffice) {
-            com.shipment.shippinggo.entity.VirtualOffice vo = (com.shipment.shippinggo.entity.VirtualOffice) unproxiedOrg;
-            if (vo.getParentOrganization() != null) {
-                if (isUserMemberOfOrganization(user, vo.getParentOrganization())) {
-                    return true;
-                }
-            }
-        }
-
-        if (companyRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
-                officeRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
-                storeRepository.existsByAdminIdAndId(user.getId(), org.getId()) ||
-                clientOrgRepository.existsByAdminIdAndId(user.getId(), org.getId())) {
-            return true;
-        }
-        return membershipRepository.existsByUserAndOrganizationAndStatus(
-                user, org, com.shipment.shippinggo.enums.MembershipStatus.ACCEPTED);
+        return organizationResolverService.isUserMemberOfOrganization(user, org);
     }
 
     public boolean canUserAccessOrder(User user, Order order) {

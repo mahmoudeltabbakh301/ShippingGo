@@ -169,10 +169,31 @@
     justify-content: center;
     font-size: 1rem;
     opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.nav-link-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.75;
+    color: inherit;
 }
 
 .nav-link.active .nav-link-icon {
     opacity: 1;
+}
+
+/* Alert icons */
+.alert-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.alert-icon svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
 }
 
 .nav-link-badge {

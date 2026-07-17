@@ -131,7 +131,9 @@ public class ApiOrderController {
                     request.getDeliveredPieces(),
                     pda, 
                     user, 
-                    request.getNotes());
+                    request.getNotes(),
+                    request.getRejectionReason(),
+                    request.getRejectionReasonNotes());
             return ResponseEntity.ok(ApiResponse.success(null, "Status updated successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));

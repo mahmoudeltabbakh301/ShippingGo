@@ -4,11 +4,11 @@
 
     <div th:classappend="${subscriptionRemainingDays <= 1 ? 'sub-banner sub-banner-critical' : (subscriptionRemainingDays <= 3 ? 'sub-banner sub-banner-warning' : 'sub-banner sub-banner-info')}">
         <span th:if="${subscriptionStatusName == 'TRIAL'}">
-            ⏳ تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء الفترة التجريبية المجانية.
+            <i data-lucide="hourglass" class="inline-icon"></i> تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء الفترة التجريبية المجانية.
             <a th:href="@{/payment/subscribe}" style="color: inherit; font-weight: 700; text-decoration: underline;">اشترك الآن</a>
         </span>
         <span th:if="${subscriptionStatusName == 'ACTIVE'}">
-            ⏳ تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء اشتراكك.
+            <i data-lucide="hourglass" class="inline-icon"></i> تبقى <strong th:text="${subscriptionRemainingDays}">5</strong> يوم على انتهاء اشتراكك.
             <a th:href="@{/payment/subscribe}" style="color: inherit; font-weight: 700; text-decoration: underline;">جدد الآن</a>
         </span>
     </div>

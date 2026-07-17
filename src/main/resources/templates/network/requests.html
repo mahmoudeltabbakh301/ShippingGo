@@ -22,6 +22,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -31,7 +32,7 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📬 <span th:text="#{network.requests.title}">طلبات الانضمام</span></h1>
+                    <h1 class="page-title"><i data-lucide="mail-open" class="inline-icon"></i> <span th:text="#{network.requests.title}">طلبات الانضمام</span></h1>
                     <p class="text-muted" th:text="#{network.requests.desc}">إدارة طلبات الانضمام المعلقة</p>
                 </div>
             </div>
@@ -73,14 +74,14 @@
                                                 <input type="hidden" name="membershipId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="true">
                                                 <button type="submit" class="table-action-btn success"
-                                                    th:title="#{network.btn.accept}">✓</button>
+                                                    th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                             </form>
                                             <form th:action="@{/network/requests/member/process}" method="post"
                                                 class="d-inline">
                                                 <input type="hidden" name="membershipId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="false">
                                                 <button type="submit" class="table-action-btn danger"
-                                                    th:title="#{network.btn.reject}">✕</button>
+                                                    th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -126,14 +127,14 @@
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="true">
                                                 <button type="submit" class="table-action-btn success"
-                                                    th:title="#{network.btn.accept}">✓</button>
+                                                    th:title="#{network.btn.accept}"><i data-lucide="check" class="inline-icon"></i></button>
                                             </form>
                                             <form th:action="@{/network/requests/link/process}" method="post"
                                                 class="d-inline">
                                                 <input type="hidden" name="relationId" th:value="${req.id}">
                                                 <input type="hidden" name="accept" value="false">
                                                 <button type="submit" class="table-action-btn danger"
-                                                    th:title="#{network.btn.reject}">✕</button>
+                                                    th:title="#{network.btn.reject}"><i data-lucide="x" class="inline-icon"></i></button>
                                             </form>
                                         </div>
                                     </td>
@@ -145,6 +146,7 @@
 
             </div>
     </div>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

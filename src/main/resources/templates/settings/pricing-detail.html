@@ -22,6 +22,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -30,16 +31,16 @@
 
         <main class="main-content">
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📋 <span th:text="${priceList.name}">قائمة الأسعار</span>
+                    <h1 class="page-title"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="${priceList.name}">قائمة الأسعار</span>
                         <span th:if="${priceList.isDefault()}"
                             style="background: rgba(76,175,80,0.15); color: #388e3c; padding: 2px 10px; border-radius: 12px; font-size: 0.8rem;"
                             th:text="#{pricing.badge_default}">افتراضية</span>
@@ -126,9 +127,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

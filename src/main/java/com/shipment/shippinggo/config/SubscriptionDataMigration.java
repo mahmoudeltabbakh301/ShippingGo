@@ -41,10 +41,27 @@ public class SubscriptionDataMigration implements ApplicationRunner {
         List<Organization> allOrgs = organizationRepository.findAll();
         int created = 0;
 
+        // Cleanup existing invalid subscriptions
+        List<Subscription> invalidSubscriptions = subscriptionRepository.findAll().stream()
+                .filter(sub -> sub.getOrganization().getType() == com.shipment.shippinggo.enums.OrganizationType.VIRTUAL_OFFICE ||
+                               sub.getOrganization().getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT)
+                .toList();
+
+        if (!invalidSubscriptions.isEmpty()) {
+            subscriptionRepository.deleteAll(invalidSubscriptions);
+            System.out.println("[SubscriptionDataMigration] Deleted " + invalidSubscriptions.size() + " invalid subscriptions for VIRTUAL_OFFICE / CLIENT.");
+        }
+
         int trialDays = platformSettingService.getDefaultTrialDays();
         LocalDateTime now = LocalDateTime.now();
 
         for (Organization org : allOrgs) {
+            // تخطي المكاتب الافتراضية والعملاء
+            if (org.getType() == com.shipment.shippinggo.enums.OrganizationType.VIRTUAL_OFFICE ||
+                org.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+                continue;
+            }
+
             // تخطي المنظمات التي لها اشتراك بالفعل
             if (subscriptionRepository.existsByOrganizationId(org.getId())) {
                 continue;

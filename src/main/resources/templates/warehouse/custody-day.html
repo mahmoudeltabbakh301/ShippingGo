@@ -24,6 +24,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -32,12 +33,12 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📦 <span th:text="#{warehouse.custody.day.title}">تفاصيل العهدة</span></h1>
+                    <h1 class="page-title"><i data-lucide="package" class="inline-icon"></i> <span th:text="#{warehouse.custody.day.title}">تفاصيل العهدة</span></h1>
                     <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                         &nbsp;•&nbsp; [[${organization.name}]]
                     </p>
@@ -49,27 +50,27 @@
             <!-- Statistics -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon waiting">📦</div>
+                    <div class="stat-icon waiting"><i data-lucide="package"></i></div>
                     <div class="stat-value" th:text="${totalOrderCount}">0</div>
                     <div class="stat-label" th:text="#{warehouse.custody.stat.in_custody}">في العهدة</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-icon waiting"><i data-lucide="hourglass"></i></div>
                     <div class="stat-value" th:text="${waitingCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_waiting}">في الانتظار</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-icon cancelled"><i data-lucide="x-circle"></i></div>
                     <div class="stat-value" th:text="${cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_cancelled}">ملغي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-icon refused"><i data-lucide="ban"></i></div>
                     <div class="stat-value" th:text="${refusedCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_refused}">مرفوض</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon transit">⏱️</div>
+                    <div class="stat-icon transit"><i data-lucide="clock"></i></div>
                     <div class="stat-value" th:text="${awaitingReceiptCount}">0</div>
                     <div class="stat-label" th:text="#{warehouse.stat.awaiting_receipt}">في انتظار التأكيد</div>
                 </div>
@@ -79,7 +80,7 @@
             <div class="card">
                 <div class="card-header"
                     style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
-                    <h3 class="card-title" th:text="#{warehouse.custody.day.subtitle}">📋 أوردرات العهدة</h3>
+                    <h3 class="card-title" th:text="#{warehouse.custody.day.subtitle}"><i data-lucide="clipboard-list" class="inline-icon"></i> أوردرات العهدة</h3>
                     <form th:action="@{/warehouse/custody}" method="get"
                         style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
                         <input type="text" name="search" class="form-control" th:value="${search}"
@@ -88,13 +89,13 @@
                             th:placeholder="#{business_days.view.code_placeholder}" style="width: 100px;">
 
                         <select name="incomingFromId" class="form-control" style="width: 130px;">
-                            <option value="">⬅️ كل الوارد</option>
+                            <option value=""><i data-lucide="arrow-right" class="inline-icon"></i> كل الوارد</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${incomingFromId == lo.id}"></option>
                         </select>
 
                         <select name="outgoingToId" class="form-control" style="width: 130px;">
-                            <option value="">➡️ كل الصادر</option>
+                            <option value=""><i data-lucide="arrow-left" class="inline-icon"></i> كل الصادر</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${outgoingToId == lo.id}"></option>
                         </select>
@@ -117,7 +118,7 @@
                         <button type="submit" class="btn btn-secondary btn-sm"
                             th:text="#{business_days.view.btn_search}">بحث</button>
                         <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null}"
-                            th:href="@{/warehouse/custody}" class="btn btn-danger btn-sm">✕</a>
+                            th:href="@{/warehouse/custody}" class="btn btn-danger btn-sm"><i data-lucide="x" class="inline-icon"></i></a>
                     </form>
                 </div>
 
@@ -137,7 +138,7 @@
                                 style="display: flex; gap: var(--space-2); align-items: center;">
                                 <input type="hidden" name="orderIds" id="orderIdsForRemoveCustody" value="">
                                 <button type="submit" class="btn btn-secondary btn-sm"
-                                    th:text="#{orders.btn.remove_custody_bulk}">📤 إزالة من العهدة</button>
+                                    th:text="#{orders.btn.remove_custody_bulk}"><i data-lucide="upload" class="inline-icon"></i> إزالة من العهدة</button>
                             </form>
                         </div>
                     </div>
@@ -145,7 +146,7 @@
 
 
                 <div th:if="${orders.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📦</div>
+                    <div class="table-empty-icon"><i data-lucide="package"></i></div>
                     <div class="table-empty-text" th:text="#{warehouse.custody.day.empty}">لا توجد أوردرات في العهدة
                     </div>
                 </div>
@@ -195,11 +196,11 @@
                                         <!-- المالك: يظهر المنظمة التي أسند لها -->
                                         <span th:if="${order.ownerOrganization.id == organization.id}">
                                             <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                                                th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
+                                                th:utext="'<i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('outgoingTo')}"
                                                 title="تم الإسناد إلى"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization != null}"
-                                                th:text="'➡️ ' + ${order.assignedToOrganization.name}"
+                                                th:utext="'<i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${order.assignedToOrganization.name}"
                                                 title="تم الإسناد إلى"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) && order.assignedToOrganization == null}">-</span>
@@ -208,14 +209,14 @@
                                         <!-- منظمة وسيطة أو نهائية (ليست المالك): يظهر من أسند ومن أسند إليه -->
                                         <span th:if="${order.ownerOrganization.id != organization.id}">
                                             <span th:if="${ctx != null && ctx.containsKey('incomingFrom')}"
-                                                th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                                                th:utext="'<i data-lucide=&quot;arrow-right&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
                                             <span th:if="${ctx != null && ctx.containsKey('outgoingTo')}"
-                                                th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
+                                                th:utext="' <i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('outgoingTo')}"
                                                 title="تم الإسناد إلى"></span>
                                             <!-- فال باك: لو ctx فاضي أو مفيش incomingFrom -->
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && order.assignedToOrganization != null && order.assignedToOrganization.id == organization.id}"
-                                                th:text="'⬅️ ' + ${order.ownerOrganization.name}"
+                                                th:utext="'<i data-lucide=&quot;arrow-right&quot; class=&quot;inline-icon&quot;></i> ' + ${order.ownerOrganization.name}"
                                                 title="وارد من"></span>
                                             <span
                                                 th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) && (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
@@ -227,11 +228,11 @@
                                     <span
                                         th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
                                     <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
-                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات"><i data-lucide="ban"></i></span>
                                 </td>
                                 <td>
                                     <a th:href="@{/orders/{id}(id=${order.id})}" class="btn btn-sm btn-secondary"
-                                        th:text="#{business_days.btn.view}">👁
+                                        th:text="#{business_days.btn.view}"><i data-lucide="eye" class="inline-icon"></i>
                                         عرض</a>
                                 </td>
                             </tr>
@@ -299,8 +300,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

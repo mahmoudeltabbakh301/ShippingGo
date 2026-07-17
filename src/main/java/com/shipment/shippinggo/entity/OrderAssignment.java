@@ -30,32 +30,32 @@ public class OrderAssignment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "ownerOrganization", "creatorOrganization", "assignedToOrganization", "custodySetterOrganization", "createdBy", "assignedToCourier", "businessDay", "invoices"})
     private Order order;
 
     // المنظمة التي أسندت (من)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigner_organization_id", nullable = false)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "admin", "offices", "about", "pickupPolicy", "returnPolicy", "paymentTerms"})
     private Organization assignerOrganization;
 
     // المنظمة المسند إليها (إلى)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_organization_id", nullable = false)
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "admin", "offices", "about", "pickupPolicy", "returnPolicy", "paymentTerms"})
     private Organization assigneeOrganization;
 
     // يوم عمل المنظمة المُسند إليها (لإبقاء الأوردر مرتبط بيوم عمل محدد وعدم ظهوره
     // بأيام أخرى)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "business_day_id")
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "organization", "createdBy", "closedBy"})
     private BusinessDay businessDay;
 
     // يوم عمل المنظمة المُسندة (لربط الصادر بيوم عمل المُسند ومنع تداخل الأيام)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigner_business_day_id")
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "organization", "createdBy", "closedBy"})
     private BusinessDay assignerBusinessDay;
 
     // مستوى الإسناد في السلسلة (1 = أول إسناد، 2 = ثاني، ...)
@@ -101,7 +101,7 @@ public class OrderAssignment {
     // المستخدم الذي قام بالإسناد
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_by_id")
-    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "primaryOrganization", "password", "authorities", "verificationToken", "fcmToken"})
     private User assignedBy;
 
     @PrePersist

@@ -76,6 +76,7 @@
             font-size: 0.9rem;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -86,7 +87,7 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title"><span th:text="${pageHeaderIcon != null ? pageHeaderIcon : '🛡️'}">🛡️</span> <span th:text="${pageTitle}">سجلات النظام</span></h1>
+                    <h1 class="page-title"><span th:utext="${pageHeaderIcon != null ? pageHeaderIcon : '<i data-lucide=&quot;shield-check&quot; class=&quot;inline-icon&quot;></i>'}"><i data-lucide="shield-check"></i></span> <span th:text="${pageTitle}">سجلات النظام</span></h1>
                     <p class="page-subtitle" th:text="#{audit_logs.subtitle}">متابعة العمليات والإجراءات داخل النظام</p>
                 </div>
             </div>
@@ -94,12 +95,12 @@
             <div class="card">
                 <!-- Stats -->
                 <div class="log-stats" th:if="${totalElements != null && totalElements > 0}">
-                    <span>📊</span>
+                    <span><i data-lucide="bar-chart-3"></i></span>
                     <span th:text="#{audit_logs.total_count(${totalElements})}">إجمالي السجلات: 0</span>
                 </div>
 
                 <div th:if="${auditLogs.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📝</div>
+                    <div class="table-empty-icon"><i data-lucide="pencil"></i></div>
                     <div class="table-empty-text" th:text="#{audit_logs.empty}">لا توجد سجلات بالنظام حتى الآن</div>
                 </div>
 
@@ -218,7 +219,8 @@
             }
         }
     </script>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

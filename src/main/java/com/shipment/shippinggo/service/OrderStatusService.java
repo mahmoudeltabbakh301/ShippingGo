@@ -53,20 +53,28 @@ public class OrderStatusService {
 
     @Transactional
     public Order updateStatus(Long orderId, OrderStatus newStatus, BigDecimal newAmount, User changedBy, String notes) {
-        return updateStatusAdvanced(orderId, newStatus, newAmount, null, null, null, changedBy, notes);
+        return updateStatusAdvanced(orderId, newStatus, newAmount, null, null, null, changedBy, notes, null, null);
     }
 
     @Transactional
     public Order updateStatusWithRejectionPayment(Long orderId, OrderStatus newStatus, BigDecimal newAmount,
             BigDecimal rejectionPayment, User changedBy, String notes) {
-        return updateStatusAdvanced(orderId, newStatus, newAmount, rejectionPayment, null, null, changedBy, notes);
+        return updateStatusAdvanced(orderId, newStatus, newAmount, rejectionPayment, null, null, changedBy, notes, null, null);
+    }
+
+    @Transactional
+    public Order updateStatusAdvanced(Long orderId, OrderStatus newStatus, BigDecimal newAmount,
+            BigDecimal rejectionPayment, Integer deliveredPieces, BigDecimal partialDeliveryAmount, User changedBy,
+            String notes) {
+        return updateStatusAdvanced(orderId, newStatus, newAmount, rejectionPayment, deliveredPieces,
+                partialDeliveryAmount, changedBy, notes, null, null);
     }
 
     // تحديث حالة الطلب بشكل متقدم وتطبيق قواعد وشروط الانتقال والتأكد من الصلاحيات
     @Transactional
     public Order updateStatusAdvanced(Long orderId, OrderStatus newStatus, BigDecimal newAmount,
             BigDecimal rejectionPayment, Integer deliveredPieces, BigDecimal partialDeliveryAmount, User changedBy,
-            String notes) {
+            String notes, com.shipment.shippinggo.enums.RejectionReason rejectionReason, String rejectionReasonNotes) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
@@ -76,22 +84,22 @@ public class OrderStatusService {
         boolean isOwner = orderAssignmentService.isUserMemberOfOrganization(changedBy, order.getOwnerOrganization());
 
         if (currentStatus == OrderStatus.DELIVERED || currentStatus == OrderStatus.REFUSED
-                || currentStatus == OrderStatus.CANCELLED) {
+                || currentStatus == OrderStatus.CANCELLED || currentStatus == OrderStatus.RETURNED_TO_SENDER) {
 
             boolean ownerFreeAccess = (assignedOrg == null) && isOwner;
 
             if (!ownerFreeAccess) {
-                if (newStatus == OrderStatus.IN_TRANSIT) {
+                if (newStatus == OrderStatus.IN_TRANSIT || newStatus == OrderStatus.OUT_FOR_DELIVERY) {
                     if (assignedOrg == null || !orderAssignmentService.isUserMemberOfOrganization(changedBy, assignedOrg)) {
                         throw new UnauthorizedAccessException(
-                                "فقط المكتب المسند إليه الطلب يمكنه إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
+                                "فقط المكتب المسند إليه الطلب يمكنه إعادة الحالة لتصحيح خطأ.");
                     }
                     order.setProcessedByCourier(false);
                 } else {
                     throw new BusinessLogicException("لا يمكن تغيير حالة طلب في حالة نهائية ("
-                            + currentStatus.getArabicName() + "). يمكن فقط إعادة الحالة إلى 'في الطريق' لتصحيح خطأ.");
+                            + currentStatus.getArabicName() + "). يمكن فقط إعادة الحالة إلى 'في الطريق' أو 'خرج للتوصيل' لتصحيح خطأ.");
                 }
-            } else if (newStatus == OrderStatus.IN_TRANSIT) {
+            } else if (newStatus == OrderStatus.IN_TRANSIT || newStatus == OrderStatus.OUT_FOR_DELIVERY) {
                 order.setProcessedByCourier(false);
             }
         }
@@ -155,7 +163,14 @@ public class OrderStatusService {
             }
         }
 
-        recordStatusChange(order, previousStatus, newStatus, changedBy, previousAmount, newAmount, notes);
+        // حفظ سبب الرفض/الإلغاء/التأجيل
+        if (rejectionReason != null && (newStatus == OrderStatus.REFUSED
+                || newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.DEFERRED)) {
+            order.setRejectionReason(rejectionReason);
+            order.setRejectionReasonNotes(rejectionReasonNotes);
+        }
+
+        recordStatusChange(order, previousStatus, newStatus, changedBy, previousAmount, newAmount, notes, rejectionReason, rejectionReasonNotes);
 
         Order savedOrder = orderRepository.save(order);
 
@@ -178,6 +193,13 @@ public class OrderStatusService {
     // تسجيل تاريخ تحديث حالة الطلب كعملية منفصلة في اللوج الخاص بالطلب
     public void recordStatusChange(Order order, OrderStatus previousStatus, OrderStatus newStatus,
             User changedBy, BigDecimal previousAmount, BigDecimal newAmount, String notes) {
+        recordStatusChange(order, previousStatus, newStatus, changedBy, previousAmount, newAmount, notes, null, null);
+    }
+
+    // تسجيل تاريخ تحديث حالة الطلب مع سبب الرفض/الإلغاء/التأجيل والتفاصيل
+    public void recordStatusChange(Order order, OrderStatus previousStatus, OrderStatus newStatus,
+            User changedBy, BigDecimal previousAmount, BigDecimal newAmount, String notes,
+            com.shipment.shippinggo.enums.RejectionReason rejectionReason, String rejectionReasonNotes) {
         OrderStatusHistory history = OrderStatusHistory.builder()
                 .order(order)
                 .previousStatus(previousStatus)
@@ -186,6 +208,8 @@ public class OrderStatusService {
                 .newAmount(newAmount)
                 .changedBy(changedBy)
                 .notes(notes)
+                .rejectionReason(rejectionReason)
+                .rejectionReasonNotes(rejectionReasonNotes)
                 .build();
 
         orderStatusHistoryRepository.save(history);
@@ -208,8 +232,11 @@ public class OrderStatusService {
 
             // Send Push Notification to ALL participating organizations
             // تخطي حالة الانتظار وحالة في الطريق - لا نرسل إشعار عند إنشاء أوردر جديد، العودة للانتظار، أو كونه في الطريق
+            // تخطي حالات الإسناد - لها إشعارات خاصة بها
             if (newStatus != com.shipment.shippinggo.enums.OrderStatus.WAITING && 
-                newStatus != com.shipment.shippinggo.enums.OrderStatus.IN_TRANSIT) {
+                newStatus != com.shipment.shippinggo.enums.OrderStatus.IN_TRANSIT &&
+                newStatus != com.shipment.shippinggo.enums.OrderStatus.PICKED_UP &&
+                newStatus != com.shipment.shippinggo.enums.OrderStatus.OUT_FOR_DELIVERY) {
                 notificationService.sendOrderStatusUpdateNotification(order, newStatus.getArabicName());
             }
         } catch (Exception e) {

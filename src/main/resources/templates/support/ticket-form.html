@@ -25,16 +25,17 @@
         @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
         .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: var(--space-1); }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">➕ تذكرة دعم جديدة</h1>
+                    <h1 class="page-title"><i data-lucide="plus" class="inline-icon"></i> تذكرة دعم جديدة</h1>
                     <p class="page-subtitle">اكتب استفسارك وسنرد عليك في أقرب وقت</p>
                 </div>
                 <a th:href="@{/support}" class="btn btn-secondary">↩ رجوع</a>
@@ -70,13 +71,14 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" style="width: 100%;">📤 إرسال التذكرة</button>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;"><i data-lucide="upload" class="inline-icon"></i> إرسال التذكرة</button>
                 </form>
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

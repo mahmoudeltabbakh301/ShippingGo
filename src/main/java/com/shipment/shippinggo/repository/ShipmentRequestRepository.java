@@ -18,4 +18,6 @@ public interface ShipmentRequestRepository extends JpaRepository<ShipmentRequest
     List<ShipmentRequest> findByOrganizationIdAndDate(
             @org.springframework.data.repository.query.Param("orgId") Long orgId,
             @org.springframework.data.repository.query.Param("date") java.time.LocalDate date);
+
+    long countByOrganizationIdAndStatus(Long organizationId, com.shipment.shippinggo.enums.ShipmentRequestStatus status);
 }

@@ -28,6 +28,8 @@
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/pages/dashboard.css}">
+    <link rel="stylesheet" th:href="@{/css/pages/reports.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -37,18 +39,18 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Inactive Organization Message -->
             <div th:if="${organizationInactive}" class="alert alert-danger"
                 style="background-color: var(--danger-500); color: white; font-weight: bold; border: none; box-shadow: var(--shadow-md);">
-                <span>⚠️</span>
+                <span><i data-lucide="alert-triangle"></i></span>
                 <span th:text="#{dashboard.support_message}">يرجي التواصل مع الدعم للمساعده</span>
             </div>
 
@@ -56,17 +58,20 @@
             <div class="dashboard-header">
                 <div class="dashboard-header-info">
                     <div class="dashboard-header-icon">
-                        <span th:if="${organization.type.name() == 'COMPANY'}">🏢</span>
-                        <span th:if="${organization.type.name() == 'OFFICE'}">🏬</span>
-                        <span th:if="${organization.type.name() == 'STORE'}">🏪</span>
+                        <span th:if="${organization.type.name() == 'COMPANY'}"><i data-lucide="building-2"></i></span>
+                        <span th:if="${organization.type.name() == 'OFFICE'}"><i data-lucide="building"></i></span>
+                        <span th:if="${organization.type.name() == 'STORE'}"><i data-lucide="store"></i></span>
                     </div>
                     <div class="dashboard-header-text">
                         <h1 th:text="${organization.name}">اسم المنظمة</h1>
                         <p class="dashboard-date">
-                            <span class="live-dot" th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() == today.toString()}"></span>
+                            <span class="live-dot"
+                                th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() == today.toString()}"></span>
                             <span th:text="#{dashboard.admin.title}">لوحة التحكم</span>
                             <span> — </span>
-                            <span th:if="${selectedBusinessDay != null}" th:text="${selectedBusinessDay.name} + ' (' + ${selectedBusinessDay.date} + ')'">يوم العمل</span>
+                            <span th:if="${selectedBusinessDay != null}"
+                                th:text="${selectedBusinessDay.name} + ' (' + ${selectedBusinessDay.date} + ')'">يوم
+                                العمل</span>
                             <span th:if="${selectedBusinessDay == null}" th:text="${today}">2026-03-16</span>
                         </p>
                     </div>
@@ -74,27 +79,179 @@
                 <!-- Business Day Selector -->
                 <div class="business-day-selector" th:if="${businessDays != null && !businessDays.isEmpty()}">
                     <div class="bd-selector-wrapper">
-                        <label class="bd-selector-label" th:text="'📅 ' + #{dashboard.select_business_day}">📅 اختر يوم العمل</label>
-                        <select id="businessDaySelector" class="bd-selector-dropdown" onchange="onBusinessDayChange(this)">
+                        <label class="bd-selector-label"
+                            th:utext="'<i data-lucide=&quot;calendar-days&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.select_business_day}"><i
+                                data-lucide="calendar-days" class="inline-icon"></i> اختر يوم العمل</label>
+                        <select id="businessDaySelector" class="bd-selector-dropdown"
+                            onchange="onBusinessDayChange(this)">
                             <option value="" th:text="#{dashboard.select_day_placeholder}">-- اختر يوم العمل --</option>
-                            <option th:each="bd : ${businessDays}"
-                                    th:value="${bd.id}"
-                                    th:selected="${selectedBusinessDayId != null && selectedBusinessDayId == bd.id}"
-                                    th:text="${bd.name} + ' — ' + ${bd.date}"
-                                    th:classappend="${bd.date.toString() == today.toString() ? 'bd-today-option' : ''}">
+                            <option th:each="bd : ${businessDays}" th:value="${bd.id}"
+                                th:selected="${selectedBusinessDayId != null && selectedBusinessDayId == bd.id}"
+                                th:text="${bd.name} + ' — ' + ${bd.date}"
+                                th:classappend="${bd.date.toString() == today.toString() ? 'bd-today-option' : ''}">
                             </option>
                         </select>
-                        <a th:href="@{/dashboard}" class="bd-btn-today" th:text="'📌 ' + #{dashboard.btn_today}" th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() != today.toString()}">📌 اليوم</a>
+                        <a th:href="@{/dashboard}" class="bd-btn-today"
+                            th:utext="'<i data-lucide=&quot;pin&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.btn_today}"
+                            th:if="${selectedBusinessDay != null && selectedBusinessDay.date.toString() != today.toString()}"><i
+                                data-lucide="pin" class="inline-icon"></i> اليوم</a>
                     </div>
                 </div>
             </div>
+
+            <!-- ===== Quick Actions Hub ===== -->
+            <th:block
+                sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY', 'ACCOUNTANT', 'FOLLOW_UP', 'WAREHOUSE_MANAGER')">
+                <div class="quick-actions-hub">
+                    <div class="quick-actions-grid">
+                        <!-- Add Order -->
+                        <a th:if="${selectedBusinessDay != null}"
+                            th:href="@{/business-days/{id}(id=${selectedBusinessDay.id})}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
+                            <div class="quick-action-icon"><i data-lucide="package-plus"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.add_order}">إضافة أوردر</div>
+                            </div>
+                        </a>
+
+                        <!-- Import Excel -->
+                        <a th:href="@{/orders/import}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')">
+                            <div class="quick-action-icon"><i data-lucide="file-spreadsheet"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.import_excel}">استيراد Excel
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- Client Requests -->
+                        <a th:href="@{/org/shipment-requests}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
+                            th:if="${organization.type.name() != 'STORE' and organization.type.name() != 'CLIENT'}">
+                            <div class="quick-action-icon"><i data-lucide="inbox"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.client_requests}">طلبات العملاء
+                                </div>
+                            </div>
+                            <span class="quick-action-badge" th:if="${stats.pendingShipmentRequestsCount > 0}"
+                                th:text="${stats.pendingShipmentRequestsCount}">0</span>
+                        </a>
+
+                        <!-- Pending Members -->
+                        <a th:href="@{/members}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                            th:if="${organization.type.name() != 'CLIENT'}">
+                            <div class="quick-action-icon"><i data-lucide="user-plus"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.pending_members}">أعضاء معلقين
+                                </div>
+                            </div>
+                            <span class="quick-action-badge" th:if="${stats.pendingMembershipsCount > 0}"
+                                th:text="${stats.pendingMembershipsCount}">0</span>
+                        </a>
+
+                        <!-- Warehouse -->
+                        <a th:href="@{/warehouse}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'WAREHOUSE_MANAGER', 'ACCOUNTANT')">
+                            <div class="quick-action-icon"><i data-lucide="warehouse"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.warehouse}">المخزن</div>
+                            </div>
+                            <span class="quick-action-badge" th:if="${stats.warehouseReturnPendingCount > 0}"
+                                th:text="${stats.warehouseReturnPendingCount}">0</span>
+                        </a>
+
+                        <!-- Invoices -->
+                        <a th:href="@{/invoices}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT')">
+                            <div class="quick-action-icon"><i data-lucide="file-text"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.invoices}">الفواتير</div>
+                            </div>
+                        </a>
+
+                        <!-- Reports -->
+                        <a th:href="@{/dashboard/reports}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT')">
+                            <div class="quick-action-icon"><i data-lucide="bar-chart-3"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.reports}">التقارير</div>
+                            </div>
+                        </a>
+
+                        <!-- Settings -->
+                        <a th:href="@{/settings}" class="quick-action-card"
+                            sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                            <div class="quick-action-icon"><i data-lucide="settings"></i></div>
+                            <div class="quick-action-text">
+                                <div class="quick-action-label" th:text="#{dashboard.qa.settings}">الإعدادات</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </th:block>
+
+            <!-- ===== Pending Alerts Strip ===== -->
+            <th:block sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <div class="pending-alerts-strip"
+                    th:if="${stats.pendingShipmentRequestsCount > 0 || stats.pendingMembershipsCount > 0 || stats.unassignedWaitingOrdersCount > 0 || stats.openSupportTicketsCount > 0 || stats.warehouseReturnPendingCount > 0}">
+                    <div class="alerts-grid">
+                        <!-- Pending Client Requests -->
+                        <a th:href="@{/org/shipment-requests}" class="alert-chip"
+                            th:if="${stats.pendingShipmentRequestsCount > 0 and organization.type.name() != 'STORE' and organization.type.name() != 'CLIENT'}">
+                            <span class="alert-chip-icon chip-warning"><i data-lucide="inbox"></i></span>
+                            <span class="alert-chip-count" th:text="${stats.pendingShipmentRequestsCount}">0</span>
+                            <span th:text="#{dashboard.alerts.pending_requests}">طلبات عملاء جديدة</span>
+                            <span class="alert-chip-action" th:text="#{dashboard.alerts.review}">مراجعة</span>
+                        </a>
+
+                        <!-- Pending Members -->
+                        <a th:href="@{/members}" class="alert-chip"
+                            th:if="${stats.pendingMembershipsCount > 0 and organization.type.name() != 'CLIENT'}">
+                            <span class="alert-chip-icon chip-info"><i data-lucide="user-plus"></i></span>
+                            <span class="alert-chip-count" th:text="${stats.pendingMembershipsCount}">0</span>
+                            <span th:text="#{dashboard.alerts.pending_members}">طلبات انضمام معلقة</span>
+                            <span class="alert-chip-action" th:text="#{dashboard.alerts.review}">مراجعة</span>
+                        </a>
+
+                        <!-- Unassigned Waiting Orders -->
+                        <a th:if="${stats.unassignedWaitingOrdersCount > 0 and selectedBusinessDay != null}"
+                            th:href="@{/business-days/{id}(id=${selectedBusinessDay.id})}" class="alert-chip">
+                            <span class="alert-chip-icon chip-warning"><i data-lucide="package-search"></i></span>
+                            <span class="alert-chip-count" th:text="${stats.unassignedWaitingOrdersCount}">0</span>
+                            <span th:text="#{dashboard.alerts.unassigned_orders}">أوردرات بدون مندوب</span>
+                            <span class="alert-chip-action" th:text="#{dashboard.alerts.review}">مراجعة</span>
+                        </a>
+
+                        <!-- Open Support Tickets -->
+                        <a th:href="@{/support}" class="alert-chip" th:if="${stats.openSupportTicketsCount > 0}">
+                            <span class="alert-chip-icon chip-danger"><i data-lucide="life-buoy"></i></span>
+                            <span class="alert-chip-count" th:text="${stats.openSupportTicketsCount}">0</span>
+                            <span th:text="#{dashboard.alerts.open_tickets}">تذاكر دعم مفتوحة</span>
+                            <span class="alert-chip-action" th:text="#{dashboard.alerts.review}">مراجعة</span>
+                        </a>
+
+                        <!-- Warehouse Return Pending — redirect to external warehouse -->
+                        <a th:if="${stats.warehouseReturnPendingCount > 0 and selectedBusinessDay != null}"
+                            th:href="@{/warehouse/{id}/external(id=${selectedBusinessDay.id})}" class="alert-chip">
+                            <span class="alert-chip-icon chip-warning"><i data-lucide="package-minus"></i></span>
+                            <span class="alert-chip-count" th:text="${stats.warehouseReturnPendingCount}">0</span>
+                            <span th:text="#{dashboard.alerts.warehouse_pending}">مرتجعات في انتظار تأكيد المخزن</span>
+                            <span class="alert-chip-action" th:text="#{dashboard.alerts.review}">مراجعة</span>
+                        </a>
+                    </div>
+                </div>
+            </th:block>
 
             <th:block sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
                 <!-- ===== Overall Progress Bar ===== -->
                 <div class="progress-section" th:if="${stats.totalOrders > 0}">
                     <div class="progress-card">
                         <div class="progress-header">
-                            <h3 th:text="'📈 ' + #{dashboard.daily_progress}">📈 نسبة الإنجاز اليومي</h3>
+                            <h3
+                                th:utext="'<i data-lucide=&quot;trending-up&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.daily_progress}">
+                                <i data-lucide="trending-up" class="inline-icon"></i> نسبة الإنجاز اليومي
+                            </h3>
                             <span class="progress-percentage"
                                 th:text="${stats.totalOrders > 0 ? T(java.lang.Math).round((stats.deliveredCount + stats.partialDeliveryCount) * 100.0 / stats.totalOrders) : 0} + '%'">0%</span>
                         </div>
@@ -117,8 +274,8 @@
                 <!-- ===== Main Stats Cards ===== -->
                 <div class="dashboard-stats-grid">
                     <!-- Total Orders -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-primary">📦</div>
+                    <div class="dashboard-stat-card" id="card-total">
+                        <div class="dashboard-stat-icon icon-primary"><i data-lucide="package"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value" th:text="${stats.totalOrders}">0</div>
                             <div class="dashboard-stat-label">
@@ -134,19 +291,48 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Waiting -->
+                    <div class="dashboard-stat-card" id="card-waiting">
+                        <div class="dashboard-stat-icon icon-waiting"><i data-lucide="hourglass"></i></div>
+                        <div class="dashboard-stat-content">
+                            <div class="dashboard-stat-value counter-value" th:text="${stats.waitingCount}">0</div>
+                            <div class="dashboard-stat-label" th:text="#{dashboard.waiting}">في الانتظار</div>
+                        </div>
+                    </div>
+                    <!-- Out for Delivery (Assigned to couriers) -->
+                    <div class="dashboard-stat-card" id="card-out-delivery">
+                        <div class="dashboard-stat-icon icon-transit"><i data-lucide="trucfast"></i></div>
+                        <div class="dashboard-stat-content">
+                            <div class="dashboard-stat-value counter-value"
+                                th:text="${stats.ordersAssignedToCourierCount}">0</div>
+                            <div class="dashboard-stat-label">خرج للتوصيل</div>
+                        </div>
+                    </div>
 
-                    <!-- In Transit -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-transit">🚚</div>
+                    <!-- In Transit (With Delegates) -->
+                    <div class="dashboard-stat-card" id="card-in-transit">
+                        <div class="dashboard-stat-icon icon-transit"><i data-lucide="truck"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value" th:text="${stats.inTransitCount}">0</div>
                             <div class="dashboard-stat-label" th:text="#{dashboard.in_transit}">مع المناديب</div>
                         </div>
                     </div>
 
+                    <!-- With Organizations (non-virtual) -->
+                    <div class="dashboard-stat-card" id="card-with-orgs">
+                        <div class="dashboard-stat-icon icon-transit"><i data-lucide="building-2"></i></div>
+                        <div class="dashboard-stat-content">
+                            <div class="dashboard-stat-value counter-value"
+                                th:text="${stats.ordersWithOrganizationsCount}">0</div>
+                            <div class="dashboard-stat-label" th:text="#{dashboard.with_organizations}">مع المنظمات
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Delivered -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-delivered">✅</div>
+                    <div class="dashboard-stat-card" id="card-delivered"
+                        th:classappend="${stats.totalOrders > 0 and ((stats.deliveredCount + stats.partialDeliveryCount) * 100.0 / stats.totalOrders) >= 70 ? 'card-glow-success' : ''}">
+                        <div class="dashboard-stat-icon icon-delivered"><i data-lucide="check-circle-2"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value"
                                 th:text="${stats.deliveredCount + stats.partialDeliveryCount}">0</div>
@@ -155,48 +341,57 @@
                     </div>
 
                     <!-- Total Amount -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-money">💰</div>
+                    <div class="dashboard-stat-card" id="card-amount">
+                        <div class="dashboard-stat-icon icon-money"><i data-lucide="wallet"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value"
-                                th:text="${#numbers.formatDecimal(stats.totalDeliveredAmount, 1, 'COMMA', 2, 'POINT')}">
+                                th:text="${stats.totalDeliveredAmount != null ? #numbers.formatDecimal(stats.totalDeliveredAmount, 1, 'COMMA', 2, 'POINT') : '0.00'}">
                                 0.00</div>
-                            <div class="dashboard-stat-label" th:text="#{dashboard.collected_amount}">المبلغ المحصل</div>
+                            <div class="dashboard-stat-label" th:text="#{dashboard.collected_amount}">المبلغ المحصل
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ===== Secondary Stats Cards ===== -->
                 <div class="dashboard-stats-grid" style="margin-bottom: var(--space-6);">
-                    <!-- Waiting -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-waiting">⏳</div>
+
+
+                    <!-- Returned (Combined) — dynamic red coloring if returns > 30% -->
+                    <div class="dashboard-stat-card" id="card-returned"
+                        th:classappend="${stats.totalOrders > 0 and ((stats.refusedCount + stats.cancelledCount + stats.deferredCount + stats.returnedToSenderCount) * 100.0 / stats.totalOrders) > 30 ? 'card-glow-danger' : ''}">
+                        <div class="dashboard-stat-icon icon-refused"><i data-lucide="package-minus"></i></div>
                         <div class="dashboard-stat-content">
-                            <div class="dashboard-stat-value counter-value" th:text="${stats.waitingCount}">0</div>
-                            <div class="dashboard-stat-label" th:text="#{dashboard.waiting}">في الانتظار</div>
+                            <div class="dashboard-stat-value counter-value"
+                                th:text="${stats.refusedCount + stats.cancelledCount + stats.deferredCount + stats.partialDeliveryCount + stats.returnedToSenderCount}">
+                                0</div>
+                            <div class="dashboard-stat-label">مرتجع</div>
                         </div>
                     </div>
 
-                    <!-- Refused -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-refused">🚫</div>
+                    <!-- Warehouse Return Pending -->
+                    <div class="dashboard-stat-card" id="card-warehouse-pending">
+                        <div class="dashboard-stat-icon icon-waiting"><i data-lucide="warehouse"></i></div>
                         <div class="dashboard-stat-content">
-                            <div class="dashboard-stat-value counter-value" th:text="${stats.refusedCount}">0</div>
-                            <div class="dashboard-stat-label" th:text="#{dashboard.refused}">مرفوض</div>
+                            <div class="dashboard-stat-value counter-value"
+                                th:text="${stats.warehouseReturnPendingCount}">0</div>
+                            <div class="dashboard-stat-label">في انتظار تأكيد المخزن</div>
                         </div>
                     </div>
 
-                    <!-- Cancelled -->
-                    <div class="dashboard-stat-card">
-                        <div class="dashboard-stat-icon icon-cancelled">❌</div>
+                    <!-- Warehouse Receipt Confirmed -->
+                    <div class="dashboard-stat-card" id="card-warehouse-receipt">
+                        <div class="dashboard-stat-icon icon-delivered"><i data-lucide="check-square"></i></div>
                         <div class="dashboard-stat-content">
-                            <div class="dashboard-stat-value counter-value" th:text="${stats.cancelledCount}">0</div>
-                            <div class="dashboard-stat-label" th:text="#{dashboard.cancelled}">ملغي</div>
+                            <div class="dashboard-stat-value counter-value"
+                                th:text="${stats.warehouseReceiptConfirmedCount}">0</div>
+                            <div class="dashboard-stat-label">تم تأكيد استلام المخزن</div>
                         </div>
                     </div>
 
-                    <div class="dashboard-stat-card" th:if="${organization.type.name() != 'STORE'}">
-                        <div class="dashboard-stat-icon icon-couriers">🏍️</div>
+                    <div class="dashboard-stat-card" id="card-active-couriers"
+                        th:if="${organization.type.name() != 'STORE'}">
+                        <div class="dashboard-stat-icon icon-couriers"><i data-lucide="bike"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value" th:text="${stats.activeCouriersCount}">0
                             </div>
@@ -205,7 +400,8 @@
                                 <div
                                     style="font-size: 0.75rem; margin-top: 4px; color: var(--text-muted); display: flex; gap: 8px;">
                                     <span th:title="#{dashboard.from_org}"
-                                        th:text="#{dashboard.from_org_val(${stats.activeOwnedCouriersCount})}">من المنظمة:
+                                        th:text="#{dashboard.from_org_val(${stats.activeOwnedCouriersCount})}">من
+                                        المنظمة:
                                         0</span>
                                     <span th:title="#{dashboard.external}"
                                         th:if="${stats.activeCouriersCount > stats.activeOwnedCouriersCount}"
@@ -216,8 +412,9 @@
                         </div>
                     </div>
                     <!-- For Stores building: Active Assigned Organizations -->
-                    <div class="dashboard-stat-card" th:if="${organization.type.name() == 'STORE'}">
-                        <div class="dashboard-stat-icon icon-couriers">🏢</div>
+                    <div class="dashboard-stat-card" id="card-active-orgs"
+                        th:if="${organization.type.name() == 'STORE'}">
+                        <div class="dashboard-stat-icon icon-couriers"><i data-lucide="building-2"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value counter-value" th:text="${stats.activeAssignedOrgsCount}">0
                             </div>
@@ -225,13 +422,66 @@
                         </div>
                     </div>
                     <!-- Top Performing Org -->
-                    <div class="dashboard-stat-card" th:if="${stats.topPerformingOrg != null}">
-                        <div class="dashboard-stat-icon" style="background-color: #fef08a; color: #ca8a04;">🏆</div>
+                    <div class="dashboard-stat-card" id="card-top-org" th:if="${stats.topPerformingOrg != null}">
+                        <div class="dashboard-stat-icon" style="background-color: #fef08a; color: #ca8a04;"><i
+                                data-lucide="trophy"></i></div>
                         <div class="dashboard-stat-content">
                             <div class="dashboard-stat-value" style="font-size: 1.25rem; font-weight: 700;"
                                 th:text="${stats.topPerformingOrg.deliveryRate} + '%'">0%</div>
-                            <div class="dashboard-stat-label"><span th:text="#{dashboard.best_rate}">أفضل معدل:</span> <span
-                                    th:text="${stats.topPerformingOrg.organizationName}">الشركة</span></div>
+                            <div class="dashboard-stat-label"><span th:text="#{dashboard.best_rate}">أفضل معدل:</span>
+                                <span th:text="${stats.topPerformingOrg.organizationName}">الشركة</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== Financial Summary ===== -->
+                <div class="financial-summary-section" th:if="${stats.totalOrders > 0}">
+                    <div class="financial-summary-header">
+                        <h3 class="financial-summary-title">
+                            <i data-lucide="coins" class="inline-icon"></i>
+                            <span th:text="#{dashboard.finance.title}">الملخص المالي</span>
+                        </h3>
+                    </div>
+                    <div class="financial-grid">
+                        <!-- Total Collected -->
+                        <div class="finance-card" id="card-collected">
+                            <div class="finance-card-accent accent-collected"></div>
+                            <div class="finance-card-label">
+                                <i data-lucide="wallet" style="width: 14px; height: 14px;"></i>
+                                <span th:text="#{dashboard.finance.collected}">إجمالي المحصل</span>
+                            </div>
+                            <div class="finance-card-value">
+                                <span class="counter-value"
+                                    th:text="${#numbers.formatDecimal(stats.totalDeliveredAmount, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                <span class="finance-card-currency" th:text="#{dashboard.currency_egp}">ج.م</span>
+                            </div>
+                        </div>
+                        <!-- Total Commissions -->
+                        <div class="finance-card" id="card-commissions">
+                            <div class="finance-card-accent accent-shipping"></div>
+                            <div class="finance-card-label">
+                                <i data-lucide="receipt" style="width: 14px; height: 14px;"></i>
+                                <span th:text="#{dashboard.finance.commissions}">إجمالي العمولات</span>
+                            </div>
+                            <div class="finance-card-value">
+                                <span class="counter-value"
+                                    th:text="${#numbers.formatDecimal(stats.totalCommissions, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                <span class="finance-card-currency" th:text="#{dashboard.currency_egp}">ج.م</span>
+                            </div>
+                        </div>
+                        <!-- Net Merchant Due -->
+                        <div class="finance-card" id="card-net-due">
+                            <div class="finance-card-accent accent-net"></div>
+                            <div class="finance-card-label">
+                                <i data-lucide="banknote" style="width: 14px; height: 14px;"></i>
+                                <span th:text="#{dashboard.finance.net_due}">صافي المستحق</span>
+                            </div>
+                            <div class="finance-card-value">
+                                <span class="counter-value"
+                                    th:text="${#numbers.formatDecimal(stats.netMerchantDue, 1, 'COMMA', 2, 'POINT')}">0.00</span>
+                                <span class="finance-card-currency" th:text="#{dashboard.currency_egp}">ج.م</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -239,19 +489,11 @@
                 <!-- ===== Charts & Leaderboard Section ===== -->
                 <div class="dashboard-grid-2">
                     <!-- Doughnut Chart -->
-                    <div class="chart-card">
-                        <div class="chart-card-header">
-                            <h3 class="chart-card-title" th:text="#{dashboard.orders_status_distribution}"> توزيع حالات الأوردرات</h3>
+                    <div class="rpt-chart-card">
+                        <div class="rpt-chart-header">
+                            <h3 class="rpt-chart-title"><i data-lucide="pie-chart"></i> توزيع حالات الطلبات</h3>
                         </div>
-                        <div th:if="${stats.totalOrders > 0}">
-                            <div class="chart-container">
-                                <canvas id="statusChart"></canvas>
-                            </div>
-                        </div>
-                        <div th:if="${stats.totalOrders == 0}" class="dashboard-empty">
-                            <div class="dashboard-empty-icon">📊</div>
-                            <div class="dashboard-empty-text" th:text="#{dashboard.no_data}">لا توجد بيانات لعرضها</div>
-                        </div>
+                        <div class="rpt-chart-body" id="chartStatusDonut"></div>
                     </div>
 
                     <!-- Courier/Organization Leaderboard -->
@@ -260,7 +502,10 @@
                         <!-- Couriers Leaderboard -->
                         <div th:if="${organization.type.name() != 'STORE'}">
                             <div class="chart-card-header" style="margin-bottom: 12px;">
-                                <h3 class="chart-card-title" th:text="'🏆 ' + #{dashboard.best_couriers_today}">🏆 أفضل المناديب اليوم</h3>
+                                <h3 class="chart-card-title"
+                                    th:utext="'<i data-lucide=&quot;trophy&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.best_couriers_today}">
+                                    <i data-lucide="trophy" class="inline-icon"></i> أفضل المناديب اليوم
+                                </h3>
                             </div>
                             <div th:if="${stats.courierPerformances != null && !stats.courierPerformances.isEmpty()}">
                                 <div th:each="courier, iterStat : ${stats.courierPerformances}"
@@ -272,11 +517,15 @@
                                         <div class="leaderboard-name" th:text="${courier.courierName}">اسم المندوب</div>
                                         <div class="leaderboard-stats">
                                             <span class="courier-orders-badge delivered"
-                                                th:text="'✅ ' + ${courier.deliveredOrders}">✅ 0</span>
+                                                th:utext="'<i data-lucide=&quot;check-circle-2&quot; class=&quot;inline-icon&quot;></i> ' + ${courier.deliveredOrders}"><i
+                                                    data-lucide="check-circle-2" class="inline-icon"></i> 0</span>
                                             <span th:if="${courier.refusedOrders > 0}"
                                                 class="courier-orders-badge refused"
-                                                th:text="'🚫 ' + ${courier.refusedOrders}">🚫 0</span>
-                                            <span th:text="'📦 ' + ${courier.totalOrders} + ' ' + #{dashboard.total}">📦 0
+                                                th:utext="'<i data-lucide=&quot;ban&quot; class=&quot;inline-icon&quot;></i> ' + ${courier.refusedOrders}"><i
+                                                    data-lucide="ban" class="inline-icon"></i> 0</span>
+                                            <span
+                                                th:utext="'<i data-lucide=&quot;package&quot; class=&quot;inline-icon&quot;></i> ' + ${courier.totalOrders} + ' ' + #{dashboard.total}"><i
+                                                    data-lucide="package" class="inline-icon"></i> 0
                                                 إجمالي</span>
                                         </div>
                                     </div>
@@ -291,8 +540,10 @@
                             </div>
                             <div th:if="${stats.courierPerformances == null || stats.courierPerformances.isEmpty()}"
                                 class="dashboard-empty" style="padding: 1rem;">
-                                <div class="dashboard-empty-icon" style="font-size: 1.5rem;">🏍️</div>
-                                <div class="dashboard-empty-text" style="font-size: 0.9rem;" th:text="#{dashboard.no_active_couriers}">لا يوجد مناديب نشطين اليوم
+                                <div class="dashboard-empty-icon" style="font-size: 1.5rem;"><i data-lucide="bike"></i>
+                                </div>
+                                <div class="dashboard-empty-text" style="font-size: 0.9rem;"
+                                    th:text="#{dashboard.no_active_couriers}">لا يوجد مناديب نشطين اليوم
                                 </div>
                             </div>
                         </div>
@@ -300,7 +551,10 @@
                         <!-- Organizations Leaderboard -->
                         <div>
                             <div class="chart-card-header" style="margin-bottom: 12px;">
-                                <h3 class="chart-card-title" th:text="'🏆 ' + #{dashboard.shared_orgs_performance}">🏆 أداء المنظمات المشتركة</h3>
+                                <h3 class="chart-card-title"
+                                    th:utext="'<i data-lucide=&quot;trophy&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.shared_orgs_performance}">
+                                    <i data-lucide="trophy" class="inline-icon"></i> أداء المنظمات المشتركة
+                                </h3>
                             </div>
                             <div
                                 th:if="${stats.organizationPerformances != null && !stats.organizationPerformances.isEmpty()}">
@@ -314,11 +568,15 @@
                                         </div>
                                         <div class="leaderboard-stats">
                                             <span class="courier-orders-badge delivered"
-                                                th:text="'✅ ' + ${orgPerf.deliveredOrders}">✅ 0</span>
+                                                th:utext="'<i data-lucide=&quot;check-circle-2&quot; class=&quot;inline-icon&quot;></i> ' + ${orgPerf.deliveredOrders}"><i
+                                                    data-lucide="check-circle-2" class="inline-icon"></i> 0</span>
                                             <span th:if="${orgPerf.refusedOrders > 0}"
                                                 class="courier-orders-badge refused"
-                                                th:text="'🚫 ' + ${orgPerf.refusedOrders}">🚫 0</span>
-                                            <span th:text="'📦 ' + ${orgPerf.totalOrders} + ' ' + #{dashboard.total}">📦 0
+                                                th:utext="'<i data-lucide=&quot;ban&quot; class=&quot;inline-icon&quot;></i> ' + ${orgPerf.refusedOrders}"><i
+                                                    data-lucide="ban" class="inline-icon"></i> 0</span>
+                                            <span
+                                                th:utext="'<i data-lucide=&quot;package&quot; class=&quot;inline-icon&quot;></i> ' + ${orgPerf.totalOrders} + ' ' + #{dashboard.total}"><i
+                                                    data-lucide="package" class="inline-icon"></i> 0
                                                 إجمالي</span>
                                         </div>
                                     </div>
@@ -333,8 +591,10 @@
                             </div>
                             <div th:if="${stats.organizationPerformances == null || stats.organizationPerformances.isEmpty()}"
                                 class="dashboard-empty" style="padding: 1rem;">
-                                <div class="dashboard-empty-icon" style="font-size: 1.5rem;">🏢</div>
-                                <div class="dashboard-empty-text" style="font-size: 0.9rem;" th:text="#{dashboard.no_active_orgs}">لا توجد منظمات نشطة اليوم
+                                <div class="dashboard-empty-icon" style="font-size: 1.5rem;"><i
+                                        data-lucide="building-2"></i></div>
+                                <div class="dashboard-empty-text" style="font-size: 0.9rem;"
+                                    th:text="#{dashboard.no_active_orgs}">لا توجد منظمات نشطة اليوم
                                 </div>
                             </div>
                         </div>
@@ -346,10 +606,16 @@
                     class="chart-card"
                     style="margin-bottom: var(--space-8); animation: fadeIn 0.5s ease-out 0.5s both;">
                     <div class="chart-card-header">
-                        <h3 class="chart-card-title" th:if="${organization.type.name() != 'STORE'}" th:text="'📊 ' + #{dashboard.couriers_performance_comparison}">📊 مقارنة أداء
-                            المناديب</h3>
-                        <h3 class="chart-card-title" th:if="${organization.type.name() == 'STORE'}" th:text="'📊 ' + #{dashboard.shared_orgs_performance_chart}">📊 أداء المنظمات
-                            المشتركة</h3>
+                        <h3 class="chart-card-title" th:if="${organization.type.name() != 'STORE'}"
+                            th:utext="'<i data-lucide=&quot;bar-chart-3&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.couriers_performance_comparison}">
+                            <i data-lucide="bar-chart-3" class="inline-icon"></i> مقارنة أداء
+                            المناديب
+                        </h3>
+                        <h3 class="chart-card-title" th:if="${organization.type.name() == 'STORE'}"
+                            th:utext="'<i data-lucide=&quot;bar-chart-3&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.shared_orgs_performance_chart}">
+                            <i data-lucide="bar-chart-3" class="inline-icon"></i> أداء المنظمات
+                            المشتركة
+                        </h3>
                     </div>
                     <div style="position: relative; width: 100%; max-height: 350px;">
                         <canvas id="performanceChart"></canvas>
@@ -362,7 +628,10 @@
             <th:block sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP')">
                 <div class="recent-activity-card">
                     <div class="chart-card-header">
-                        <h3 class="chart-card-title" th:text="'⚡ ' + #{dashboard.latest_updated_orders}">⚡ آخر الأوردرات المحدثة</h3>
+                        <h3 class="chart-card-title"
+                            th:utext="'<i data-lucide=&quot;zap&quot; class=&quot;inline-icon&quot;></i> ' + #{dashboard.latest_updated_orders}">
+                            <i data-lucide="zap" class="inline-icon"></i> آخر الأوردرات المحدثة
+                        </h3>
                     </div>
                     <div th:if="${stats.recentOrders != null && !stats.recentOrders.isEmpty()}">
                         <div th:each="order : ${stats.recentOrders}" class="activity-item">
@@ -378,10 +647,11 @@
                                 <div class="activity-subtitle">
                                     <span th:if="${order.code != null}" th:text="${order.code}">CODE</span>
                                     <span th:if="${order.isAssigned}"
-                                        style="font-size: 0.65rem; padding: 2px 6px; margin-right: 4px; background-color: var(--primary-100); color: var(--primary-700); border-radius: 4px;" th:text="#{dashboard.assigned_badge}">مسند</span>
+                                        style="font-size: 0.65rem; padding: 2px 6px; margin-right: 4px; background-color: var(--primary-100); color: var(--primary-700); border-radius: 4px;"
+                                        th:text="#{dashboard.assigned_badge}">مسند</span>
                                     <span th:if="${order.courierName != null}"> — </span>
                                     <span th:if="${order.courierName != null}"
-                                        th:text="'🏍️ ' + ${order.courierName}">المندوب</span>
+                                        th:utext="'<i data-lucide=&quot;bike&quot; class=&quot;inline-icon&quot;></i> ' + ${order.courierName}">المندوب</span>
                                 </div>
                             </div>
                             <span class="activity-badge" th:classappend="${order.status == 'WAITING' ? 'badge-waiting' :
@@ -393,13 +663,15 @@
                                 <span th:text="${order.statusArabic}">الحالة</span>
                             </span>
                             <div class="activity-amount" th:if="${order.amount != null}"
-                                th:text="${#numbers.formatDecimal(order.amount, 1, 'COMMA', 2, 'POINT')} + ' ' + #{dashboard.currency_egp}">0.00
+                                th:text="${#numbers.formatDecimal(order.amount, 1, 'COMMA', 2, 'POINT')} + ' ' + #{dashboard.currency_egp}">
+                                0.00
                                 ج.م</div>
                         </div>
                     </div>
                     <div th:if="${stats.recentOrders == null || stats.recentOrders.isEmpty()}" class="dashboard-empty">
-                        <div class="dashboard-empty-icon">📋</div>
-                        <div class="dashboard-empty-text" th:text="#{dashboard.no_orders_yet}">لا توجد أوردرات اليوم بعد</div>
+                        <div class="dashboard-empty-icon"><i data-lucide="clipboard-list"></i></div>
+                        <div class="dashboard-empty-text" th:text="#{dashboard.no_orders_yet}">لا توجد أوردرات اليوم بعد
+                        </div>
                     </div>
                 </div>
             </th:block>
@@ -407,11 +679,11 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
 
-    <!-- Chart.js - Lightweight charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <!-- ApexCharts - Premium charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
     <script th:inline="javascript">
         // Get chart data from Thymeleaf
@@ -425,149 +697,128 @@
             return document.documentElement.getAttribute('data-theme') === 'dark';
         }
 
-        // Chart colors
-        const chartColors = [
-            '#16a34a', // Delivered - green
-            '#2563eb', // In Transit - blue
-            '#ea580c', // Waiting - orange
-            '#dc2626', // Refused - red
-            '#737373', // Cancelled - gray
-            '#7c3aed', // Deferred - purple
-            '#a855f7', // Partial - light purple
-        ];
+        // Shared ApexCharts options
+        const getBaseChartOptions = () => ({
+            chart: {
+                fontFamily: "'Cairo', 'Noto Sans Arabic', sans-serif",
+                background: 'transparent',
+                toolbar: { show: false },
+                animations: { enabled: true, easing: 'easeinout', speed: 800 }
+            },
+            theme: { mode: isDarkMode() ? 'dark' : 'light' },
+            grid: {
+                borderColor: isDarkMode() ? '#262626' : '#e5e5e5',
+                strokeDashArray: 4,
+            },
+            tooltip: {
+                style: { fontSize: '13px', fontFamily: "'Cairo', sans-serif" }
+            },
+            legend: {
+                fontFamily: "'Cairo', sans-serif",
+                fontSize: '13px',
+                labels: { colors: isDarkMode() ? '#a3a3a3' : '#525252' }
+            }
+        });
 
         // ===== Status Doughnut Chart =====
-        const statusCanvas = document.getElementById('statusChart');
-        if (statusCanvas) {
-            const totalOrders = chartValues.reduce((a, b) => a + b, 0);
-            if (totalOrders > 0) {
-                new Chart(statusCanvas, {
-                    type: 'doughnut',
-                    data: {
-                        labels: chartLabels,
-                        datasets: [{
-                            data: chartValues,
-                            backgroundColor: chartColors,
-                            borderWidth: 0,
-                            hoverOffset: 8,
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        cutout: '65%',
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    padding: 16,
-                                    usePointStyle: true,
-                                    pointStyle: 'circle',
-                                    font: { family: 'Cairo', size: 12, weight: '500' },
-                                    color: isDarkMode() ? '#a3a3a3' : '#525252',
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: isDarkMode() ? '#262626' : '#0a0a0a',
-                                titleFont: { family: 'Cairo', size: 13 },
-                                bodyFont: { family: 'Cairo', size: 12 },
-                                padding: 12,
-                                cornerRadius: 8,
-                                callbacks: {
-                                    label: function (context) {
-                                        const pct = totalOrders > 0 ? Math.round(context.raw / totalOrders * 100) : 0;
-                                        return context.label + ': ' + context.raw + ' (' + pct + '%)';
+        const totalOrders = chartValues.reduce((a, b) => a + b, 0);
+        if (totalOrders > 0) {
+            // Re-map colors based on labels (similar to reports page)
+            const getStatusColor = (label) => {
+                if (label.includes('تسليم') || label.includes('Delivered')) return '#171717';
+                if (label.includes('مرتجع') || label.includes('مرفوض') || label.includes('Refused')) return '#525252';
+                if (label.includes('ملغي') || label.includes('Cancelled')) return '#737373';
+                if (label.includes('تأجيل') || label.includes('Deferred')) return '#a3a3a3';
+                if (label.includes('طريق') || label.includes('Transit')) return '#d4d4d4';
+                if (label.includes('انتظار') || label.includes('Waiting')) return '#404040';
+                return '#e5e5e5';
+            };
+            const colors = chartLabels.map(getStatusColor);
+
+            const donutOptions = {
+                ...getBaseChartOptions(),
+                chart: { ...getBaseChartOptions().chart, type: 'donut', height: 320 },
+                series: chartValues,
+                labels: chartLabels,
+                colors: colors,
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
+                            labels: {
+                                show: true,
+                                name: { show: true, fontSize: '14px', fontFamily: "'Cairo', sans-serif", fontWeight: 700 },
+                                value: { show: true, fontSize: '28px', fontFamily: "'Cairo', sans-serif", fontWeight: 800 },
+                                total: {
+                                    show: true,
+                                    label: 'إجمالي',
+                                    fontSize: '13px',
+                                    fontFamily: "'Cairo', sans-serif",
+                                    fontWeight: 600,
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString('ar-EG');
                                     }
                                 }
                             }
                         }
                     }
-                });
-            }
+                },
+                legend: { ...getBaseChartOptions().legend, position: 'bottom' },
+                stroke: { show: true, width: 3, colors: [isDarkMode() ? '#171717' : '#ffffff'] },
+                dataLabels: { enabled: false }
+            };
+
+            const donutChart = new ApexCharts(document.querySelector("#chartStatusDonut"), donutOptions);
+            donutChart.render();
+        } else {
+            document.querySelector("#chartStatusDonut").innerHTML = '<div class="dashboard-empty"><i data-lucide="pie-chart"></i><p>لا توجد بيانات</p></div>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
 
-        // ===== Performance Bar Chart (Courirers / Organizations) =====
-        const performanceCanvas = document.getElementById('performanceChart');
+        // ===== Performance Bar Chart =====
         let useOrganizations = typeof organizationPerformances !== 'undefined' && organizationPerformances != null && organizationPerformances.length > 0 && (!courierPerformances || courierPerformances.length === 0);
         let performancesToUse = useOrganizations ? organizationPerformances : courierPerformances;
 
-        if (performanceCanvas && performancesToUse && performancesToUse.length > 0) {
+        if (performancesToUse && performancesToUse.length > 0) {
             const entityNames = performancesToUse.map(c => useOrganizations ? c.organizationName : c.courierName);
             const deliveredData = performancesToUse.map(c => c.deliveredOrders);
             const refusedData = performancesToUse.map(c => c.refusedOrders);
             const remainingData = performancesToUse.map(c => c.totalOrders - c.deliveredOrders - c.refusedOrders);
 
-            new Chart(performanceCanvas, {
-                type: 'bar',
-                data: {
-                    labels: entityNames,
-                    datasets: [
-                        {
-                            label: /*[[#{dashboard.delivered}]]*/ 'تم التسليم',
-                            data: deliveredData,
-                            backgroundColor: '#16a34a',
-                            borderRadius: 4,
-                            borderSkipped: false,
-                        },
-                        {
-                            label: /*[[#{dashboard.refused}]]*/ 'مرفوض',
-                            data: refusedData,
-                            backgroundColor: '#dc2626',
-                            borderRadius: 4,
-                            borderSkipped: false,
-                        },
-                        {
-                            label: /*[[#{dashboard.remaining_orders(' ')}]]*/ 'بقية',
-                            data: remainingData,
-                            backgroundColor: isDarkMode() ? '#404040' : '#e5e5e5',
-                            borderRadius: 4,
-                            borderSkipped: false,
-                        }
-                    ]
+            const barOptions = {
+                ...getBaseChartOptions(),
+                chart: { ...getBaseChartOptions().chart, type: 'bar', height: 350, stacked: true },
+                series: [
+                    { name: 'تم التسليم', data: deliveredData },
+                    { name: 'مرفوض', data: refusedData },
+                    { name: 'بقية الأوردرات', data: remainingData }
+                ],
+                xaxis: {
+                    categories: entityNames,
+                    labels: { style: { fontFamily: "'Cairo', sans-serif", fontSize: '12px', colors: isDarkMode() ? '#737373' : '#737373' } }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            stacked: true,
-                            grid: { display: false },
-                            ticks: {
-                                font: { family: 'Cairo', size: 11 },
-                                color: isDarkMode() ? '#a3a3a3' : '#737373',
-                            }
-                        },
-                        y: {
-                            stacked: true,
-                            grid: { display: false },
-                            ticks: {
-                                font: { family: 'Cairo', size: 12, weight: '600' },
-                                color: isDarkMode() ? '#ededed' : '#0a0a0a',
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                padding: 16,
-                                usePointStyle: true,
-                                pointStyle: 'circle',
-                                font: { family: 'Cairo', size: 12, weight: '500' },
-                                color: isDarkMode() ? '#a3a3a3' : '#525252',
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: isDarkMode() ? '#262626' : '#0a0a0a',
-                            titleFont: { family: 'Cairo', size: 13 },
-                            bodyFont: { family: 'Cairo', size: 12 },
-                            padding: 12,
-                            cornerRadius: 8,
-                        }
-                    }
-                }
-            });
+                yaxis: {
+                    labels: { style: { fontFamily: "'Cairo', sans-serif", fontSize: '12px', colors: isDarkMode() ? '#737373' : '#737373' } }
+                },
+                colors: ['#171717', '#737373', '#d4d4d4'],
+                plotOptions: {
+                    bar: { horizontal: true, borderRadius: 4, barHeight: '60%' }
+                },
+                dataLabels: { enabled: false },
+                legend: { ...getBaseChartOptions().legend, position: 'top' }
+            };
+
+            const perfContainer = document.querySelector("#performanceChart");
+            if (perfContainer) {
+                // Change canvas to div for ApexCharts
+                const parent = perfContainer.parentNode;
+                const newDiv = document.createElement('div');
+                newDiv.id = 'chartPerformanceApex';
+                parent.replaceChild(newDiv, perfContainer);
+
+                const barChart = new ApexCharts(document.querySelector("#chartPerformanceApex"), barOptions);
+                barChart.render();
+            }
         }
 
         // ===== Counter Animation =====
@@ -598,6 +849,73 @@
             }
             requestAnimationFrame(animate);
         });
+
+        // ===== Mini Sparkline Charts =====
+        function generateSparkline(cardId, seedValue) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+
+            // Generate pseudo-random points based on seed for consistency
+            const points = [];
+            const numPoints = 8;
+            let seed = seedValue || 1;
+            for (let i = 0; i < numPoints; i++) {
+                seed = (seed * 9301 + 49297) % 233280;
+                const rnd = seed / 233280;
+                points.push(rnd * 24 + 4); // between 4 and 28
+            }
+
+            const width = 200;
+            const height = 32;
+            const stepX = width / (numPoints - 1);
+
+            // Build SVG path
+            let linePath = `M 0,${height - points[0]}`;
+            let areaPath = `M 0,${height} L 0,${height - points[0]}`;
+            for (let i = 1; i < numPoints; i++) {
+                const x = i * stepX;
+                const y = height - points[i];
+                // Smooth cubic bezier
+                const prevX = (i - 1) * stepX;
+                const cpx1 = prevX + stepX * 0.5;
+                const cpy1 = height - points[i - 1];
+                const cpx2 = x - stepX * 0.5;
+                const cpy2 = y;
+                linePath += ` C ${cpx1},${cpy1} ${cpx2},${cpy2} ${x},${y}`;
+                areaPath += ` C ${cpx1},${cpy1} ${cpx2},${cpy2} ${x},${y}`;
+            }
+            areaPath += ` L ${width},${height} Z`;
+
+            const container = document.createElement('div');
+            container.className = 'sparkline-container';
+            container.innerHTML = `
+                <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                    <path class="sparkline-area" d="${areaPath}"/>
+                    <path class="sparkline-line" d="${linePath}"/>
+                </svg>`;
+            card.appendChild(container);
+        }
+
+        // Generate sparklines for each stat card
+        const sparklineCards = [
+            { id: 'card-total', seed: 42 },
+            { id: 'card-waiting', seed: 73 },
+            { id: 'card-out-delivery', seed: 156 },
+            { id: 'card-in-transit', seed: 89 },
+            { id: 'card-with-orgs', seed: 211 },
+            { id: 'card-delivered', seed: 127 },
+            { id: 'card-amount', seed: 334 },
+            { id: 'card-returned', seed: 198 },
+            { id: 'card-warehouse-pending', seed: 56 },
+            { id: 'card-warehouse-receipt', seed: 382 },
+            { id: 'card-active-couriers', seed: 144 },
+            { id: 'card-active-orgs', seed: 275 },
+            { id: 'card-top-org', seed: 91 },
+            { id: 'card-collected', seed: 12 },
+            { id: 'card-commissions', seed: 84 },
+            { id: 'card-net-due', seed: 310 }
+        ];
+        sparklineCards.forEach(s => generateSparkline(s.id, s.seed));
     </script>
 
     <script>
@@ -612,7 +930,21 @@
         }
     </script>
 
+    <script>
+        // ===== Auto Refresh every 120 seconds =====
+        setTimeout(function () {
+            // Keep the selected businessDayId if it exists in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('businessDayId')) {
+                window.location.href = '/dashboard?businessDayId=' + urlParams.get('businessDayId');
+            } else {
+                window.location.reload();
+            }
+        }, 120000);
+    </script>
+
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded", function () { if (typeof lucide !== "undefined") { lucide.createIcons(); } });</script>
 </body>
 
 </html>

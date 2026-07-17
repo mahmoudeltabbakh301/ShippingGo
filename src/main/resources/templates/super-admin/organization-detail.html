@@ -48,6 +48,7 @@
             color: var(--text-primary);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -58,15 +59,15 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <div>
-                    <h1 class="page-title">🏢 <span th:text="${org.name}">اسم المنظمة</span></h1>
+                    <h1 class="page-title"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="${org.name}">اسم المنظمة</span></h1>
                     <p class="page-subtitle">
                         <span class="badge" th:text="${org.type.arabicName}">نوع</span>
                         <span class="badge badge-delivered" th:if="${org.active}" th:text="#{super_admin.status.active}">مفعّلة</span>
@@ -75,8 +76,8 @@
                 </div>
                 <div style="display: flex; gap: var(--space-2); flex-wrap: wrap;">
                     <a th:href="@{/super-admin/organizations}" class="btn btn-outline">← <span th:text="#{super_admin.btn.back}">رجوع</span></a>
-                    <a th:href="@{/super-admin/organizations/{id}/edit(id=${org.id})}" class="btn btn-outline">✏️ تعديل</a>
-                    <a th:href="@{/audit-logs/organization/{id}(id=${org.id})}" class="btn btn-outline">📜 <span th:text="#{super_admin.org_detail.logs}">سجلات المنظمة</span></a>
+                    <a th:href="@{/super-admin/organizations/{id}/edit(id=${org.id})}" class="btn btn-outline"><i data-lucide="pencil" class="inline-icon"></i> تعديل</a>
+                    <a th:href="@{/audit-logs/organization/{id}(id=${org.id})}" class="btn btn-outline"><i data-lucide="scroll" class="inline-icon"></i> <span th:text="#{super_admin.org_detail.logs}">سجلات المنظمة</span></a>
                     <form th:action="@{/super-admin/organizations/{id}/toggle(id=${org.id})}" method="post" style="display: inline;">
                         <button type="submit" class="btn"
                                 th:classappend="${org.active ? 'btn-danger' : 'btn-success'}"
@@ -85,22 +86,22 @@
                     </form>
                     <!-- حذف / استعادة -->
                     <form th:if="${!org.deleted}" th:action="@{/super-admin/organizations/{id}/delete(id=${org.id})}" method="post" style="display: inline;">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذه المنظمة؟ سيتم أرشفتها.');">🗑️ حذف</button>
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذه المنظمة؟ سيتم أرشفتها.');"><i data-lucide="trash-2" class="inline-icon"></i> حذف</button>
                     </form>
                     <form th:if="${org.deleted}" th:action="@{/super-admin/organizations/{id}/restore(id=${org.id})}" method="post" style="display: inline;">
-                        <button type="submit" class="btn btn-success">♻️ استعادة</button>
+                        <button type="submit" class="btn btn-success"><i data-lucide="refresh-cw" class="inline-icon"></i> استعادة</button>
                     </form>
                 </div>
             </div>
 
             <!-- شريط تحذير المنظمة المحذوفة -->
             <div th:if="${org.deleted}" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); margin-bottom: var(--space-4); font-weight: 600;">
-                ⚠️ هذه المنظمة محذوفة (مؤرشفة) منذ <span th:text="${org.deletedAt != null ? #temporals.format(org.deletedAt, 'yyyy/MM/dd HH:mm') : ''}"></span>
+                <i data-lucide="alert-triangle" class="inline-icon"></i> هذه المنظمة محذوفة (مؤرشفة) منذ <span th:text="${org.deletedAt != null ? #temporals.format(org.deletedAt, 'yyyy/MM/dd HH:mm') : ''}"></span>
             </div>
 
             <!-- Organization Info -->
             <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">📋 <span th:text="#{super_admin.org_detail.info}">معلومات المنظمة</span></h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{super_admin.org_detail.info}">معلومات المنظمة</span></h2>
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label" th:text="#{super_admin.orgs.col_name}">الاسم</span>
@@ -141,11 +142,11 @@
                 </div>
             </div>
             <!-- Subscription Management -->
-            <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">💎 إدارة الاشتراك</h2>
+            <div class="card" style="margin-bottom: var(--space-6);" th:if="${isSubscriptionApplicable}">
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="gem" class="inline-icon"></i> إدارة الاشتراك</h2>
 
                 <div th:if="${subscription == null}" class="table-empty" style="padding: var(--space-4);">
-                    <div class="table-empty-icon">💎</div>
+                    <div class="table-empty-icon"><i data-lucide="gem"></i></div>
                     <div class="table-empty-text">لم يتم إنشاء اشتراك لهذه المنظمة بعد</div>
                 </div>
 
@@ -197,7 +198,7 @@
                                        th:value="${subscription.monthlyPrice}"
                                        style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 120px; background: var(--bg-secondary); color: var(--text-primary);">
                             </div>
-                            <button type="submit" class="btn btn-sm btn-primary">💲 تحديث السعر</button>
+                            <button type="submit" class="btn btn-sm btn-primary"><i data-lucide="tag" class="inline-icon"></i> تحديث السعر</button>
                         </form>
 
                         <!-- تفعيل يدوي -->
@@ -210,14 +211,14 @@
                                        style="padding: 6px 10px; border: 1px solid var(--border-color); border-radius: var(--radius-md); width: 80px; background: var(--bg-secondary); color: var(--text-primary);">
                             </div>
                             <button type="submit" class="btn btn-sm btn-success"
-                                    onclick="return confirm('تفعيل الاشتراك يدوياً؟');">✅ تفعيل يدوي</button>
+                                    onclick="return confirm('تفعيل الاشتراك يدوياً؟');"><i data-lucide="check-circle-2" class="inline-icon"></i> تفعيل يدوي</button>
                         </form>
 
                         <!-- تعليق -->
                         <form th:action="@{/super-admin/subscriptions/{id}/suspend(id=${org.id})}" method="post"
                               th:if="${subscription.status.name() == 'ACTIVE' || subscription.status.name() == 'TRIAL'}">
                             <button type="submit" class="btn btn-sm btn-danger"
-                                    onclick="return confirm('هل أنت متأكد من تعليق الاشتراك؟');">⛔ تعليق</button>
+                                    onclick="return confirm('هل أنت متأكد من تعليق الاشتراك؟');"><i data-lucide="octagon-x" class="inline-icon"></i> تعليق</button>
                         </form>
                     </div>
                 </div>
@@ -225,10 +226,10 @@
 
             <!-- Payment History -->
             <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">💳 سجل المدفوعات</h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="credit-card" class="inline-icon"></i> سجل المدفوعات</h2>
 
                 <div th:if="${payments == null || payments.isEmpty()}" class="table-empty" style="padding: var(--space-4);">
-                    <div class="table-empty-icon">💳</div>
+                    <div class="table-empty-icon"><i data-lucide="credit-card"></i></div>
                     <div class="table-empty-text">لا توجد مدفوعات بعد</div>
                 </div>
 
@@ -265,12 +266,12 @@
 
             <!-- Members -->
             <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">👥 <span th:text="#{super_admin.org_detail.members}">أعضاء المنظمة</span>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="users" class="inline-icon"></i> <span th:text="#{super_admin.org_detail.members}">أعضاء المنظمة</span>
                     <span class="badge" th:text="${members.size()}">0</span>
                 </h2>
 
                 <div th:if="${members.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">👥</div>
+                    <div class="table-empty-icon"><i data-lucide="users"></i></div>
                     <div class="table-empty-text" th:text="#{super_admin.org_detail.members_empty}">لا يوجد أعضاء في هذه المنظمة</div>
                 </div>
 
@@ -310,7 +311,7 @@
 
             <!-- Pending Members -->
             <div class="card" th:if="${!pendingMembers.isEmpty()}">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">⏳ <span th:text="#{super_admin.org_detail.pending_members}">طلبات انضمام معلقة</span>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="hourglass" class="inline-icon"></i> <span th:text="#{super_admin.org_detail.pending_members}">طلبات انضمام معلقة</span>
                     <span class="badge" th:text="${pendingMembers.size()}">0</span>
                 </h2>
                 <div class="table-container" style="border: none;">
@@ -339,7 +340,7 @@
 
             <!-- نقل الملكية -->
             <div class="card" style="margin-bottom: var(--space-6); border: 2px solid var(--border-color);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">🔄 نقل ملكية المنظمة</h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="repeat" class="inline-icon"></i> نقل ملكية المنظمة</h2>
                 <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: var(--space-3);">
                     نقل ملكية المنظمة لمستخدم آخر. يجب أن يكون المستخدم الجديد له صلاحية مدير (ADMIN) أو مدير (MANAGER).
                 </p>
@@ -359,14 +360,15 @@
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary"
-                            onclick="return confirm('هل أنت متأكد من نقل ملكية المنظمة؟');">🔄 نقل الملكية</button>
+                            onclick="return confirm('هل أنت متأكد من نقل ملكية المنظمة؟');"><i data-lucide="repeat" class="inline-icon"></i> نقل الملكية</button>
                 </form>
             </div>
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

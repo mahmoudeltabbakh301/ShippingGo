@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import com.shipment.shippinggo.enums.Governorate;
+import com.shipment.shippinggo.enums.RejectionReason;
 
 import java.math.BigDecimal;
 
@@ -66,4 +67,10 @@ public class OrderDto {
 
     // المنطقة
     private String area;
+
+    // سبب الرفض
+    private RejectionReason rejectionReason;
+
+    // تفاصيل سبب الرفض
+    private String rejectionReasonNotes;
 }

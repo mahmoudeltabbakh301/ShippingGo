@@ -5,6 +5,7 @@ import com.shipment.shippinggo.enums.CommissionType;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.enums.OrganizationType;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.OrderReportRepository;
 import com.shipment.shippinggo.repository.TargetSettingRepository;
 import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.springframework.stereotype.Service;
@@ -26,13 +27,16 @@ public class TargetService {
 
     private final TargetSettingRepository targetSettingRepository;
     private final OrderRepository orderRepository;
+    private final OrderReportRepository orderReportRepository;
     private final VirtualOfficeRepository virtualOfficeRepository;
 
     public TargetService(TargetSettingRepository targetSettingRepository,
             OrderRepository orderRepository,
+            OrderReportRepository orderReportRepository,
             VirtualOfficeRepository virtualOfficeRepository) {
         this.targetSettingRepository = targetSettingRepository;
         this.orderRepository = orderRepository;
+        this.orderReportRepository = orderReportRepository;
         this.virtualOfficeRepository = virtualOfficeRepository;
     }
 
@@ -179,7 +183,7 @@ public class TargetService {
      * حساب المبلغ المسلم للمندوب خلال فترة معينة
      */
     public BigDecimal getCourierDeliveredAmount(User courier, LocalDateTime from, LocalDateTime to) {
-        BigDecimal deliveredAmount = orderRepository
+        BigDecimal deliveredAmount = orderReportRepository
                 .sumDeliveredAmountByCourierAndDateRange(courier.getId(), from, to);
         return deliveredAmount != null ? deliveredAmount : BigDecimal.ZERO;
     }
@@ -188,7 +192,7 @@ public class TargetService {
      * جلب المبالغ المسلمة للمندوب مقسمة بالأيام خلال فترة معينة
      */
     public List<com.shipment.shippinggo.dto.DailyTargetStatsDto> getDailyCourierDeliveredAmount(User courier, LocalDateTime from, LocalDateTime to) {
-        List<Order> orders = orderRepository.findDeliveredOrdersByCourierAndDateRange(courier.getId(), from, to);
+        List<Order> orders = orderReportRepository.findDeliveredOrdersByCourierAndDateRange(courier.getId(), from, to);
         return groupOrdersByDate(orders, true);
     }
 
@@ -198,7 +202,7 @@ public class TargetService {
      */
     public BigDecimal getOrganizationDeliveredAmount(Organization sourceOrg, Organization targetOrg,
             LocalDateTime from, LocalDateTime to) {
-        BigDecimal deliveredAmount = orderRepository
+        BigDecimal deliveredAmount = orderReportRepository
                 .sumDeliveredAmountByAssignedOrgAndDateRange(targetOrg.getId(), from, to);
         return deliveredAmount != null ? deliveredAmount : BigDecimal.ZERO;
     }
@@ -208,7 +212,7 @@ public class TargetService {
      */
     public List<com.shipment.shippinggo.dto.DailyTargetStatsDto> getDailyOrganizationDeliveredAmount(Organization sourceOrg, Organization targetOrg,
             LocalDateTime from, LocalDateTime to) {
-        List<Order> orders = orderRepository.findDeliveredOrdersByAssignedOrgAndDateRange(targetOrg.getId(), from, to);
+        List<Order> orders = orderReportRepository.findDeliveredOrdersByAssignedOrgAndDateRange(targetOrg.getId(), from, to);
         return groupOrdersByDate(orders, false);
     }
 

@@ -44,6 +44,8 @@ class OrganizationServiceTest {
     private ClientOrgRepository clientOrgRepository;
     @Mock
     private NotificationService notificationService;
+    @Mock
+    private AssignmentPermissionRepository assignmentPermissionRepository;
 
     private OrganizationService organizationService;
     private User adminUser;
@@ -52,7 +54,8 @@ class OrganizationServiceTest {
     void setUp() {
         organizationService = new OrganizationService(organizationRepository, companyRepository,
                 officeRepository, storeRepository, clientOrgRepository, membershipRepository, userRepository,
-                organizationRelationRepository, virtualOfficeRepository, notificationService);
+                organizationRelationRepository, virtualOfficeRepository, notificationService,
+                assignmentPermissionRepository);
 
         adminUser = new User();
         adminUser.setId(1L);

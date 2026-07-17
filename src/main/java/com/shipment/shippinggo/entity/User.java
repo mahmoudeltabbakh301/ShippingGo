@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "users")
@@ -76,6 +77,12 @@ public class User implements UserDetails {
 
     @Column(name = "last_location_update_time")
     private LocalDateTime lastLocationUpdateTime;
+
+    // المنظمة الأساسية للمستخدم — تُملأ تلقائياً عند أول استدعاء لـ resolveUserOrganization
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "primary_org_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "admin", "offices", "about", "pickupPolicy", "returnPolicy", "paymentTerms"})
+    private Organization primaryOrganization;
 
     @PrePersist
     protected void onCreate() {

@@ -23,6 +23,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -32,24 +33,24 @@
         <main class="main-content">
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📩 <span th:text="#{invitations.title}">الدعوات</span></h1>
+                    <h1 class="page-title"><i data-lucide="mail" class="inline-icon"></i> <span th:text="#{invitations.title}">الدعوات</span></h1>
                     <p class="text-muted" th:text="#{invitations.subtitle}">دعوات الانضمام لفرق العمل</p>
                 </div>
             </div>
 
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Pending Invitations -->
             <div class="card" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">🔔 <span th:text="#{invitations.pending_title}">دعوات بانتظار الرد</span>
+                    <h3 class="card-title"><i data-lucide="bell" class="inline-icon"></i> <span th:text="#{invitations.pending_title}">دعوات بانتظار الرد</span>
                     </h3>
                 </div>
 
                 <div th:if="${pendingInvitations.isEmpty()}"
                     style="text-align: center; padding: var(--space-8); color: var(--text-secondary);">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📭</div>
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="mail-x"></i></div>
                     <h4 th:text="#{invitations.empty}">لا توجد دعوات حالياً</h4>
                     <p class="text-muted" th:text="#{invitations.empty_desc}">ستظهر هنا الدعوات عندما تدعوك منظمة
                         للانضمام لفريقها</p>
@@ -72,7 +73,7 @@
                                     <div style="display: flex; align-items: center; gap: var(--space-3);">
                                         <div
                                             style="width: 36px; height: 36px; background: var(--primary-100); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; color: var(--primary-600); font-weight: 700;">
-                                            🏢</div>
+                                            <i data-lucide="building-2" class="inline-icon"></i></div>
                                         <div>
                                             <div style="font-weight: 600;" th:text="${inv.organization.name}">اسم
                                                 المنظمة</div>
@@ -92,12 +93,12 @@
                                         <form th:action="@{/members/invitations/{id}/accept(id=${inv.id})}"
                                             method="post">
                                             <button type="submit" class="btn btn-sm btn-success"
-                                                th:text="#{invitations.btn_accept}">✓ قبول</button>
+                                                th:text="#{invitations.btn_accept}"><i data-lucide="check" class="inline-icon"></i> قبول</button>
                                         </form>
                                         <form th:action="@{/members/invitations/{id}/decline(id=${inv.id})}"
                                             method="post">
                                             <button type="submit" class="btn btn-sm btn-danger"
-                                                th:text="#{invitations.btn_decline}">✕ رفض</button>
+                                                th:text="#{invitations.btn_decline}"><i data-lucide="x" class="inline-icon"></i> رفض</button>
                                         </form>
                                     </div>
                                 </td>
@@ -109,8 +110,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

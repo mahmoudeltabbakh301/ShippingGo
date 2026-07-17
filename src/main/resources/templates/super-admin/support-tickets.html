@@ -32,17 +32,18 @@
         .status-RESOLVED { background: #dcfce7; color: #166534; }
         .status-CLOSED { background: #e5e7eb; color: #374151; }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🎫 تذاكر الدعم الفني</h1>
+                    <h1 class="page-title"><i data-lucide="life-buoy" class="inline-icon"></i> تذاكر الدعم الفني</h1>
                     <p class="page-subtitle">إدارة استفسارات وشكاوى المنظمات</p>
                 </div>
             </div>
@@ -122,8 +123,9 @@
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

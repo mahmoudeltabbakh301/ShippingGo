@@ -105,6 +105,10 @@ public class SuperAdminController {
         model.addAttribute("subscription", subscription);
         model.addAttribute("payments", paymobService.getPaymentsByOrganization(id));
 
+        boolean isSubscriptionApplicable = org.getType() != OrganizationType.VIRTUAL_OFFICE &&
+                                           org.getType() != OrganizationType.CLIENT;
+        model.addAttribute("isSubscriptionApplicable", isSubscriptionApplicable);
+
         // قائمة المستخدمين لنقل الملكية
         model.addAttribute("allUsers", superAdminService.getAllUsers());
 

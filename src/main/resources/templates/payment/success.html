@@ -66,18 +66,20 @@
             transform: translateY(-2px);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
     <div class="result-card">
-        <div class="result-icon">✅</div>
+        <div class="result-icon"><i data-lucide="check-circle-2"></i></div>
         <h1 class="result-title">تم الدفع بنجاح!</h1>
         <p class="result-text">
             تم تفعيل اشتراكك بنجاح. يمكنك الآن الاستمتاع بجميع مميزات ShippingGo.
         </p>
         <a th:href="@{/dashboard}" class="btn-dashboard">
-            🏠 الذهاب للوحة التحكم
+            <i data-lucide="layout-dashboard" class="inline-icon"></i> الذهاب للوحة التحكم
         </a>
     </div>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

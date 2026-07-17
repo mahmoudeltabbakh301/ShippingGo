@@ -23,11 +23,11 @@
                 <th:block th:with="ctx=${orderChainContext.get(order.id)}">
                     <span th:if="${order.ownerOrganization.id == organization.id}">
                         <span th:if="${ctx != null &amp;&amp; ctx.containsKey('outgoingTo')}"
-                            th:text="'➡️ ' + ${ctx.get('outgoingTo')}"
+                            th:utext="'<i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('outgoingTo')}"
                             title="تم الإسناد إلى"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) &amp;&amp; order.assignedToOrganization != null}"
-                            th:text="'➡️ ' + ${order.assignedToOrganization.name}"
+                            th:utext="'<i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${order.assignedToOrganization.name}"
                             title="تم الإسناد إلى"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('outgoingTo')) &amp;&amp; order.assignedToOrganization == null}">-</span>
@@ -35,13 +35,13 @@
 
                     <span th:if="${order.ownerOrganization.id != organization.id}">
                         <span th:if="${ctx != null &amp;&amp; ctx.containsKey('incomingFrom')}"
-                            th:text="'⬅️ ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
+                            th:utext="'<i data-lucide=&quot;arrow-right&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('incomingFrom')}" title="وارد من"></span>
                         <span th:if="${ctx != null &amp;&amp; ctx.containsKey('outgoingTo')}"
-                            th:text="' ➡️ ' + ${ctx.get('outgoingTo')}"
+                            th:utext="' <i data-lucide=&quot;arrow-left&quot; class=&quot;inline-icon&quot;></i> ' + ${ctx.get('outgoingTo')}"
                             title="تم الإسناد إلى"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) &amp;&amp; order.assignedToOrganization != null &amp;&amp; order.assignedToOrganization.id == organization.id}"
-                            th:text="'⬅️ ' + ${order.ownerOrganization.name}"
+                            th:utext="'<i data-lucide=&quot;arrow-right&quot; class=&quot;inline-icon&quot;></i> ' + ${order.ownerOrganization.name}"
                             title="وارد من"></span>
                         <span
                             th:if="${(ctx == null || !ctx.containsKey('incomingFrom')) &amp;&amp; (order.assignedToOrganization == null || order.assignedToOrganization.id != organization.id)}"
@@ -53,14 +53,15 @@
                 <span
                     th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
                 <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
-                    style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                    style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات"><i data-lucide="ban"></i></span>
             </td>
             <td>
                 <a th:href="@{/orders/{id}(id=${order.id}, businessDayId=${businessDay.id})}"
-                    class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}">👁
+                    class="btn btn-sm btn-secondary" th:text="#{business_days.btn.view}"><i data-lucide="eye" class="inline-icon"></i>
                     عرض</a>
             </td>
         </tr>
     </th:block>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

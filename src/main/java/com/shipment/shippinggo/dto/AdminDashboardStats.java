@@ -19,15 +19,41 @@ public class AdminDashboardStats {
     private long ownedOrdersCount;
     private long assignedOrdersCount;
     private long waitingCount;
-    private long inTransitCount;
+    private long inTransitCount; // this is specifically for "مع المناديب" (assigned to courier)
+    private long inTransitStatusCount;
+    private long pickedUpCount;
+    private long outForDeliveryCount;
+    private long ordersAssignedToCourierCount;
     private long deliveredCount;
     private long refusedCount;
     private long cancelledCount;
     private long deferredCount;
     private long partialDeliveryCount;
+    private long returnedToSenderCount;
+    private long warehouseReturnPendingCount;
+    private long warehouseReceiptConfirmedCount;
 
     // Financial
-    private BigDecimal totalDeliveredAmount;
+    @Builder.Default
+    private BigDecimal totalDeliveredAmount = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal totalCommissions = BigDecimal.ZERO;
+    @Builder.Default
+    private BigDecimal netMerchantDue = BigDecimal.ZERO;
+
+    // Orders currently with non-virtual organizations
+    private long ordersWithOrganizationsCount;
+
+    // Pending alerts
+    private long pendingShipmentRequestsCount;
+    private long pendingMembershipsCount;
+    private long openSupportTicketsCount;
+    private long unassignedWaitingOrdersCount;
+
+    // Active operations
+    private long activeTripsCount;
+    private long ordersInTripsCount;
+    private boolean businessDayOpen;
 
     // Courier stats
     private long activeCouriersCount;
@@ -35,18 +61,21 @@ public class AdminDashboardStats {
     private long activeExternalCouriersCount;
 
     // Courier performance list (Only for internal couriers)
-    private List<CourierPerformance> courierPerformances;
+    @Builder.Default
+    private List<CourierPerformance> courierPerformances = new java.util.ArrayList<>();
     
     // Aggregated performance for external couriers
     private CourierPerformance externalCouriersPerformance;
 
     // Assigned Organization Stats
     private long activeAssignedOrgsCount;
-    private List<OrganizationPerformance> organizationPerformances;
+    @Builder.Default
+    private List<OrganizationPerformance> organizationPerformances = new java.util.ArrayList<>();
     private OrganizationPerformance topPerformingOrg;
 
     // Recent orders
-    private List<RecentOrderInfo> recentOrders;
+    @Builder.Default
+    private List<RecentOrderInfo> recentOrders = new java.util.ArrayList<>();
 
     @Data
     @Builder

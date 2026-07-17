@@ -45,6 +45,7 @@
         .stat-card-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
         .stat-card-label { font-size: 0.8rem; color: var(--text-muted); }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -54,15 +55,15 @@
 
         <main class="main-content">
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">💎 إدارة الاشتراكات</h1>
+                    <h1 class="page-title"><i data-lucide="gem" class="inline-icon"></i> إدارة الاشتراكات</h1>
                     <p class="page-subtitle">عرض وإدارة اشتراكات جميع المنظمات على المنصة</p>
                 </div>
             </div>
@@ -70,7 +71,7 @@
             <!-- Stats -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-card-icon">📊</div>
+                    <div class="stat-card-icon"><i data-lucide="bar-chart-3"></i></div>
                     <div class="stat-card-value" th:text="${subStats.total}">0</div>
                     <div class="stat-card-label">إجمالي الاشتراكات</div>
                 </div>
@@ -80,7 +81,7 @@
                     <div class="stat-card-label">تجريبي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-icon"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-card-value" th:text="${subStats.active}">0</div>
                     <div class="stat-card-label">نشط</div>
                 </div>
@@ -90,7 +91,7 @@
                     <div class="stat-card-label">منتهي</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-card-icon">⛔</div>
+                    <div class="stat-card-icon"><i data-lucide="octagon-x"></i></div>
                     <div class="stat-card-value" th:text="${subStats.suspended}">0</div>
                     <div class="stat-card-label">معلق</div>
                 </div>
@@ -99,11 +100,11 @@
             <!-- Subscriptions Table -->
             <div class="card">
                 <div class="card-header">
-                    <h2 style="margin: 0; font-size: 1.1rem;">📋 جميع الاشتراكات</h2>
+                    <h2 style="margin: 0; font-size: 1.1rem;"><i data-lucide="clipboard-list" class="inline-icon"></i> جميع الاشتراكات</h2>
                 </div>
 
                 <div th:if="${subscriptions.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">💎</div>
+                    <div class="table-empty-icon"><i data-lucide="gem"></i></div>
                     <div class="table-empty-text">لا توجد اشتراكات بعد</div>
                 </div>
 
@@ -161,8 +162,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

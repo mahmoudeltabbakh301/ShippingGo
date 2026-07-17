@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -33,18 +34,18 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">👥 <span th:text="#{members.list.title}">إدارة الأعضاء</span></h1>
+                <h1 class="page-title"><i data-lucide="users" class="inline-icon"></i> <span th:text="#{members.list.title}">إدارة الأعضاء</span></h1>
             </div>
 
             <!-- Invite Member Card -->
             <div class="card" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">📩 <span th:text="#{members.list.invite_title}">إرسال دعوة عضو
+                    <h3 class="card-title"><i data-lucide="mail" class="inline-icon"></i> <span th:text="#{members.list.invite_title}">إرسال دعوة عضو
                             جديد</span></h3>
                 </div>
                 <div class="card-body" style="padding: var(--space-4);">
@@ -69,7 +70,7 @@
                                 </option>
                             </select>
                         </div>
-                        <button type="submit" class="btn btn-primary" th:text="#{members.list.btn_invite}">📩 إرسال
+                        <button type="submit" class="btn btn-primary" th:text="#{members.list.btn_invite}"><i data-lucide="mail" class="inline-icon"></i> إرسال
                             الدعوة</button>
                     </form>
                 </div>
@@ -78,7 +79,7 @@
             <!-- Pending Invitations -->
             <div class="card" th:if="${!pendingMemberships.isEmpty()}" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">⏳ <span th:text="#{members.list.pending_invites_title}">دعوات بانتظار
+                    <h3 class="card-title"><i data-lucide="hourglass" class="inline-icon"></i> <span th:text="#{members.list.pending_invites_title}">دعوات بانتظار
                             الرد</span></h3>
                 </div>
                 <div class="table-container" style="border: none;">
@@ -107,7 +108,7 @@
                                     <form th:action="@{/members/{id}/cancel-invite(id=${m.id})}" method="post"
                                         style="display: inline;">
                                         <button type="submit" class="btn btn-sm btn-danger"
-                                            th:text="#{members.list.btn_cancel_invite}">❌ إلغاء الدعوة</button>
+                                            th:text="#{members.list.btn_cancel_invite}"><i data-lucide="x-circle" class="inline-icon"></i> إلغاء الدعوة</button>
                                     </form>
                                 </td>
                             </tr>
@@ -119,7 +120,7 @@
             <!-- Accepted Members Table -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">👥 <span th:text="#{members.list.accepted_title}">الأعضاء الحاليون</span>
+                    <h3 class="card-title"><i data-lucide="users" class="inline-icon"></i> <span th:text="#{members.list.accepted_title}">الأعضاء الحاليون</span>
                     </h3>
                     <span class="badge badge-delivered" th:text="${#lists.size(acceptedMemberships)}">0</span>
                 </div>
@@ -165,7 +166,7 @@
                                             th:value="${m.nickname}" placeholder="اسم مستعار..."
                                             style="width: 120px; font-size: 0.85rem;">
                                         <button type="submit" class="btn btn-sm btn-secondary"
-                                            style="padding: 4px 8px; font-size: 0.8rem;">💾</button>
+                                            style="padding: 4px 8px; font-size: 0.8rem;"><i data-lucide="save"></i></button>
                                     </form>
                                 </td>
                                 <td>
@@ -205,7 +206,7 @@
                                             style="display: inline;"
                                             th:onsubmit="|return confirm('#{members.list.confirm_delete}');|">
                                             <button type="submit" class="btn btn-sm btn-danger"
-                                                th:title="#{members.list.delete_member}">❌</button>
+                                                th:title="#{members.list.delete_member}"><i data-lucide="x-circle" class="inline-icon"></i></button>
                                         </form>
                                     </div>
                                 </td>
@@ -218,8 +219,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

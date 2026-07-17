@@ -23,11 +23,12 @@
         .back-link:hover { text-decoration: underline; }
         .empty-content { text-align: center; padding: 3rem; color: #94a3b8; }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="page-container">
         <div class="page-header">
-            <h1>📋 الشروط والأحكام</h1>
+            <h1><i data-lucide="clipboard-list" class="inline-icon"></i> الشروط والأحكام</h1>
             <p th:text="${platformName}">ShippingGo</p>
         </div>
         <div class="page-content">
@@ -38,5 +39,6 @@
         </div>
         <a href="/" class="back-link">↩ الرجوع للصفحة الرئيسية</a>
     </div>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

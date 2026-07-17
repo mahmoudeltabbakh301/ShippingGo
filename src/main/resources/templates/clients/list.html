@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -33,18 +34,18 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">🤝 <span th:text="#{clients.manage}">إدارة العملاء</span></h1>
+                <h1 class="page-title"><i data-lucide="handshake" class="inline-icon"></i> <span th:text="#{clients.manage}">إدارة العملاء</span></h1>
             </div>
 
             <!-- Invite Client Card -->
             <div class="card" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">📩 <span th:text="#{clients.invite_new}">دعوة عميل جديد</span></h3>
+                    <h3 class="card-title"><i data-lucide="mail" class="inline-icon"></i> <span th:text="#{clients.invite_new}">دعوة عميل جديد</span></h3>
                 </div>
                 <div class="card-body" style="padding: var(--space-4);">
                     <form th:action="@{/clients/invite}" method="post"
@@ -54,10 +55,10 @@
                             <input type="text" name="identifier" class="form-control" required autocomplete="off"
                                 th:placeholder="#{clients.invite.placeholder}">
                         </div>
-                        <button type="submit" class="btn btn-primary" th:text="'📩 ' + #{clients.invite.send}">📩 إرسال الدعوة</button>
+                        <button type="submit" class="btn btn-primary" th:utext="'<i data-lucide=&quot;mail&quot; class=&quot;inline-icon&quot;></i> ' + #{clients.invite.send}"><i data-lucide="mail" class="inline-icon"></i> إرسال الدعوة</button>
                     </form>
-                    <div style="margin-top: var(--space-3); color: var(--text-secondary); font-size: 0.85rem;" th:text="'💡 ' + #{clients.invite.hint}">
-                        💡 العميل يجب أن يكون مسجلاً في النظام كعضو أولاً. عند قبول الدعوة سيتم إنشاء منظمة عميل له تلقائياً وربطها بمنظمتك.
+                    <div style="margin-top: var(--space-3); color: var(--text-secondary); font-size: 0.85rem;" th:utext="'<i data-lucide=&quot;lightbulb&quot; class=&quot;inline-icon&quot;></i> ' + #{clients.invite.hint}">
+                        <i data-lucide="lightbulb" class="inline-icon"></i> العميل يجب أن يكون مسجلاً في النظام كعضو أولاً. عند قبول الدعوة سيتم إنشاء منظمة عميل له تلقائياً وربطها بمنظمتك.
                     </div>
                 </div>
             </div>
@@ -65,7 +66,7 @@
             <!-- Pending Invitations -->
             <div class="card" th:if="${!pendingInvitations.isEmpty()}" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">⏳ <span th:text="#{clients.pending_invitations}">دعوات بانتظار الرد</span></h3>
+                    <h3 class="card-title"><i data-lucide="hourglass" class="inline-icon"></i> <span th:text="#{clients.pending_invitations}">دعوات بانتظار الرد</span></h3>
                 </div>
                 <div class="table-container" style="border: none;">
                     <table class="table">
@@ -87,7 +88,7 @@
                                 <td>
                                     <form th:action="@{/clients/{id}/cancel-invite(id=${m.id})}" method="post"
                                         style="display: inline;">
-                                        <button type="submit" class="btn btn-sm btn-danger" th:text="'❌ ' + #{clients.invite.cancel}">❌ إلغاء الدعوة</button>
+                                        <button type="submit" class="btn btn-sm btn-danger" th:utext="'<i data-lucide=&quot;x-circle&quot; class=&quot;inline-icon&quot;></i> ' + #{clients.invite.cancel}"><i data-lucide="x-circle" class="inline-icon"></i> إلغاء الدعوة</button>
                                     </form>
                                 </td>
                             </tr>
@@ -99,7 +100,7 @@
             <!-- Active Clients -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🤝 <span th:text="#{clients.active_clients}">العملاء الحاليون</span></h3>
+                    <h3 class="card-title"><i data-lucide="handshake" class="inline-icon"></i> <span th:text="#{clients.active_clients}">العملاء الحاليون</span></h3>
                     <span class="badge badge-delivered" th:text="${#lists.size(clients)}">0</span>
                 </div>
                 <div th:if="${clients.isEmpty()}"
@@ -140,7 +141,7 @@
                                         style="display: inline;"
                                         th:onsubmit="'return confirm(\'' + #{clients.confirm.remove} + '\');'">
                                         <button type="submit" class="btn btn-sm btn-danger"
-                                            th:title="#{clients.action.remove}" th:text="'❌ ' + #{clients.action.remove}">❌ إزالة</button>
+                                            th:title="#{clients.action.remove}" th:utext="'<i data-lucide=&quot;x-circle&quot; class=&quot;inline-icon&quot;></i> ' + #{clients.action.remove}"><i data-lucide="x-circle" class="inline-icon"></i> إزالة</button>
                                     </form>
                                 </td>
                             </tr>
@@ -151,8 +152,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

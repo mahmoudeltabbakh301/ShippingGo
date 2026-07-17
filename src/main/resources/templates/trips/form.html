@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء رحلة جديدة - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .form-card { max-width: 600px; margin: 0 auto; }
+        .form-card .card { padding: 28px; }
+        .trip-form-group { margin-bottom: 16px; }
+        .trip-form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+        .trip-form-input {
+            width: 100%; padding: 10px 12px; border-radius: 8px;
+            border: 1px solid var(--border-color); background: var(--bg-primary);
+            color: var(--text-primary); font-size: 14px;
+        }
+        .trip-form-input:focus {
+            outline: none; border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 99, 102, 241), 0.15);
+        }
+        .trip-form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border-color); }
+        .empty-state { text-align: center; padding: 32px; color: var(--text-secondary); }
+        .empty-state a { color: var(--primary-color); }
+    </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><i data-lucide="map" class="inline-icon"></i> إنشاء رحلة جديدة</h1>
+                    <p class="text-muted">حدد الشاحنة والوجهة لإنشاء رحلة شحن جديدة</p>
+                </div>
+                <a th:href="@{/trips}" class="btn btn-secondary">← الرحلات</a>
+            </div>
+
+            <!-- Form -->
+            <div class="form-card" th:if="${vehicles != null and !vehicles.isEmpty()}">
+                <div class="card">
+                    <form th:action="@{/trips/new}" method="post">
+
+                        <div class="trip-form-group">
+                            <label for="vehicleId"><i data-lucide="truck" class="inline-icon"></i> الشاحنة *</label>
+                            <select id="vehicleId" name="vehicleId" class="trip-form-input" required>
+                                <option value="">— اختر شاحنة —</option>
+                                <option th:each="v : ${vehicles}" th:value="${v.id}"
+                                        th:text="${v.plateNumber + ' (' + v.vehicleType.arabicName + ')' + (v.driverName != null ? ' — ' + v.driverName : '')}"></option>
+                            </select>
+                        </div>
+
+                        <div class="trip-form-group">
+                            <label for="destinationOrgId"><i data-lucide="building-2" class="inline-icon"></i> المنظمة الوجهة (اختياري)</label>
+                            <select id="destinationOrgId" name="destinationOrgId" class="trip-form-input">
+                                <option value="">— بدون وجهة محددة —</option>
+                                <option th:each="org : ${linkedOrganizations}" th:value="${org.id}" th:text="${org.name}"></option>
+                            </select>
+                        </div>
+
+                        <div class="trip-form-group">
+                            <label for="notes"><i data-lucide="pencil" class="inline-icon"></i> ملاحظات</label>
+                            <textarea id="notes" name="notes" class="trip-form-input" rows="3" placeholder="أي ملاحظات عن الرحلة..."></textarea>
+                        </div>
+
+                        <div class="trip-form-actions">
+                            <a th:href="@{/trips}" class="btn btn-secondary">إلغاء</a>
+                            <button type="submit" class="btn btn-primary">إنشاء الرحلة</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${vehicles == null or vehicles.isEmpty()}" class="form-card">
+                <div class="card empty-state">
+                    <p><i data-lucide="truck" class="inline-icon"></i> لا توجد شاحنات متاحة حالياً.</p>
+                    <p>يجب <a th:href="@{/vehicles}">إضافة شاحنات</a> أولاً وتحديد حالتها كـ"متاحة" لإنشاء رحلة.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
+</body>
+</html>

@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,17 +35,17 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title" th:text="#{accounts.settings.title}">⚙️ إعدادات العمولات</h1>
+                <h1 class="page-title" th:text="#{accounts.settings.title}"><i data-lucide="settings" class="inline-icon"></i> إعدادات العمولات</h1>
                 <div class="page-actions">
                     <a th:href="@{/accounts}" class="btn btn-secondary" th:text="#{accounts.days.btn_back}">← العودة
                         للحسابات</a>
@@ -55,7 +56,7 @@
             <div class="card" th:if="${linkedOrganizations != null && !linkedOrganizations.isEmpty()}"
                 style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{accounts.settings.org_add_title}">🏢 إضافة عمولة للمنظمات</h3>
+                    <h3 class="card-title" th:text="#{accounts.settings.org_add_title}"><i data-lucide="building-2" class="inline-icon"></i> إضافة عمولة للمنظمات</h3>
                 </div>
                 <form th:action="@{/accounts/settings/organization}" method="post" class="form">
                     <div
@@ -116,7 +117,7 @@
             <!-- Add Courier Commission -->
             <div class="card" th:if="${couriers != null && !couriers.isEmpty()}" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{accounts.settings.courier_add_title}">🚚 إضافة عمولة للمناديب</h3>
+                    <h3 class="card-title" th:text="#{accounts.settings.courier_add_title}"><i data-lucide="truck" class="inline-icon"></i> إضافة عمولة للمناديب</h3>
                 </div>
                 <form th:action="@{/accounts/settings/courier}" method="post" class="form">
                     <div
@@ -168,7 +169,7 @@
             <!-- Add Unassigned Commission -->
             <div class="card" style="margin-bottom: var(--space-6);">
                 <div class="card-header">
-                    <h3 class="card-title">📦 عمولة غير مسند (أوردرات بدون إسناد)</h3>
+                    <h3 class="card-title"><i data-lucide="package" class="inline-icon"></i> عمولة غير مسند (أوردرات بدون إسناد)</h3>
                 </div>
                 <form th:action="@{/accounts/settings/unassigned}" method="post" class="form">
                     <div
@@ -219,7 +220,7 @@
             <!-- Current Commission Settings -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{accounts.settings.current_title}">📋 إعدادات العمولات الحالية</h3>
+                    <h3 class="card-title" th:text="#{accounts.settings.current_title}"><i data-lucide="clipboard-list" class="inline-icon"></i> إعدادات العمولات الحالية</h3>
                 </div>
 
                 <div th:if="${commissionSettings != null && !commissionSettings.isEmpty()}" class="table-container"
@@ -244,7 +245,7 @@
                                         th:text="${setting.targetOrganization.name}">منظمة</span>
                                     <span th:if="${setting.courier != null}"
                                         th:text="${courierDisplayNames != null && courierDisplayNames.containsKey(setting.courier.id) ? courierDisplayNames.get(setting.courier.id) : setting.courier.fullName}">مندوب</span>
-                                    <span th:if="${setting.targetOrganization == null && setting.courier == null}">📦 غير مسند</span>
+                                    <span th:if="${setting.targetOrganization == null && setting.courier == null}"><i data-lucide="package" class="inline-icon"></i> غير مسند</span>
                                 </td>
                                 <td>
                                     <span class="badge badge-pending" th:if="${setting.targetOrganization != null}"
@@ -288,7 +289,7 @@
                                         <input type="hidden" name="settingId" th:value="${setting.id}">
                                         <button type="submit" class="table-action-btn danger" title="Delete"
                                             th:data-confirm="#{accounts.settings.btn_delete_confirm}"
-                                            onclick="return confirm(this.getAttribute('data-confirm'))">✕</button>
+                                            onclick="return confirm(this.getAttribute('data-confirm'))"><i data-lucide="x" class="inline-icon"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -298,7 +299,7 @@
 
                 <div th:if="${commissionSettings == null || commissionSettings.isEmpty()}" class="text-center"
                     style="padding: var(--space-8);">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">⚙️</div>
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="settings"></i></div>
                     <h3 th:text="#{accounts.settings.empty}">لا توجد إعدادات عمولات</h3>
                     <p class="text-muted" th:text="#{accounts.settings.empty_desc}">أضف إعدادات العمولات للمنظمات أو
                         المناديب من الأعلى</p>
@@ -308,8 +309,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

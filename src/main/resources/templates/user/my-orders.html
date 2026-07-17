@@ -209,6 +209,7 @@
             gap: 0.5rem;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -218,13 +219,13 @@
         <main class="main-content">
             <!-- Header -->
             <div class="dashboard-header">
-                <h1 class="welcome-title">👋 <span th:text="#{dashboard.welcome}">مرحباً بك يا</span> <span th:text="${user.fullName}"></span></h1>
+                <h1 class="welcome-title"><i data-lucide="hand" class="inline-icon"></i> <span th:text="#{dashboard.welcome}">مرحباً بك يا</span> <span th:text="${user.fullName}"></span></h1>
                 <a th:if="${param.code}" th:href="@{/user/my-orders}" class="btn btn-outline btn-sm" th:text="#{user.orders.btn.view_all}">عرض كل الطلبات</a>
             </div>
 
             <!-- Error Message -->
             <div th:if="${searchError}" class="search-error">
-                <span>⚠️</span>
+                <span><i data-lucide="alert-triangle"></i></span>
                 <span th:text="${searchError}"></span>
             </div>
 
@@ -232,7 +233,7 @@
             <div class="cards-grid">
                 <!-- Track Shipment Card -->
                 <div class="feature-card primary-card">
-                    <div class="feature-icon">🔍</div>
+                    <div class="feature-icon"><i data-lucide="search"></i></div>
                     <h3 class="feature-title" th:text="#{user.orders.card.track.title}">تتبع شحنة</h3>
                     <p class="feature-desc" th:text="#{user.orders.card.track.desc}">أدخل كود الشحنة لتتمكن من معرفة حالتها فوراً</p>
                     <form th:action="@{/user/my-orders}" method="get" class="track-form">
@@ -245,7 +246,7 @@
                 <!-- Send Shipment Card -->
                 <div class="feature-card" style="cursor: pointer;" th:attr="onclick='alert(\'' + #{user.orders.js.coming_soon} + '\')'">
                     <div class="coming-soon-badge" th:text="#{user.orders.card.send.coming_soon}">قريباً</div>
-                    <div class="feature-icon">📦</div>
+                    <div class="feature-icon"><i data-lucide="package"></i></div>
                     <h3 class="feature-title" style="color: var(--text-color);" th:text="#{user.orders.card.send.title}">إرسال شحنة</h3>
                     <p class="feature-desc" th:text="#{user.orders.card.send.desc}">ارسل طرد لأي مكان آخر عبر أقرب شركة أو مكتب شحن باستخدام الـ GPS.</p>
                 </div>
@@ -282,13 +283,13 @@
                                     <span th:text="${order.amount != null ? order.amount : '-'}"></span> EGP
                                 </td>
                                 <td>
-                                    <span th:text="${order.shippingFee != null ? order.shippingFee : '-'}"></span> EGP
+                                    <span th:text="${order.shippingPrice != null ? order.shippingPrice : '-'}"></span> EGP
                                 </td>
                                 <td th:text="${#temporals.format(order.createdAt, 'yyyy-MM-dd HH:mm')}">2024-01-01</td>
                                 <td>
                                     <span class="status-badge"
                                         th:classappend="${'status-' + order.status}"
-                                        th:text="#{${'order.status.' + order.status}}">WAITING</span>
+                                        th:text="${#locale.language == 'en' ? order.status.englishName : order.status.arabicName}">WAITING</span>
                                 </td>
                             </tr>
                         </tbody>
@@ -296,7 +297,7 @@
 
                     <!-- Empty State -->
                     <div class="table-empty" th:if="${#lists.isEmpty(orders)}">
-                        <div class="table-empty-icon" style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <div class="table-empty-icon" style="font-size: 3rem; margin-bottom: 1rem;"><i data-lucide="mail-x"></i></div>
                         <div class="table-empty-text" style="font-size: 1.25rem; font-weight: 600;" th:text="#{user.orders.empty.title}">لاتوجد شحنات مسجلة برقم هاتفك</div>
                         <p style="color: var(--text-secondary); margin-top: 0.5rem;" th:text="#{user.orders.empty.desc}">بمجرد قيام أي شركة بإنشاء بوليصة شحن برقم هاتفك، ستظهر هنا تلقائياً.</p>
                     </div>
@@ -306,8 +307,9 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

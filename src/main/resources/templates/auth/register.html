@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/pages/auth.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -122,7 +123,7 @@
                                 <input type="radio" id="typeStore" name="organizationType" value="STORE"
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeStore">
-                                    <div class="type-option-icon">🏪</div>
+                                    <div class="type-option-icon"><i data-lucide="store"></i></div>
                                     <div class="type-option-title" th:text="#{auth.org.type.store}">متجر</div>
                                 </label>
                             </div>
@@ -130,7 +131,7 @@
                                 <input type="radio" id="typeCompany" name="organizationType" value="COMPANY"
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeCompany">
-                                    <div class="type-option-icon">🏢</div>
+                                    <div class="type-option-icon"><i data-lucide="building-2"></i></div>
                                     <div class="type-option-title" th:text="#{auth.org.type.company}">شركة شحن</div>
                                 </label>
                             </div>
@@ -138,7 +139,7 @@
                                 <input type="radio" id="typeOffice" name="organizationType" value="OFFICE"
                                     th:field="*{organizationType}">
                                 <label class="type-option-label" for="typeOffice">
-                                    <div class="type-option-icon">🏬</div>
+                                    <div class="type-option-icon"><i data-lucide="building"></i></div>
                                     <div class="type-option-title" th:text="#{auth.org.type.office}">مكتب شحن</div>
                                 </label>
                             </div>
@@ -216,6 +217,7 @@
             toggleOrganizationOptions();
         });
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

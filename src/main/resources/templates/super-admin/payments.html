@@ -45,6 +45,7 @@
         .revenue-card-value { font-size: 1.8rem; font-weight: 700; color: var(--text-primary); }
         .revenue-card-label { font-size: 0.875rem; color: var(--text-muted); margin-top: var(--space-1); }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -54,15 +55,15 @@
 
         <main class="main-content">
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">💳 سجل المدفوعات</h1>
+                    <h1 class="page-title"><i data-lucide="credit-card" class="inline-icon"></i> سجل المدفوعات</h1>
                     <p class="page-subtitle">عرض جميع المعاملات المالية على المنصة</p>
                 </div>
             </div>
@@ -70,12 +71,12 @@
             <!-- Revenue Stats -->
             <div class="revenue-grid">
                 <div class="revenue-card">
-                    <div class="revenue-card-icon">💰</div>
+                    <div class="revenue-card-icon"><i data-lucide="wallet"></i></div>
                     <div class="revenue-card-value" th:text="${totalRevenue != null ? totalRevenue : 0}">0</div>
                     <div class="revenue-card-label">إجمالي الإيرادات (جنيه)</div>
                 </div>
                 <div class="revenue-card">
-                    <div class="revenue-card-icon">📅</div>
+                    <div class="revenue-card-icon"><i data-lucide="calendar-days"></i></div>
                     <div class="revenue-card-value" th:text="${monthlyRevenue != null ? monthlyRevenue : 0}">0</div>
                     <div class="revenue-card-label">إيرادات هذا الشهر (جنيه)</div>
                 </div>
@@ -83,11 +84,11 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h2 style="margin: 0; font-size: 1.1rem;">📋 جميع المعاملات</h2>
+                    <h2 style="margin: 0; font-size: 1.1rem;"><i data-lucide="clipboard-list" class="inline-icon"></i> جميع المعاملات</h2>
                 </div>
 
                 <div class="table-empty" style="padding: var(--space-6);">
-                    <div class="table-empty-icon">💳</div>
+                    <div class="table-empty-icon"><i data-lucide="credit-card"></i></div>
                     <div class="table-empty-text">ستظهر هنا جميع المعاملات المالية بعد بدء استقبال المدفوعات عبر Paymob</div>
                     <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: var(--space-2);">
                         تأكد من إعداد مفاتيح Paymob من
@@ -98,8 +99,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

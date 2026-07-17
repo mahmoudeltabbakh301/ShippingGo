@@ -23,6 +23,7 @@
     <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -31,19 +32,19 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📦 <span th:text="#{warehouse.custody.title}">أيام العهدة</span></h1>
+                <h1 class="page-title"><i data-lucide="package" class="inline-icon"></i> <span th:text="#{warehouse.custody.title}">أيام العهدة</span></h1>
                 <a th:href="@{/warehouse}" class="btn btn-secondary">⬅ رجوع للمخازن</a>
             </div>
 
             <!-- Warehouse Days Table -->
             <div class="card">
                 <div th:if="${businessDays.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📦</div>
+                    <div class="table-empty-icon"><i data-lucide="package"></i></div>
                     <div class="table-empty-text" th:text="#{warehouse.custody.empty}">لا توجد أيام عهدة بعد</div>
                 </div>
 
@@ -71,7 +72,7 @@
                                 <td th:text="${bd.createdBy != null ? bd.createdBy.fullName : '-'}">المنشئ</td>
                                 <td>
                                     <a th:href="@{/warehouse/custody/{id}(id=${bd.id})}" class="btn btn-sm btn-primary"
-                                        th:text="#{warehouse.btn.view_custody}">📦 عرض العهدة</a>
+                                        th:text="#{warehouse.btn.view_custody}"><i data-lucide="package" class="inline-icon"></i> عرض العهدة</a>
                                 </td>
                             </tr>
                         </tbody>
@@ -81,8 +82,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

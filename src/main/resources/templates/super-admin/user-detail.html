@@ -58,6 +58,7 @@
             border-radius: var(--radius-md);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -68,15 +69,15 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                 <div>
-                    <h1 class="page-title">👤 <span th:text="${targetUser.fullName}">اسم المستخدم</span></h1>
+                    <h1 class="page-title"><i data-lucide="user" class="inline-icon"></i> <span th:text="${targetUser.fullName}">اسم المستخدم</span></h1>
                     <p class="page-subtitle">
                         <span class="badge" th:text="${targetUser.role}">ROLE</span>
                         <span class="badge badge-delivered" th:if="${targetUser.enabled}" th:text="#{super_admin.status.active}">مفعّل</span>
@@ -97,7 +98,7 @@
 
             <!-- User Info -->
             <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">📋 <span th:text="#{super_admin.user_detail.info}">معلومات المستخدم</span></h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="clipboard-list" class="inline-icon"></i> <span th:text="#{super_admin.user_detail.info}">معلومات المستخدم</span></h2>
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label" th:text="#{super_admin.users.col_name}">الاسم الكامل</span>
@@ -132,7 +133,7 @@
 
             <!-- Organization Info -->
             <div class="card" style="margin-bottom: var(--space-6);">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">🏢 <span th:text="#{super_admin.user_detail.org}">المنظمة</span></h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="#{super_admin.user_detail.org}">المنظمة</span></h2>
 
                 <div th:if="${userOrg != null}" class="info-grid">
                     <div class="info-item">
@@ -156,14 +157,14 @@
                 </div>
 
                 <div th:if="${userOrg == null}" class="table-empty">
-                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                     <div class="table-empty-text" th:text="#{super_admin.user_detail.no_org}">هذا المستخدم غير مرتبط بأي منظمة</div>
                 </div>
             </div>
 
             <!-- Change Role -->
             <div class="card" th:if="${targetUser.role.name() != 'SUPER_ADMIN'}">
-                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;">🔑 <span th:text="#{super_admin.user_detail.change_role}">تغيير الصلاحية</span></h2>
+                <h2 style="margin-bottom: var(--space-4); font-size: 1.1rem;"><i data-lucide="key" class="inline-icon"></i> <span th:text="#{super_admin.user_detail.change_role}">تغيير الصلاحية</span></h2>
                 <form th:action="@{/super-admin/users/{id}/role(id=${targetUser.id})}" method="post" class="role-form">
                     <select name="role" class="form-control" style="min-width: 200px;">
                         <option th:each="r : ${roles}" th:if="${r.name() != 'SUPER_ADMIN'}"
@@ -178,8 +179,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

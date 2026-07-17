@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,13 +35,13 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📅 [[${businessDay.name ?: #temporals.format(businessDay.date,
+                    <h1 class="page-title"><i data-lucide="calendar-days" class="inline-icon"></i> [[${businessDay.name ?: #temporals.format(businessDay.date,
                         'yyyy/MM/dd')}]]</h1>
                     <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
                         <span th:if="${businessDay.active}" class="badge badge-delivered"
@@ -53,22 +54,22 @@
                 <div class="btn-group" style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <a th:href="@{/orders/new(businessDayId=${businessDay.id})}" class="btn btn-primary"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
-                        th:text="#{business_days.view.btn_new_order}">➕
+                        th:text="#{business_days.view.btn_new_order}"><i data-lucide="plus" class="inline-icon"></i>
                         طلب جديد</a>
                     <a th:href="@{/orders/import(businessDayId=${businessDay.id})}" class="btn btn-secondary"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'DATA_ENTRY')"
-                        th:text="#{business_days.view.btn_import_excel}">📥 استيراد
+                        th:text="#{business_days.view.btn_import_excel}"><i data-lucide="inbox" class="inline-icon"></i> استيراد
                         Excel</a>
                     <a th:href="@{/business-days/{id}/export(id=${businessDay.id}, search=${search}, code=${code}, courierId=${courierId}, incomingFromId=${incomingFromId}, outgoingToId=${outgoingToId}, status=${status}, governorate=${governorate})}"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT', 'DATA_ENTRY')" class="btn"
-                        style="background-color: #10B981; color: white;" th:text="#{business_days.view.export_excel}">📊
+                        style="background-color: #10B981; color: white;" th:text="#{business_days.view.export_excel}"><i data-lucide="bar-chart-3" class="inline-icon"></i>
                         تصدير Excel</a>
                     <a th:href="@{/business-days}" class="btn btn-secondary"
-                        th:text="#{business_days.view.btn_all_days}">📅 كل الأيام</a>
+                        th:text="#{business_days.view.btn_all_days}"><i data-lucide="calendar-days" class="inline-icon"></i> كل الأيام</a>
                     <a th:href="@{/business-days/{id}/inquiries(id=${businessDay.id})}" class="btn"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP', 'DATA_ENTRY')"
                         style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white; position: relative;">
-                        <span th:text="#{business_days.view.btn_inquiries}">🔍 الاستعلامات</span>
+                        <span th:text="#{business_days.view.btn_inquiries}"><i data-lucide="search" class="inline-icon"></i> الاستعلامات</span>
                         <span th:if="${inquiryCount != null && inquiryCount > 0}" th:text="${inquiryCount}"
                             style="position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 0.7rem; display: flex; align-items: center; justify-content: center;">0</span>
                     </a>
@@ -79,14 +80,14 @@
                         th:onsubmit="|return confirm('#{business_days.view.confirm_delete_orders}');|"
                         style="display: inline;">
                         <button type="submit" class="btn btn-danger"
-                            th:text="#{business_days.view.btn_delete_orders}">🗑 حذف الطلبات</button>
+                            th:text="#{business_days.view.btn_delete_orders}"><i data-lucide="trash-2" class="inline-icon"></i> حذف الطلبات</button>
                     </form>
 
                     <form th:action="@{/business-days/{id}/delete(id=${businessDay.id})}" method="post"
                         sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
                         th:onsubmit="|return confirm('#{business_days.view.confirm_delete_day}');|"
                         style="display: inline;">
-                        <button type="submit" class="btn btn-danger" th:text="#{business_days.view.btn_delete_day}">💣
+                        <button type="submit" class="btn btn-danger" th:text="#{business_days.view.btn_delete_day}"><i data-lucide="trash-2" class="inline-icon"></i>
                             حذف اليوم</button>
                     </form>
                 </div>
@@ -95,51 +96,51 @@
             <!-- Statistics -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-icon waiting">📦</div>
+                    <div class="stat-icon waiting"><i data-lucide="package"></i></div>
                     <div class="stat-value" th:text="${totalOrderCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_total_orders}">إجمالي الطلبات</div>
                 </div>
 
 
                 <div class="stat-card">
-                    <div class="stat-icon waiting">⏳</div>
+                    <div class="stat-icon waiting"><i data-lucide="hourglass"></i></div>
                     <div class="stat-value" th:text="${waitingCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_waiting}">في الانتظار</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon transit">🚚</div>
+                    <div class="stat-icon transit"><i data-lucide="truck"></i></div>
                     <div class="stat-value" th:text="${inTransitCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_transit}">في الطريق</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value" th:text="${deliveredCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_delivered}">تم التسليم</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon cancelled">❌</div>
+                    <div class="stat-icon cancelled"><i data-lucide="x-circle"></i></div>
                     <div class="stat-value" th:text="${cancelledCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_cancelled}">ملغي</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon refused">🚫</div>
+                    <div class="stat-icon refused"><i data-lucide="ban"></i></div>
                     <div class="stat-value" th:text="${refusedCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_refused}">مرفوض</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon waiting">⏱️</div>
+                    <div class="stat-icon waiting"><i data-lucide="clock"></i></div>
                     <div class="stat-value" th:text="${deferredCount}">0</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_deferred}">مؤجل</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon transit">💰</div>
+                    <div class="stat-icon transit"><i data-lucide="wallet"></i></div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 2, 'POINT')} + ' ' + #{business_days.view.currency}">
                         0 ج.م</div>
                     <div class="stat-label" th:text="#{business_days.view.stat_total_amount}">إجمالي المبالغ</div>
                 </div>
                 <div class="stat-card" sec:authorize="!hasAnyRole('DATA_ENTRY', 'FOLLOW_UP')">
-                    <div class="stat-icon delivered">✅</div>
+                    <div class="stat-icon delivered"><i data-lucide="check-circle-2"></i></div>
                     <div class="stat-value"
                         th:text="${#numbers.formatDecimal(deliveredAmount, 0, 'COMMA', 2, 'POINT')} + ' ' + #{business_days.view.currency}">
                         0 ج.م
@@ -153,7 +154,7 @@
             <div class="card">
                 <div class="card-header"
                     style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-3);">
-                    <h3 class="card-title" th:text="#{business_days.view.subtitle_orders}">📋 طلبات هذا اليوم</h3>
+                    <h3 class="card-title" th:text="#{business_days.view.subtitle_orders}"><i data-lucide="clipboard-list" class="inline-icon"></i> طلبات هذا اليوم</h3>
                     <form th:action="@{/business-days/{id}(id=${businessDay.id})}" method="get"
                         style="display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap;">
                         <input type="text" name="search" class="form-control" th:value="${search}"
@@ -162,13 +163,13 @@
                             th:placeholder="#{business_days.view.code_placeholder}" style="width: 100px;">
 
                         <select name="incomingFromId" class="form-control" style="width: 130px;">
-                            <option value="" th:text="#{business_days.view.filter_all_inward}">⬅️ كل الوارد</option>
+                            <option value="" th:text="#{business_days.view.filter_all_inward}"><i data-lucide="arrow-right" class="inline-icon"></i> كل الوارد</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${incomingFromId == lo.id}"></option>
                         </select>
 
                         <select name="outgoingToId" class="form-control" style="width: 130px;">
-                            <option value="" th:text="#{business_days.view.filter_all_outward}">➡️ كل الصادر</option>
+                            <option value="" th:text="#{business_days.view.filter_all_outward}"><i data-lucide="arrow-left" class="inline-icon"></i> كل الصادر</option>
                             <option th:each="lo : ${linkedOrganizations}" th:value="${lo.id}" th:text="${lo.name}"
                                 th:selected="${outgoingToId == lo.id}"></option>
                         </select>
@@ -202,17 +203,17 @@
                         <button type="submit" class="btn btn-secondary btn-sm"
                             th:text="#{business_days.view.btn_search}">بحث</button>
                         <a th:if="${search != null || code != null || courierId != null || incomingFromId != null || outgoingToId != null || status != null || governorate != null}"
-                            th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm">✕</a>
+                            th:href="@{/business-days/{id}(id=${businessDay.id})}" class="btn btn-danger btn-sm"><i data-lucide="x" class="inline-icon"></i></a>
                     </form>
                 </div>
 
                 <div th:if="${orders.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📋</div>
+                    <div class="table-empty-icon"><i data-lucide="clipboard-list"></i></div>
                     <div class="table-empty-text" th:text="#{business_days.view.empty_orders}">لا توجد طلبات في هذا
                         اليوم</div>
                     <a th:href="@{/orders/new(businessDayId=${businessDay.id})}" class="btn btn-primary"
                         sec:authorize="!hasRole('WAREHOUSE_MANAGER')" style="margin-top: var(--space-4);"
-                        th:text="#{business_days.view.btn_add_order}">➕ إضافة طلب
+                        th:text="#{business_days.view.btn_add_order}"><i data-lucide="plus" class="inline-icon"></i> إضافة طلب
                         جديد</a>
                 </div>
 
@@ -250,7 +251,7 @@
                                     </optgroup>
                                 </select>
                                 <button type="submit" class="btn btn-secondary btn-sm"
-                                    th:text="#{business_days.view.bulk_assign_org}">🏢 إسناد لمؤسسه</button>
+                                    th:text="#{business_days.view.bulk_assign_org}"><i data-lucide="building-2" class="inline-icon"></i> إسناد لمؤسسه</button>
                             </form>
 
                             <!-- Bulk assign to courier -->
@@ -268,7 +269,23 @@
                                     </th:block>
                                 </select>
                                 <button type="submit" class="btn btn-primary btn-sm"
-                                    th:text="#{business_days.view.bulk_assign_courier}">🚚 إسناد للمندوب</button>
+                                    th:text="#{business_days.view.bulk_assign_courier}"><i data-lucide="truck" class="inline-icon"></i> إسناد للمندوب</button>
+                            </form>
+
+                            <!-- Bulk assign to vehicle -->
+                            <form id="bulkAssignVehicleForm" th:action="@{/trips/assign-from-day}" method="post"
+                                sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
+                                style="display: flex; gap: var(--space-2); align-items: center;">
+                                <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
+                                <input type="hidden" name="orderIds" id="orderIdsForVehicle" value="">
+                                <select name="vehicleId" class="form-control" style="width: 150px;" required>
+                                    <option value="">اختر شاحنة...</option>
+                                    <th:block th:if="${vehicles != null}">
+                                        <option th:each="v : ${vehicles}" th:value="${v.id}" th:text="${v.plateNumber}">
+                                        </option>
+                                    </th:block>
+                                </select>
+                                <button type="submit" class="btn btn-info btn-sm"><i data-lucide="truck" class="inline-icon"></i> إسناد لشاحنة</button>
                             </form>
 
                             <!-- Bulk assign to custody -->
@@ -278,7 +295,7 @@
                                 <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
                                 <input type="hidden" name="orderIds" id="orderIdsForCustody" value="">
                                 <button type="submit" class="btn btn-warning btn-sm"
-                                    th:text="#{business_days.view.bulk_assign_custody}">📦 إسناد لعهدة المخزن</button>
+                                    th:text="#{business_days.view.bulk_assign_custody}"><i data-lucide="package" class="inline-icon"></i> إسناد لعهدة المخزن</button>
                             </form>
 
                             <!-- التوزيع التلقائي -->
@@ -290,7 +307,7 @@
                                 <input type="hidden" name="selectedIds" id="orderIdsForAutoDist" value="">
                                 <button type="submit" class="btn btn-sm"
                                     style="background: linear-gradient(135deg, #10b981, #059669); color: white;"
-                                    th:text="#{auto_dist.btn_execute}">🤖 توزيع تلقائي</button>
+                                    th:text="#{auto_dist.btn_execute}"><i data-lucide="cpu" class="inline-icon"></i> توزيع تلقائي</button>
                             </form>
 
                             <!-- Bulk Print Labels (10x15) -->
@@ -300,19 +317,9 @@
                                 <input type="hidden" name="orderIds" id="orderIdsForPrint" value="">
                                 <button type="submit" class="btn btn-dark btn-sm"
                                     th:title="#{business_days.view.tooltip_thermal_print}"
-                                    th:text="#{global.btn_print}">🖨️ طباعة مجمعة (10x15)</button>
+                                    th:text="#{global.btn_print}"><i data-lucide="printer" class="inline-icon"></i> طباعة مجمعة (10x15)</button>
                             </form>
 
-                            <!-- Bulk Create Invoices -->
-                            <form id="bulkCreateInvoiceForm" th:action="@{/invoices/generate-for-orders}" method="post"
-                                sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'ACCOUNTANT')"
-                                style="display: flex; gap: var(--space-2); align-items: center;">
-                                <input type="hidden" name="businessDayId" th:value="${businessDay.id}">
-                                <input type="hidden" name="orderIds" id="orderIdsForInvoice" value="">
-                                <button type="submit" class="btn btn-sm"
-                                    style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: white;"
-                                    title="إنشاء فاتورة للطلبات المحددة">📄 إنشاء فاتورة</button>
-                            </form>
 
                             <!-- Bulk Send as Inquiry (Companies Only) -->
                             <th:block th:if="${organization.type.name() == 'COMPANY'}">
@@ -333,7 +340,7 @@
                                     <button type="submit" class="btn btn-sm"
                                         style="background: linear-gradient(135deg, #6366f1, #a855f7); color: white;"
                                         th:title="#{business_days.view.tooltip_inquiry_selected}"
-                                        th:text="#{global.btn_inquiry}">🔍 استعلام</button>
+                                        th:text="#{global.btn_inquiry}"><i data-lucide="search" class="inline-icon"></i> استعلام</button>
                                 </form>
 
                                 <form id="bulkSendInquiryAllForm" th:action="@{/orders/send-inquiry-all}" method="post"
@@ -344,7 +351,7 @@
                                     <button type="submit" class="btn btn-sm"
                                         style="background: linear-gradient(135deg, #8b5cf6, #d946ef); color: white;"
                                         th:title="#{business_days.view.tooltip_inquiry_all}"
-                                        th:text="#{global.btn_inquiry_all}">🔍 استعلام للكل</button>
+                                        th:text="#{global.btn_inquiry_all}"><i data-lucide="search" class="inline-icon"></i> استعلام للكل</button>
                                 </form>
                             </th:block>
                         </div>
@@ -395,6 +402,7 @@
                             var orderIdsForOffice = document.getElementById('orderIdsForOffice');
                             var orderIdsForCourier = document.getElementById('orderIdsForCourier');
                             var orderIdsForCustody = document.getElementById('orderIdsForCustody');
+                            var orderIdsForVehicle = document.getElementById('orderIdsForVehicle');
                             var orderIdsForPrint = document.getElementById('orderIdsForPrint');
                             var loader = document.getElementById('infiniteScrollLoader');
 
@@ -413,14 +421,13 @@
                                 if (orderIdsForOffice) orderIdsForOffice.value = idsStr;
                                 if (orderIdsForCourier) orderIdsForCourier.value = idsStr;
                                 if (orderIdsForCustody) orderIdsForCustody.value = idsStr;
+                                if (orderIdsForVehicle) orderIdsForVehicle.value = idsStr;
                                 if (orderIdsForPrint) orderIdsForPrint.value = idsStr;
 
                                 var orderIdsForInquiry = document.getElementById('orderIdsForInquiry');
                                 var orderIdsForInquiryAll = document.getElementById('orderIdsForInquiryAll');
-                                var orderIdsForInvoiceEl = document.getElementById('orderIdsForInvoice');
                                 if (orderIdsForInquiry) orderIdsForInquiry.value = idsStr;
                                 if (orderIdsForInquiryAll) orderIdsForInquiryAll.value = idsStr;
-                                if (orderIdsForInvoiceEl) orderIdsForInvoiceEl.value = idsStr;
 
                                 var orderIdsForAutoDist = document.getElementById('orderIdsForAutoDist');
                                 if (orderIdsForAutoDist) orderIdsForAutoDist.value = idsStr;
@@ -459,7 +466,7 @@
                                         if (loader) loader.style.display = 'block';
 
                                         var currentSearch = window.location.search;
-                                        var fetchUrl = window.location.pathname + '/matching-waiting-order-ids' + currentSearch;
+                                        var fetchUrl = window.location.pathname + '/matching-bulk-order-ids' + currentSearch;
 
                                         fetch(fetchUrl)
                                             .then(res => res.json())
@@ -524,6 +531,16 @@
                                 });
                             }
 
+                            var vehicleForm = document.getElementById('bulkAssignVehicleForm');
+                            if (vehicleForm) {
+                                vehicleForm.addEventListener('submit', function (e) {
+                                    if (!orderIdsForVehicle || !orderIdsForVehicle.value) {
+                                        e.preventDefault();
+                                        alert('يرجى تحديد طلبات أولاً');
+                                    }
+                                });
+                            }
+
                             var custodyForm = document.getElementById('bulkAssignCustodyForm');
                             if (custodyForm) {
                                 custodyForm.addEventListener('submit', function (e) {
@@ -571,21 +588,7 @@
                                 });
                             }
 
-                            // Invoice form validation
-                            var invoiceForm = document.getElementById('bulkCreateInvoiceForm');
-                            if (invoiceForm) {
-                                invoiceForm.addEventListener('submit', function (e) {
-                                    var orderIdsForInvoiceEl = document.getElementById('orderIdsForInvoice');
-                                    if (!orderIdsForInvoiceEl || !orderIdsForInvoiceEl.value) {
-                                        e.preventDefault();
-                                        alert('يرجى تحديد طلبات أولاً لإنشاء الفواتير');
-                                    } else {
-                                        if (!confirm('هل أنت متأكد من إنشاء فواتير للطلبات المحددة؟ سيتم إنشاء فاتورة منفصلة لكل طلب.')) {
-                                            e.preventDefault();
-                                        }
-                                    }
-                                });
-                            }
+
 
                             // Auto-distribution form validation
                             var autoDistForm = document.getElementById('autoDistributeForm');
@@ -717,8 +720,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

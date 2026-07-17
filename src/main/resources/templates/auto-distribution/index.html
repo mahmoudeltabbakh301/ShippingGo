@@ -22,6 +22,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -30,23 +31,23 @@
 
         <main class="main-content">
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span> <span th:text="${success}"></span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span> <span th:text="${error}"></span>
+                <i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🚚 <span th:text="#{auto_dist.title}">التوزيع التلقائي</span></h1>
+                    <h1 class="page-title"><i data-lucide="truck" class="inline-icon"></i> <span th:text="#{auto_dist.title}">التوزيع التلقائي</span></h1>
                     <p class="text-muted" th:text="#{auto_dist.subtitle}">إسناد الأوردرات تلقائياً للمناديب حسب المنطقة</p>
                 </div>
             </div>
 
             <!-- Smart Distribution Hint -->
             <div style="display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; margin-bottom: var(--space-4); border-radius: 12px; background: linear-gradient(135deg, rgba(33,150,243,0.08), rgba(33,150,243,0.03)); border: 1px solid rgba(33,150,243,0.2);">
-                <span style="font-size: 1.4rem; flex-shrink: 0; margin-top: 1px;">💡</span>
+                <span style="font-size: 1.4rem; flex-shrink: 0; margin-top: 1px;"><i data-lucide="lightbulb"></i></span>
                 <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7;">
                     <strong style="color: var(--text-primary);" th:text="#{auto_dist.smart_hint_title}">ملاحظة حول التوزيع الذكي</strong><br>
                     <span th:text="#{auto_dist.smart_hint_body}">يعتمد التوزيع التلقائي على تحديد المحافظة في الطلب كحد أدنى. الطلبات التي لا تحتوي على محافظة لن تدخل في التوزيع، وذلك لتجنب التشابه بين أسماء المناطق في المحافظات المختلفة. كلما كانت بيانات العنوان أكثر تفصيلاً (محافظة ← مركز ← منطقة)، كانت دقة التوزيع أعلى.</span>
@@ -59,7 +60,7 @@
 
                 <div th:if="${couriers == null or couriers.isEmpty()}" class="alert"
                     style="background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3);">
-                    <span>⚠️</span> <span th:text="#{auto_dist.no_couriers}">لا يوجد مناديب</span>
+                    <span><i data-lucide="alert-triangle"></i></span> <span th:text="#{auto_dist.no_couriers}">لا يوجد مناديب</span>
                 </div>
 
                 <form th:if="${couriers != null and !couriers.isEmpty()}"
@@ -106,7 +107,7 @@
 
             <!-- Custom Area Management -->
             <div class="card" style="margin-bottom: var(--space-4);">
-                <h3>📍 <span th:text="#{auto_dist.custom_areas_title}">إدارة المناطق المخصصة</span></h3>
+                <h3><i data-lucide="map-pin" class="inline-icon"></i> <span th:text="#{auto_dist.custom_areas_title}">إدارة المناطق المخصصة</span></h3>
                 <p style="color: var(--text-secondary); margin-bottom: 12px;" th:text="#{auto_dist.custom_areas_desc}">أضف مناطق أو قرى أو شوارع مخصصة للمراكز لتسهيل التوزيع</p>
 
                 <div style="display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 12px;">
@@ -139,7 +140,7 @@
                             placeholder="Kafr El Sheikh Selim" dir="ltr">
                     </div>
                     <button type="button" class="btn btn-primary" onclick="addCustomArea()"
-                        th:text="#{auto_dist.btn_add_area}">➕ إضافة</button>
+                        th:text="#{auto_dist.btn_add_area}"><i data-lucide="plus" class="inline-icon"></i> إضافة</button>
                 </div>
 
                 <div id="customAreaMessage" style="display: none;" class="alert"></div>
@@ -170,12 +171,12 @@
                                 <div style="font-size: 0.82rem; color: var(--text-secondary);">
                                     <span th:text="${entry.value.size()}">0</span>
                                     <span th:text="#{auto_dist.courier_zone_count}">منطقة</span>
-                                    <span th:if="${entry.key.phone}" style="margin-inline-start: 10px;">📱 <span th:text="${entry.key.phone}"></span></span>
+                                    <span th:if="${entry.key.phone}" style="margin-inline-start: 10px;"><i data-lucide="smartphone" class="inline-icon"></i> <span th:text="${entry.key.phone}"></span></span>
                                 </div>
                             </div>
                             <a th:href="@{/auto-distribution/courier/{id}(id=${entry.key.id})}"
                                 class="btn btn-sm btn-secondary"
-                                th:text="#{auto_dist.btn_details}">📋 تفاصيل</a>
+                                th:text="#{auto_dist.btn_details}"><i data-lucide="clipboard-list" class="inline-icon"></i> تفاصيل</a>
                         </div>
                         <!-- Courier Zones Table -->
                         <div class="table-container" style="border: none; margin: 0;">
@@ -220,7 +221,7 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
     <script th:inline="javascript">
@@ -267,7 +268,7 @@
                     areas.forEach(function (a) {
                         var opt = document.createElement('option');
                         opt.value = a.name;
-                        opt.textContent = a.name + (a.custom ? ' ✦' : '');
+                        opt.textContent = a.name + (a.custom ? ' <i data-lucide="sparkle" class="inline-icon"></i>' : '');
                         if (a.custom) opt.style.color = 'var(--primary)';
                         areaSelect.appendChild(opt);
                     });
@@ -300,7 +301,7 @@
             var msg = document.getElementById('customAreaMessage');
             msg.style.display = 'block';
             msg.className = 'alert ' + (isError ? 'alert-danger' : 'alert-success');
-            msg.innerHTML = (isError ? '✕ ' : '✓ ') + text;
+            msg.innerHTML = (isError ? '<i data-lucide="x" class="inline-icon"></i> ' : '<i data-lucide="check" class="inline-icon"></i> ') + text;
             setTimeout(function() { msg.style.display = 'none'; }, 4000);
         }
 
@@ -348,6 +349,7 @@
             }
         });
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'رحلة ' + ${trip.code} + ' - ShippingGo'">تفاصيل الرحلة</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .trip-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .trip-info-item { background: var(--bg-secondary); padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .trip-info-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
+        .trip-info-value { font-size: 15px; font-weight: 600; }
+
+        .trip-status-badge { display: inline-flex; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .trip-status-badge.preparing { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .trip-status-badge.in-transit { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .trip-status-badge.arrived { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+        .trip-status-badge.completed { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+        .trip-status-badge.returning { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .trip-status-badge.returned { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+        .trip-status-badge.cancelled { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+
+        /* Timeline */
+        .trip-timeline { display: flex; align-items: center; gap: 0; margin-bottom: 24px; flex-wrap: wrap; }
+        .timeline-step { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 10px;
+            background: var(--bg-secondary); border: 1px solid var(--border-color); font-size: 13px; font-weight: 500; }
+        .timeline-step.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .timeline-step.done { background: rgba(16, 185, 129, 0.1); color: #10b981; border-color: rgba(16, 185, 129, 0.3); }
+        .timeline-connector { width: 30px; height: 2px; background: var(--border-color); flex-shrink: 0; }
+        .timeline-connector.done { background: #10b981; }
+
+        .status-actions { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+        .add-orders-form { margin-bottom: 16px; }
+        .add-orders-form textarea { width: 100%; }
+    </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><i data-lucide="map" class="inline-icon"></i> رحلة <span style="font-family: monospace;" th:text="${trip.code}"></span></h1>
+                    <p class="text-muted">
+                        <span th:text="${trip.originOrganization.name}"></span>
+                        <span th:if="${trip.destinationOrganization != null}"> → <span th:text="${trip.destinationOrganization.name}"></span></span>
+                    </p>
+                </div>
+                <a th:href="@{/trips}" class="btn btn-secondary">← كل الرحلات</a>
+            </div>
+
+            <!-- Status Timeline -->
+            <div class="trip-timeline">
+                <div class="timeline-step"
+                     th:classappend="${trip.status.name() == 'PREPARING' ? 'active' : (trip.status.ordinal() > 0 ? 'done' : '')}">
+                    <i data-lucide="package" class="inline-icon"></i> تجهيز
+                </div>
+                <div class="timeline-connector" th:classappend="${trip.status.ordinal() > 0 ? 'done' : ''}"></div>
+                <div class="timeline-step"
+                     th:classappend="${trip.status.name() == 'IN_TRANSIT' ? 'active' : (trip.status.ordinal() > 1 ? 'done' : '')}">
+                    <i data-lucide="route" class="inline-icon"></i> في الطريق
+                </div>
+                <div class="timeline-connector" th:classappend="${trip.status.ordinal() > 1 ? 'done' : ''}"></div>
+                <div class="timeline-step"
+                     th:classappend="${trip.status.name() == 'ARRIVED' ? 'active' : (trip.status.ordinal() > 2 ? 'done' : '')}">
+                    <i data-lucide="map-pin" class="inline-icon"></i> وصلت
+                </div>
+                <div class="timeline-connector" th:classappend="${trip.status.ordinal() > 2 ? 'done' : ''}"></div>
+                <div class="timeline-step"
+                     th:classappend="${trip.status.name() == 'COMPLETED' ? 'active done' : (trip.status.name() == 'RETURNING' ? 'done' : (trip.status.name() == 'RETURNED' ? 'done' : ''))}">
+                    <i data-lucide="check-circle-2" class="inline-icon"></i> مكتمل
+                </div>
+                <div class="timeline-connector" th:classappend="${trip.status.ordinal() > 3 ? 'done' : ''}"></div>
+                <div class="timeline-step"
+                     th:classappend="${trip.status.name() == 'RETURNING' ? 'active' : (trip.status.name() == 'RETURNED' ? 'done' : '')}">
+                    <i data-lucide="repeat" class="inline-icon"></i> رجوع
+                </div>
+                <div class="timeline-connector" th:classappend="${trip.status.name() == 'RETURNED' ? 'done' : ''}"></div>
+                <div class="timeline-step" th:classappend="${trip.status.name() == 'RETURNED' ? 'active done' : ''}">
+                    <i data-lucide="flag-triangle-right" class="inline-icon"></i> تم الرجوع
+                </div>
+            </div>
+
+            <!-- Status Actions (conditional based on role and trip ownership) -->
+            <div class="status-actions" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                <span style="font-weight: 600; color: var(--text-secondary);">تحديث الحالة:</span>
+
+                <!-- PREPARING → IN_TRANSIT (Origin Only) -->
+                <form th:if="${trip.status.name() == 'PREPARING' and isOrigin}" th:action="@{/trips/{id}/status(id=${trip.id})}" method="post" style="display: inline;">
+                    <input type="hidden" name="status" value="IN_TRANSIT">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('هل تريد بدء الرحلة (الانطلاق)؟')"><i data-lucide="route" class="inline-icon"></i> انطلاق</button>
+                </form>
+
+                <!-- PREPARING → CANCELLED (Origin Only) -->
+                <form th:if="${trip.status.name() == 'PREPARING' and isOrigin}" th:action="@{/trips/{id}/cancel(id=${trip.id})}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من رغبتك في إلغاء الرحلة؟ سيتم تفريغ الأوردرات المربوطة بها لتتمكن من إسنادها لشاحنة أخرى.')"><i data-lucide="x-circle" class="inline-icon"></i> إلغاء الرحلة</button>
+                </form>
+
+                <!-- IN_TRANSIT → ARRIVED (Origin for Local, Destination for Assigned) -->
+                <form th:if="${trip.status.name() == 'IN_TRANSIT' and ((trip.destinationOrganization == null and isOrigin) or (trip.destinationOrganization != null and isDestination))}" th:action="@{/trips/{id}/status(id=${trip.id})}" method="post" style="display: inline;">
+                    <input type="hidden" name="status" value="ARRIVED">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('هل وصلت الشاحنة للوجهة وتم استلامها؟')"><i data-lucide="map-pin" class="inline-icon"></i> تأكيد الاستلام والوصول</button>
+                </form>
+
+                <!-- ARRIVED → COMPLETED or RETURNING -->
+                <th:block th:if="${trip.status.name() == 'ARRIVED'}">
+                    <!-- COMPLETED (Origin Only) -->
+                    <form th:if="${isOrigin}" th:action="@{/trips/{id}/status(id=${trip.id})}" method="post" style="display: inline;">
+                        <input type="hidden" name="status" value="COMPLETED">
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('هل تم إغلاق الرحلة بالكامل؟')"><i data-lucide="check-circle-2" class="inline-icon"></i> إغلاق نهائي</button>
+                    </form>
+                    
+                    <!-- RETURNING (Origin for Local, Destination for Assigned) -->
+                    <form th:if="${(trip.destinationOrganization == null and isOrigin) or (trip.destinationOrganization != null and isDestination)}" th:action="@{/trips/{id}/status(id=${trip.id})}" method="post" style="display: inline;">
+                        <input type="hidden" name="status" value="RETURNING">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('هل تريد بدء رحلة العودة بالمرتجعات؟')"><i data-lucide="repeat" class="inline-icon"></i> بدء الرجوع</button>
+                    </form>
+                </th:block>
+
+                <!-- RETURNING → RETURNED (Origin Only) -->
+                <form th:if="${trip.status.name() == 'RETURNING' and isOrigin}" th:action="@{/trips/{id}/status(id=${trip.id})}" method="post" style="display: inline;">
+                    <input type="hidden" name="status" value="RETURNED">
+                    <button type="submit" class="btn btn-primary" onclick="return confirm('هل استلمت الشاحنة والمرتجعات؟')"><i data-lucide="flag-triangle-right" class="inline-icon"></i> تأكيد الاستلام النهائي</button>
+                </form>
+            </div>
+
+            <!-- Trip Info -->
+            <div class="trip-info-grid">
+                <div class="trip-info-item">
+                    <div class="trip-info-label">الشاحنة</div>
+                    <div class="trip-info-value" th:text="${trip.vehicle.plateNumber}"></div>
+                    <small th:if="${trip.vehicle.driverName}" th:text="${trip.vehicle.driverName}" style="color: var(--text-tertiary);"></small>
+                </div>
+                <div class="trip-info-item">
+                    <div class="trip-info-label">الحالة</div>
+                    <div>
+                        <span class="trip-status-badge"
+                              th:classappend="${trip.status.name() == 'PREPARING' ? 'preparing' : (trip.status.name() == 'IN_TRANSIT' ? 'in-transit' : (trip.status.name() == 'ARRIVED' ? 'arrived' : (trip.status.name() == 'RETURNING' ? 'returning' : (trip.status.name() == 'CANCELLED' ? 'cancelled' : 'completed'))))}"
+                              th:text="${trip.status.arabicName}"></span>
+                    </div>
+                </div>
+                <div class="trip-info-item">
+                    <div class="trip-info-label">من</div>
+                    <div class="trip-info-value" th:text="${trip.originOrganization.name}"></div>
+                </div>
+                <div class="trip-info-item">
+                    <div class="trip-info-label">إلى</div>
+                    <div class="trip-info-value" th:text="${trip.destinationOrganization != null ? trip.destinationOrganization.name : '—'}"></div>
+                </div>
+                <div class="trip-info-item">
+                    <div class="trip-info-label">التاريخ</div>
+                    <div class="trip-info-value" th:text="${#temporals.format(trip.tripDate, 'yyyy-MM-dd')}"></div>
+                </div>
+                <div class="trip-info-item">
+                    <div class="trip-info-label">عدد الطلبات</div>
+                    <div class="trip-info-value" th:text="${trip.orderCount}"></div>
+                </div>
+                <div class="trip-info-item" th:if="${trip.departedAt != null}">
+                    <div class="trip-info-label">وقت المغادرة</div>
+                    <div class="trip-info-value" th:text="${#temporals.format(trip.departedAt, 'HH:mm')}"></div>
+                </div>
+                <div class="trip-info-item" th:if="${trip.arrivedAt != null}">
+                    <div class="trip-info-label">وقت الوصول</div>
+                    <div class="trip-info-value" th:text="${#temporals.format(trip.arrivedAt, 'HH:mm')}"></div>
+                </div>
+            </div>
+
+            <!-- Add Orders (only during PREPARING) -->
+            <div class="card" th:if="${trip.status.name() == 'PREPARING' and isOrigin}" style="margin-bottom: 24px;">
+                <div class="card-header"><h3 class="card-title"><i data-lucide="package" class="inline-icon"></i> إضافة طلبات للرحلة</h3></div>
+                <div style="padding: 16px;">
+                    <form th:action="@{/trips/{id}/add-orders(id=${trip.id})}" method="post" class="add-orders-form">
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; font-size: 13px;">أرقام الطلبات (IDs) مفصولة بفاصلة</label>
+                            <textarea name="orderIds" class="v-form-input" rows="2" placeholder="مثال: 101, 102, 103" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 14px;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">إضافة</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Trip Orders -->
+            <div class="card">
+                <div class="card-header"><h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> طلبات الرحلة</h3></div>
+                <div th:if="${tripOrders == null or tripOrders.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    لا توجد طلبات مضافة لهذه الرحلة بعد.
+                </div>
+                <div th:if="${tripOrders != null and !tripOrders.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>كود الطلب</th>
+                                <th>المستلم</th>
+                                <th>العنوان</th>
+                                <th>وقت التحميل</th>
+                                <th>نوع</th>
+                                <th th:if="${trip.status.name() == 'PREPARING' and isOrigin}">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="to : ${tripOrders}">
+                                <td style="font-family: monospace; font-weight: 600;" th:text="${to.order.code}"></td>
+                                <td th:text="${to.order.recipientName}"></td>
+                                <td th:text="${to.order.recipientAddress}" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;"></td>
+                                <td th:text="${#temporals.format(to.loadedAt, 'HH:mm')}"></td>
+                                <td>
+                                    <span th:if="${!to.isReturn}" class="badge badge-primary">شحن</span>
+                                    <span th:if="${to.isReturn}" class="badge badge-warning">مرتجع</span>
+                                </td>
+                                <td th:if="${trip.status.name() == 'PREPARING' and isOrigin}">
+                                    <form th:action="@{/trips/{id}/remove-order/{orderId}(id=${trip.id}, orderId=${to.order.id})}" method="post" style="display: inline;"
+                                          onsubmit="return confirm('هل تريد إزالة هذا الطلب من الرحلة؟');">
+                                        <button type="submit" class="btn btn-sm btn-danger">إزالة</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div th:if="${trip.notes != null and !trip.notes.isEmpty()}" class="card" style="margin-top: 16px;">
+                <div class="card-header"><h3 class="card-title"><i data-lucide="pencil" class="inline-icon"></i> ملاحظات</h3></div>
+                <div style="padding: 16px; color: var(--text-secondary); line-height: 1.7;" th:text="${trip.notes}"></div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
+</body>
+</html>

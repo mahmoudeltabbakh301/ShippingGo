@@ -40,17 +40,18 @@
         .org-select-group { display: none; }
         .org-select-group.visible { display: block; }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">📢 الرسائل والإشعارات</h1>
+                    <h1 class="page-title"><i data-lucide="megaphone" class="inline-icon"></i> الرسائل والإشعارات</h1>
                     <p class="page-subtitle">إرسال إشعارات وإدارة وضع الصيانة</p>
                 </div>
             </div>
@@ -60,20 +61,20 @@
                 <div style="flex: 1;">
                     <div class="maintenance-status">
                         <span class="dot" th:classappend="${maintenanceMode ? 'on' : 'off'}"></span>
-                        <span th:text="${maintenanceMode ? '🔧 وضع الصيانة مفعل' : '✅ المنصة تعمل بشكل طبيعي'}"></span>
+                        <span th:utext="${maintenanceMode ? '<i data-lucide=&quot;wrench&quot; class=&quot;inline-icon&quot;></i> وضع الصيانة مفعل' : '<i data-lucide="check-circle-2" class="inline-icon"></i> المنصة تعمل بشكل طبيعي'}"></span>
                     </div>
                 </div>
                 <form th:action="@{/super-admin/maintenance/toggle}" method="post" style="display: flex; gap: var(--space-2); align-items: center;">
                     <input type="hidden" name="enabled" th:value="${!maintenanceMode}">
                     <input type="text" name="message" class="form-input" placeholder="رسالة الصيانة (اختياري)" style="width: 250px;" th:if="${!maintenanceMode}">
                     <button type="submit" class="btn" th:classappend="${maintenanceMode ? 'btn-success' : 'btn-danger'}"
-                            th:text="${maintenanceMode ? '🟢 إلغاء الصيانة' : '🔴 تفعيل الصيانة'}"></button>
+                            th:utext="${maintenanceMode ? '<i data-lucide=&quot;circle-dot&quot; class=&quot;inline-icon&quot;></i> إلغاء الصيانة' : '<i data-lucide="circle-dot" class="inline-icon"></i> تفعيل الصيانة'}"></button>
                 </form>
             </div>
 
             <!-- فورم إرسال رسالة -->
             <div class="broadcast-form">
-                <div class="broadcast-form-title">✉️ إرسال رسالة جديدة</div>
+                <div class="broadcast-form-title"><i data-lucide="mail" class="inline-icon"></i> إرسال رسالة جديدة</div>
                 <form th:action="@{/super-admin/broadcasts/send}" method="post">
                     <div class="form-row">
                         <div class="form-group">
@@ -104,12 +105,12 @@
                         <label class="form-label">المحتوى</label>
                         <textarea class="form-textarea" name="body" required placeholder="نص الرسالة..."></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">📤 إرسال الرسالة</button>
+                    <button type="submit" class="btn btn-primary"><i data-lucide="upload" class="inline-icon"></i> إرسال الرسالة</button>
                 </form>
             </div>
 
             <!-- قائمة الرسائل -->
-            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: var(--space-3);">📋 سجل الرسائل</h2>
+            <h2 style="font-size: 1.1rem; font-weight: 700; margin-bottom: var(--space-3);"><i data-lucide="clipboard-list" class="inline-icon"></i> سجل الرسائل</h2>
             <div class="broadcast-list">
                 <div th:if="${#lists.isEmpty(broadcasts)}" style="text-align: center; padding: var(--space-6); color: var(--text-muted);">
                     لا توجد رسائل مرسلة بعد
@@ -130,14 +131,14 @@
                         </div>
                     </div>
                     <form th:action="@{'/super-admin/broadcasts/' + ${b.id} + '/delete'}" method="post" th:if="${b.active}">
-                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد؟')">🗑️</button>
+                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد؟')"><i data-lucide="trash-2" class="inline-icon"></i></button>
                     </form>
                     <span th:if="${!b.active}" style="color: var(--text-muted); font-size: 0.8rem;">محذوفة</span>
                 </div>
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
     <script>
@@ -147,5 +148,6 @@
             orgGroup.classList.toggle('visible', sel.value === 'SPECIFIC_ORG');
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

@@ -105,6 +105,7 @@
             box-shadow: var(--shadow-md);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -128,7 +129,7 @@
                     المكافأة: <strong th:text="${setting.rewardType?.name() == 'FIXED' ? setting.rewardValue + ' (مبلغ ثابت)' : setting.rewardValue + '% (نسبة مئوية)'}"></strong>
                 </div>
                 <div style="color: rgba(255,255,255,0.9); margin-top: 5px;" th:if="${progress >= 100}">
-                    ✅ قيمة المكافأة المستحقة: <strong th:text="${rewardAmount} + ' ج.م'"></strong>
+                    <i data-lucide="check-circle-2" class="inline-icon"></i> قيمة المكافأة المستحقة: <strong th:text="${rewardAmount} + ' ج.م'"></strong>
                 </div>
                 <div style="color: rgba(255,255,255,0.6); margin-top: 5px; font-size: 0.9em;" th:if="${progress < 100}">
                     (قيمة المكافأة المحسوبة حتى الآن: <span th:text="${setting.rewardType?.name() == 'FIXED' ? setting.rewardValue : (totalDelivered * setting.rewardValue / 100.0)}"></span> ج.م تضاف فور تحقيق الهدف)
@@ -186,7 +187,8 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

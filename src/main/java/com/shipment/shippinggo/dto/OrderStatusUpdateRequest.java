@@ -1,6 +1,7 @@
 package com.shipment.shippinggo.dto;
 
 import com.shipment.shippinggo.enums.OrderStatus;
+import com.shipment.shippinggo.enums.RejectionReason;
 import lombok.Data;
 import java.math.BigDecimal;
 
@@ -12,4 +13,6 @@ public class OrderStatusUpdateRequest {
     private Integer deliveredPieces;
     private BigDecimal partialDeliveryAmount;
     private String notes;
+    private RejectionReason rejectionReason;
+    private String rejectionReasonNotes;
 }

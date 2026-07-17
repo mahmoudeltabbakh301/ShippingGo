@@ -81,6 +81,7 @@
             }
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -89,18 +90,18 @@
 
         <main class="main-content">
             <!-- Alerts -->
-            <div th:if="${success}" class="alert alert-success"><span>✓</span><span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span><span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
 
             <div class="order-container">
                 <div class="page-header">
                     <h1 class="page-title"
                         style="display: flex; align-items: center; gap: var(--space-2); font-size: 1.5rem;">
-                        <span th:text="#{orders.view.title}">👁 تفاصيل الطلب:</span>
+                        <span th:text="#{orders.view.title}"><i data-lucide="eye" class="inline-icon"></i> تفاصيل الطلب:</span>
                         <span id="orderCodeValue">[[${order.code ?: order.id}]]</span>
                         <button type="button" class="btn btn-sm btn-secondary"
                             onclick="copyToClipboard('orderCodeValue', this)" th:title="#{orders.view.copy_code}"
-                            style="padding: 3px 6px; font-size: 0.75em;">📋</button>
+                            style="padding: 3px 6px; font-size: 0.75em;"><i data-lucide="clipboard-list" class="inline-icon"></i></button>
                     </h1>
                     <a th:if="${businessDayId != null}" th:href="@{/business-days/{id}(id=${businessDayId})}"
                         class="btn btn-secondary btn-sm" th:text="#{orders.new.btn_back_to_day}">⬅ رجوع لليوم</a>
@@ -115,7 +116,7 @@
                 <!-- ===== Order Details Card ===== -->
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title" th:text="#{orders.view.info_title}" style="font-size: 1.1rem;">📦 معلومات
+                        <h3 class="card-title" th:text="#{orders.view.info_title}" style="font-size: 1.1rem;"><i data-lucide="package" class="inline-icon"></i> معلومات
                             الشحنة</h3>
                         <span class="badge"
                             th:classappend="${order.status.name() == 'DELIVERED' ? 'badge-delivered' : 
@@ -128,16 +129,22 @@
                     </div>
 
                     <!-- External Source Badge (for orders from external integrations) -->
-                    <div th:if="${order.sourcePlatform != null}" 
-                         style="margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); background: linear-gradient(to right, var(--primary-50), var(--bg-secondary)); border-radius: var(--radius-sm); border: 1px solid var(--primary-200); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
+                    <div th:if="${order.sourcePlatform != null}"
+                        style="margin-bottom: var(--space-3); padding: var(--space-2) var(--space-3); background: linear-gradient(to right, var(--primary-50), var(--bg-secondary)); border-radius: var(--radius-sm); border: 1px solid var(--primary-200); display: flex; align-items: center; gap: var(--space-3); flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: var(--space-2);">
-                            <span style="font-size: 1.1rem;">🔌</span>
-                            <span style="font-weight: 600; font-size: 0.85rem;" th:text="#{orders.view.source_platform}">المصدر:</span>
-                            <span class="badge badge-info" th:text="${order.sourcePlatform.displayName}">اسم المنصة</span>
+                            <span style="font-size: 1.1rem;"><i data-lucide="plug"></i></span>
+                            <span style="font-weight: 600; font-size: 0.85rem;"
+                                th:text="#{orders.view.source_platform}">المصدر:</span>
+                            <span class="badge badge-info" th:text="${order.sourcePlatform.displayName}">اسم
+                                المنصة</span>
                         </div>
-                        <div th:if="${order.externalOrderId != null}" style="display: flex; align-items: center; gap: var(--space-2);">
-                            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);" th:text="#{orders.view.external_id}">الرقم الخارجي:</span>
-                            <code style="background: var(--bg-secondary); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em;" th:text="${order.externalOrderId}"></code>
+                        <div th:if="${order.externalOrderId != null}"
+                            style="display: flex; align-items: center; gap: var(--space-2);">
+                            <span style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);"
+                                th:text="#{orders.view.external_id}">الرقم الخارجي:</span>
+                            <code
+                                style="background: var(--bg-secondary); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em;"
+                                th:text="${order.externalOrderId}"></code>
                         </div>
                     </div>
 
@@ -177,7 +184,8 @@
                                     onchange="onEditGovChange(this.value)">
                                     <option value="" th:text="#{orders.view.select_governorate}">غير محدد</option>
                                     <option th:each="gov : ${governorates}" th:value="${gov}"
-                                        th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}" th:selected="${order.governorate == gov}"></option>
+                                        th:text="${#locale.language == 'en' ? gov.englishName : gov.arabicName}"
+                                        th:selected="${order.governorate == gov}"></option>
                                 </select>
                             </div>
 
@@ -239,20 +247,23 @@
                             </div>
 
                             <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</label>
+                                <label class="form-label" style="color: var(--accent-1);"
+                                    th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.partialDeliveryAmount}"></p>
                             </div>
 
                             <div class="form-group" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
+                                <label class="form-label" style="color: var(--accent-1);"
+                                    th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.deliveredPieces}"></p>
                             </div>
 
                             <div class="form-group"
                                 th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
-                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.collected_amount}">المبلغ المحصل الفعلي</label>
+                                <label class="form-label" style="color: var(--accent-1);"
+                                    th:text="#{orders.view.collected_amount}">المبلغ المحصل الفعلي</label>
                                 <p style="font-weight: 600; padding: var(--space-2); background: var(--dark-surface); border-radius: var(--radius-sm);"
                                     th:text="${order.collectedAmount}"></p>
                             </div>
@@ -265,6 +276,41 @@
                                     th:placeholder="#{orders.view.rejection_payment_placeholder}">
                             </div>
 
+                            <div class="form-group" id="rejectionReasonGroup"
+                                th:style="${
+                                    (order.status.name() == 'REFUSED' || order.status.name() == 'CANCELLED' || order.status.name() == 'DEFERRED' || order.status.name() == 'PARTIAL_DELIVERY' || order.rejectionReason != null)
+                                    ? '' : 'display: none;'}">
+                                <label class="form-label">سبب الرفض/الإلغاء/التأجيل</label>
+                                <select name="rejectionReason" class="form-control" id="rejectionReasonSelect"
+                                    onchange="toggleReasonNotes()">
+                                    <option value="">-- اختر السبب --</option>
+                                    <option value="CUSTOMER_NOT_AVAILABLE" th:selected="${order.rejectionReason?.name() == 'CUSTOMER_NOT_AVAILABLE'}">العميل غير متاح</option>
+                                    <option value="WRONG_ADDRESS" th:selected="${order.rejectionReason?.name() == 'WRONG_ADDRESS'}">عنوان خاطئ</option>
+                                    <option value="CUSTOMER_REFUSED" th:selected="${order.rejectionReason?.name() == 'CUSTOMER_REFUSED'}">العميل رفض الاستلام</option>
+                                    <option value="CUSTOMER_CHANGED_MIND" th:selected="${order.rejectionReason?.name() == 'CUSTOMER_CHANGED_MIND'}">العميل غيّر رأيه</option>
+                                    <option value="DAMAGED_PRODUCT" th:selected="${order.rejectionReason?.name() == 'DAMAGED_PRODUCT'}">المنتج تالف</option>
+                                    <option value="WRONG_PRODUCT" th:selected="${order.rejectionReason?.name() == 'WRONG_PRODUCT'}">منتج خاطئ</option>
+                                    <option value="PRICE_DISPUTE" th:selected="${order.rejectionReason?.name() == 'PRICE_DISPUTE'}">خلاف على السعر</option>
+                                    <option value="DUPLICATE_ORDER" th:selected="${order.rejectionReason?.name() == 'DUPLICATE_ORDER'}">طلب مكرر</option>
+                                    <option value="OUT_OF_AREA" th:selected="${order.rejectionReason?.name() == 'OUT_OF_AREA'}">خارج النطاق</option>
+                                    <option value="PHONE_UNREACHABLE" th:selected="${order.rejectionReason?.name() == 'PHONE_UNREACHABLE'}">الهاتف مغلق</option>
+                                    <option value="DEFERRED_BY_CUSTOMER" th:selected="${order.rejectionReason?.name() == 'DEFERRED_BY_CUSTOMER'}">العميل طلب تأجيل</option>
+                                    <option value="DEFERRED_BY_COURIER" th:selected="${order.rejectionReason?.name() == 'DEFERRED_BY_COURIER'}">المندوب طلب تأجيل</option>
+                                    <option value="EVASION" th:selected="${order.rejectionReason?.name() == 'EVASION'}">التهرب</option>
+                                    <option value="OTHER" th:selected="${order.rejectionReason?.name() == 'OTHER'}">سبب آخر</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="rejectionReasonNotesGroup"
+                                th:style="${
+                                    (order.rejectionReason != null && order.rejectionReason.name() == 'OTHER') || (order.rejectionReasonNotes != null && !order.rejectionReasonNotes.isEmpty())
+                                    ? '' : 'display: none;'}">
+                                <label class="form-label">تفاصيل السبب</label>
+                                <textarea name="rejectionReasonNotes" class="form-control" rows="2"
+                                    placeholder="اكتب تفاصيل السبب هنا..."
+                                    th:text="${order.rejectionReasonNotes}"></textarea>
+                            </div>
+
                             <div class="form-group" style="grid-column: span 2;">
                                 <label class="form-label" th:text="#{orders.view.notes}">ملاحظات</label>
                                 <textarea name="notes" class="form-control" rows="2" th:text="${order.notes}"
@@ -272,7 +318,7 @@
                             </div>
 
                             <div style="grid-column: span 2;">
-                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}">💾
+                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}"><i data-lucide="save" class="inline-icon"></i>
                                     حفظ التعديلات</button>
                             </div>
                         </div>
@@ -306,8 +352,9 @@
                                         th:text="${order.recipientPhone} ?: '-'"></p>
                                     <button th:if="${order.recipientPhone != null}" type="button"
                                         class="btn btn-sm btn-secondary"
-                                        onclick="copyToClipboard('phoneFollowUp', this)" th:title="#{orders.view.copy_phone_tooltip}"
-                                        style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
+                                        onclick="copyToClipboard('phoneFollowUp', this)"
+                                        th:title="#{orders.view.copy_phone_tooltip}"
+                                        style="padding: 2px 6px; font-size: 0.75em; line-height: 1;"><i data-lucide="clipboard-list" class="inline-icon"></i></button>
                                 </div>
                             </div>
                             <div class="detail-item">
@@ -375,7 +422,7 @@
                                     th:placeholder="#{orders.view.notes_placeholder}"></textarea>
                             </div>
                             <div style="grid-column: span 2;">
-                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}">💾
+                                <button type="submit" class="btn btn-primary" th:text="#{orders.btn.save_changes}"><i data-lucide="save" class="inline-icon"></i>
                                     حفظ التعديلات</button>
                             </div>
                         </div>
@@ -401,7 +448,7 @@
                                 <button th:if="${order.recipientPhone != null}" type="button"
                                     class="btn btn-sm btn-secondary" onclick="copyToClipboard('phoneReadOnly', this)"
                                     th:title="#{orders.view.copy_phone_tooltip}"
-                                    style="padding: 2px 6px; font-size: 0.75em; line-height: 1;">📋</button>
+                                    style="padding: 2px 6px; font-size: 0.75em; line-height: 1;"><i data-lucide="clipboard-list" class="inline-icon"></i></button>
                             </div>
                         </div>
                         <div class="detail-item">
@@ -434,17 +481,20 @@
                         </div>
 
                         <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);"
+                                th:text="#{orders.view.delivered_pieces}">القطع المسلمة</p>
                             <p class="detail-value-text">[[${order.deliveredPieces}]]</p>
                         </div>
                         <div class="detail-item" th:if="${order.status.name() == 'PARTIAL_DELIVERY'}">
-                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);"
+                                th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام الجزئي</p>
                             <p class="detail-value-text">[[${order.partialDeliveryAmount}]]</p>
                         </div>
 
                         <div class="detail-item"
                             th:if="${order.collectedAmount != null && order.collectedAmount != order.amount}">
-                            <p class="detail-label-text" style="color: var(--accent-1);" th:text="#{orders.view.actual_collected_amount}">المبلغ المحصل الفعلي</p>
+                            <p class="detail-label-text" style="color: var(--accent-1);"
+                                th:text="#{orders.view.actual_collected_amount}">المبلغ المحصل الفعلي</p>
                             <p class="detail-value-text">[[${order.collectedAmount}]]</p>
                         </div>
                         <div class="detail-item"
@@ -452,12 +502,21 @@
                             <p class="detail-label-text" th:text="#{orders.view.rejection_payment}">مدفوع للرفض</p>
                             <p style="font-weight: 600; color: var(--danger-400);">[[${order.rejectionPayment}]]</p>
                         </div>
+                        <div class="detail-item" th:if="${order.rejectionReason != null}">
+                            <p class="detail-label-text">سبب الرفض/الإلغاء</p>
+                            <p style="font-weight: 600; color: var(--warning-400);">[[${order.rejectionReason.arabicName}]]</p>
+                        </div>
+                        <div class="detail-item" th:if="${order.rejectionReasonNotes != null && !order.rejectionReasonNotes.isEmpty()}">
+                            <p class="detail-label-text">تفاصيل السبب</p>
+                            <p class="detail-value-text">[[${order.rejectionReasonNotes}]]</p>
+                        </div>
                         <div class="detail-item">
                             <p class="detail-label-text" th:text="#{orders.view.current_courier}">المندوب الحالي</p>
                             <p class="detail-value-text" th:if="${order.assignedToCourier != null}">
                                 <span th:text="${order.assignedToCourier.fullName}"></span>
                                 <span th:if="${order.assignedToCourier.isVirtual()}"
-                                    style="color: #e65100; font-size: 0.8em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                                    style="color: #e65100; font-size: 0.8em;"
+                                    title="مندوب افتراضي - لا يمكنه تحديث الحالات"><i data-lucide="ban"></i></span>
                             </p>
                             <p class="detail-value-text" th:if="${order.assignedToCourier == null}"
                                 th:text="#{orders.view.unassigned}"></p>
@@ -479,19 +538,27 @@
 
                     <!-- QR Code & Status Update -->
                     <div class="card">
-                        <div class="card-header" style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
+                        <div class="card-header"
+                            style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);">
                             <h4 class="card-title" style="margin: 0; font-size: 1rem;"
                                 th:text="#{orders.view.summary_title}">ملخص الطلب</h4>
-                            <a th:href="@{/orders/{id}/label(id=${order.id})}" target="_blank"
-                                class="btn btn-sm btn-secondary" style="padding: 3px 8px; font-size: 0.8em;">
-                                <span th:text="#{orders.btn.print_label}">🖨 طباعة</span>
-                            </a>
+                            <div style="display: flex; gap: var(--space-2); align-items: center;">
+                                <a th:href="@{/orders/{id}/label(id=${order.id})}" target="_blank"
+                                    class="btn btn-sm btn-secondary" style="padding: 3px 8px; font-size: 0.8em;">
+                                    <span th:text="#{orders.btn.print_label}"><i data-lucide="printer" class="inline-icon"></i> طباعة</span>
+                                </a>
+                            </div>
                         </div>
                         <div style="text-align: center; margin-bottom: var(--space-3);">
                             <img th:src="@{/api/orders/{code}/qr-image(code=${order.code})}" alt="QR Code"
                                 style="max-width: 100px;">
                             <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: var(--space-1);"
                                 th:text="${order.code}"></p>
+                        </div>
+                        <div th:if="${order.rejectionReason != null}" style="margin-bottom: var(--space-3); padding: var(--space-2); background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border-color); text-align: center;">
+                            <p style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 4px;" th:text="#{orders.view.rejection_reason_title}">سبب المرتجع / الرفض</p>
+                            <p style="font-weight: bold; color: var(--warning-500); margin: 0;">[[${order.rejectionReason.arabicName}]]</p>
+                            <p th:if="${order.rejectionReasonNotes != null && !order.rejectionReasonNotes.isEmpty()}" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; margin-bottom: 0;">[[${order.rejectionReasonNotes}]]</p>
                         </div>
                         <form th:action="@{/orders/{id}/update-status(id=${order.id})}" method="post"
                             sec:authorize="hasAnyRole('ADMIN', 'MANAGER', 'FOLLOW_UP', 'COURIER')">
@@ -507,11 +574,12 @@
                                 </select>
                             </div>
                             <div class="form-group" id="partialDeliveryGroup" style="display: none;">
-                                <label class="form-label" style="color: var(--accent-1);" th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
+                                <label class="form-label" style="color: var(--accent-1);"
+                                    th:text="#{orders.view.delivered_pieces}">القطع المسلمة</label>
                                 <input type="number" name="deliveredPieces" class="form-control" min="1"
                                     th:value="${order.deliveredPieces}">
-                                <label class="form-label"
-                                    style="color: var(--accent-1); margin-top: var(--space-2);" th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام
+                                <label class="form-label" style="color: var(--accent-1); margin-top: var(--space-2);"
+                                    th:text="#{orders.view.partial_delivery_amount}">سعر الاستلام
                                     الجزئي</label>
                                 <input type="number" name="partialDeliveryAmount" class="form-control" step="0.01"
                                     min="0" th:value="${order.partialDeliveryAmount}">
@@ -527,6 +595,37 @@
                                     التغيير</label>
                                 <textarea name="notes" class="form-control" rows="2"></textarea>
                             </div>
+                            <div class="form-group" id="statusRejectionReasonGroup" style="display: none;">
+                                <label class="form-label" style="color: var(--danger-400);">سبب الرفض/الإلغاء/التأجيل</label>
+                                <select name="rejectionReason" class="form-control" id="statusRejectionReasonSelect"
+                                    onchange="toggleStatusReasonNotes()">
+                                    <option value="">-- اختر السبب --</option>
+                                    <option value="CUSTOMER_NOT_AVAILABLE">العميل غير متاح</option>
+                                    <option value="WRONG_ADDRESS">عنوان خاطئ</option>
+                                    <option value="CUSTOMER_REFUSED">العميل رفض الاستلام</option>
+                                    <option value="CUSTOMER_CHANGED_MIND">العميل غيّر رأيه</option>
+                                    <option value="DAMAGED_PRODUCT">المنتج تالف</option>
+                                    <option value="WRONG_PRODUCT">منتج خاطئ</option>
+                                    <option value="PRICE_DISPUTE">خلاف على السعر</option>
+                                    <option value="DUPLICATE_ORDER">طلب مكرر</option>
+                                    <option value="OUT_OF_AREA">خارج النطاق</option>
+                                    <option value="PHONE_UNREACHABLE">الهاتف مغلق</option>
+                                    <option value="DEFERRED_BY_CUSTOMER">العميل طلب تأجيل</option>
+                                    <option value="DEFERRED_BY_COURIER">المندوب طلب تأجيل</option>
+                                    <option value="EVASION">التهرب</option>
+                                    <option value="OTHER">سبب آخر</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="statusRejectionNotesGroup" style="display: none;">
+                                <label class="form-label" style="color: var(--danger-400);">تفاصيل السبب</label>
+                                <textarea name="rejectionReasonNotes" class="form-control" rows="2"
+                                    placeholder="اكتب تفاصيل السبب هنا..."></textarea>
+                            </div>
+                            <div class="form-group" id="statusRejectionPaymentGroup" style="display: none;">
+                                <label class="form-label" style="color: var(--danger-400);">مبلغ الرفض (ج.م)</label>
+                                <input type="number" step="0.01" name="rejectionPayment" class="form-control" min="0"
+                                    th:value="${order.rejectionPayment}" placeholder="0.00">
+                            </div>
                             <button type="submit" class="btn btn-secondary" style="width: 100%;"
                                 th:text="#{orders.btn.update_status}">تحديث الحالة</button>
                         </form>
@@ -541,10 +640,10 @@
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                                 <h4 th:if="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
                                     class="card-title" th:text="#{orders.view.assign_organization_title}"
-                                    style="margin: 0; font-size: 1rem;">🏢 إسناد لمؤسسة</h4>
+                                    style="margin: 0; font-size: 1rem;"><i data-lucide="building-2" class="inline-icon"></i> إسناد لمؤسسة</h4>
                                 <h4 th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
                                     class="card-title" th:text="#{orders.view.assign_office_title}"
-                                    style="margin: 0; font-size: 1rem;">🏢 إسناد لمكتب</h4>
+                                    style="margin: 0; font-size: 1rem;"><i data-lucide="building-2" class="inline-icon"></i> إسناد لمكتب</h4>
                             </div>
                             <form th:action="@{/orders/{id}/assign-organization(id=${order.id})}" method="post">
                                 <input type="hidden" name="businessDayId"
@@ -558,13 +657,15 @@
                                             th:unless="${currentUserOrganization != null && currentUserOrganization.type.name() == 'STORE'}"
                                             th:text="#{orders.view.assign_office_select}">اختر مكتباً...</option>
 
-                                        <optgroup th:label="#{orders.list.group_companies}" th:if="${companies != null && !companies.isEmpty()}">
+                                        <optgroup th:label="#{orders.list.group_companies}"
+                                            th:if="${companies != null && !companies.isEmpty()}">
                                             <option th:each="c : ${companies}" th:value="${c.id}" th:text="${c.name}"
                                                 th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == c.id}">
                                             </option>
                                         </optgroup>
 
-                                        <optgroup th:label="#{orders.list.group_offices}" th:if="${offices != null && !offices.isEmpty()}">
+                                        <optgroup th:label="#{orders.list.group_offices}"
+                                            th:if="${offices != null && !offices.isEmpty()}">
                                             <option th:each="o : ${offices}" th:value="${o.id}" th:text="${o.name}"
                                                 th:selected="${order.assignedToOrganization != null && order.assignedToOrganization.id == o.id}">
                                             </option>
@@ -591,8 +692,8 @@
                             <!-- Assignment Chain Display -->
                             <div th:if="${assignmentChain != null && !assignmentChain.isEmpty()}"
                                 style="margin-top: var(--space-4); margin-bottom: var(--space-2);">
-                                <h5
-                                    style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);" th:text="#{orders.view.assignment_chain_title}">
+                                <h5 style="font-size: 0.9rem; margin-bottom: var(--space-2); color: var(--text-secondary);"
+                                    th:text="#{orders.view.assignment_chain_title}">
                                     سلسلة إسناد الطلب
                                 </h5>
                                 <div style="display: flex; flex-direction: column; gap: var(--space-2);">
@@ -608,10 +709,12 @@
                                                 style="color: var(--primary-600); font-weight: 600;"
                                                 target="_blank"></a>
                                             <span th:if="${assignment.accepted}"
-                                                style="color: var(--success-600); font-size: 0.75rem; margin-inline-start: var(--space-1);" th:text="'✓ ' + #{orders.view.assignment_accepted}">✓
+                                                style="color: var(--success-600); font-size: 0.75rem; margin-inline-start: var(--space-1);"
+                                                th:utext="'<i data-lucide=&quot;check&quot; class=&quot;inline-icon&quot;></i> ' + #{orders.view.assignment_accepted}"><i data-lucide="check" class="inline-icon"></i>
                                                 مقبول</span>
                                             <span th:unless="${assignment.accepted}"
-                                                style="color: var(--warning-600); font-size: 0.75rem; margin-inline-start: var(--space-1);" th:text="'⏳ ' + #{orders.view.assignment_pending}">⏳
+                                                style="color: var(--warning-600); font-size: 0.75rem; margin-inline-start: var(--space-1);"
+                                                th:utext="'<i data-lucide=&quot;hourglass&quot; class=&quot;inline-icon&quot;></i> ' + #{orders.view.assignment_pending}"><i data-lucide="hourglass" class="inline-icon"></i>
                                                 بانتظار القبول</span>
                                         </div>
                                     </div>
@@ -628,7 +731,7 @@
                                     th:value="${businessDayId ?: order.businessDay?.id}">
                                 <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.9rem;"
                                     th:text="#{orders.btn.cancel_assignment_request}">
-                                    ❌ إلغاء طلب الإسناد
+                                    <i data-lucide="x-circle" class="inline-icon"></i> إلغاء طلب الإسناد
                                 </button>
                             </form>
                         </div>
@@ -639,7 +742,7 @@
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                                 <h4 class="card-title" th:text="#{orders.view.assign_courier_title}"
-                                    style="margin: 0; font-size: 1rem;">🚚 تعيين مندوب</h4>
+                                    style="margin: 0; font-size: 1rem;"><i data-lucide="truck" class="inline-icon"></i> تعيين مندوب</h4>
                             </div>
                             <form th:action="@{/orders/{id}/assign-courier(id=${order.id})}" method="post">
                                 <input type="hidden" name="businessDayId"
@@ -650,7 +753,7 @@
                                         </option>
                                         <th:block th:if="${couriers != null}">
                                             <option th:each="c : ${couriers}" th:value="${c.id}"
-                                                th:text="${c.fullName + (c.isVirtual() ? ' 🚫' : '')}">
+                                                th:utext="${c.fullName + (c.isVirtual() ? ' <i data-lucide=&quot;ban&quot; class=&quot;inline-icon&quot;></i>' : '')}">
                                             </option>
                                         </th:block>
                                     </select>
@@ -667,7 +770,7 @@
                                 <input type="hidden" name="businessDayId"
                                     th:value="${businessDayId ?: order.businessDay?.id}">
                                 <button type="submit" class="btn btn-danger" style="width: 100%; font-size: 0.85rem;"
-                                    th:text="#{orders.btn.unassign_courier}">❌ إلغاء الإسناد للمندوب</button>
+                                    th:text="#{orders.btn.unassign_courier}"><i data-lucide="x-circle" class="inline-icon"></i> إلغاء الإسناد للمندوب</button>
                             </form>
                         </div>
 
@@ -677,7 +780,7 @@
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                                 <h4 class="card-title" th:text="#{orders.view.assign_custody_title}"
-                                    style="margin: 0; font-size: 1rem;">📦 إسناد لعهدة المخزن</h4>
+                                    style="margin: 0; font-size: 1rem;"><i data-lucide="package" class="inline-icon"></i> إسناد لعهدة المخزن</h4>
                             </div>
                             <form th:action="@{/orders/{id}/assign-custody(id=${order.id})}" method="post"
                                 th:onsubmit="|return confirm('#{orders.view.assign_custody_confirm}');|">
@@ -693,7 +796,7 @@
                             <div class="card-header"
                                 style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                                 <h4 class="card-title" th:text="#{orders.view.remove_custody_title}"
-                                    style="margin: 0; font-size: 1rem;">📦 إزالة من عهدة المخزن</h4>
+                                    style="margin: 0; font-size: 1rem;"><i data-lucide="package" class="inline-icon"></i> إزالة من عهدة المخزن</h4>
                             </div>
                             <form th:action="@{/orders/{id}/remove-custody(id=${order.id})}" method="post"
                                 th:onsubmit="|return confirm('#{orders.view.remove_custody_confirm}');|">
@@ -705,14 +808,14 @@
                         </div>
                     </div>
                 </div>
-                          <!-- Delete Order (Admin and Manager) -->
+                <!-- Delete Order (Admin and Manager) -->
                 <div class="card" sec:authorize="hasAnyRole('ADMIN', 'MANAGER')"
                     style="border: 1px solid var(--danger-border);">
                     <div class="card-header"
                         style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); background-color: var(--danger-50); margin: calc(-1 * var(--space-6)); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-6); border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
                         <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;"
                             th:text="#{orders.view.delete_title}">
-                            🗑 حذف الطلب</h4>
+                            <i data-lucide="trash-2" class="inline-icon"></i> حذف الطلب</h4>
                     </div>
                     <div style="display: flex; align-items: center; gap: var(--space-4);">
                         <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0; flex: 1;"
@@ -733,22 +836,24 @@
                     style="border: 2px solid var(--danger-400);">
                     <div class="card-header"
                         style="margin-bottom: var(--space-3); padding-bottom: var(--space-2); background-color: var(--danger-50); margin: calc(-1 * var(--space-6)); margin-bottom: var(--space-3); padding: var(--space-3) var(--space-6); border-radius: var(--radius-xl) var(--radius-xl) 0 0;">
-                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;" th:text="#{orders.view.return_tracking_title}">📦 تتبع إرجاع المرتجع</h4>
+                        <h4 class="card-title" style="color: var(--danger-700); margin: 0; font-size: 1rem;"
+                            th:text="#{orders.view.return_tracking_title}"><i data-lucide="package" class="inline-icon"></i> تتبع إرجاع المرتجع</h4>
                     </div>
 
                     <!-- Completed -->
                     <div th:if="${returnStatus.get('returnedToOwner')}"
                         style="text-align: center; padding: var(--space-3);">
-                        <div style="font-size: 1.5rem;">✅</div>
-                        <p
-                            style="font-weight: 700; color: var(--success-600); margin-top: var(--space-2); font-size: 0.9rem;" th:text="#{orders.view.returned_to_owner_success}">
+                        <div style="font-size: 1.5rem;"><i data-lucide="check-circle-2"></i></div>
+                        <p style="font-weight: 700; color: var(--success-600); margin-top: var(--space-2); font-size: 0.9rem;"
+                            th:text="#{orders.view.returned_to_owner_success}">
                             تم إرجاع الطلب بالكامل للمالك الأصلي
                         </p>
                     </div>
 
                     <!-- Chain Progress -->
                     <div th:unless="${returnStatus.get('returnedToOwner')}">
-                        <p style="color: var(--text-secondary); margin-bottom: var(--space-2); font-size: 0.8rem;" th:text="#{orders.view.return_stages}">
+                        <p style="color: var(--text-secondary); margin-bottom: var(--space-2); font-size: 0.8rem;"
+                            th:text="#{orders.view.return_stages}">
                             مراحل استلام المرتجع (من الأسفل للأعلى):
                         </p>
 
@@ -757,8 +862,8 @@
                             <div th:each="lvl : ${returnStatus.get('chainLevels')}"
                                 style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm); font-size: 0.85rem;"
                                 th:styleappend="${lvl.get('returnConfirmed') ? 'background: var(--success-50); border: 1px solid var(--success-200);' : 'background: var(--dark-surface); border: 1px solid var(--dark-border);'}">
-                                <span th:if="${lvl.get('returnConfirmed')}">✅</span>
-                                <span th:unless="${lvl.get('returnConfirmed')}">⏳</span>
+                                <span th:if="${lvl.get('returnConfirmed')}"><i data-lucide="check-circle-2"></i></span>
+                                <span th:unless="${lvl.get('returnConfirmed')}"><i data-lucide="hourglass"></i></span>
                                 <div>
                                     <span style="font-weight: 600;" th:text="${lvl.get('assigneeName')}"></span>
                                     <span style="color: var(--text-tertiary); font-size: 0.75rem;"
@@ -768,7 +873,7 @@
                             <!-- Owner (final destination) -->
                             <div style="display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2); border-radius: var(--radius-sm);"
                                 th:styleappend="${returnStatus.get('returnedToOwner') ? 'background: var(--success-50); border: 1px solid var(--success-200);' : 'background: var(--dark-surface); border: 1px solid var(--dark-border);'}">
-                                <span>🏠</span>
+                                <span><i data-lucide="layout-dashboard"></i></span>
                                 <span style="font-weight: 600; font-size: 0.85rem;"
                                     th:text="${order.ownerOrganization.name} + ' ' + #{orders.view.owner_label}"></span>
                             </div>
@@ -781,7 +886,7 @@
                             <input type="hidden" name="businessDayId"
                                 th:value="${businessDayId ?: order.businessDay?.id}">
                             <button type="submit" class="btn btn-primary" style="width: 100%;">
-                                📦 تأكيد استلام المرتجع
+                                <i data-lucide="package" class="inline-icon"></i> تأكيد استلام المرتجع
                             </button>
                         </form>
                     </div>
@@ -791,7 +896,7 @@
                 <div class="card">
                     <div class="card-header" style="margin-bottom: var(--space-3); padding-bottom: var(--space-2);">
                         <h4 class="card-title" th:text="#{orders.view.history_title}"
-                            style="margin: 0; font-size: 1rem;">📜 سجل التغييرات</h4>
+                            style="margin: 0; font-size: 1rem;"><i data-lucide="scroll" class="inline-icon"></i> سجل التغييرات</h4>
                     </div>
                     <div class="table-container" style="border: none;">
                         <table class="table">
@@ -801,7 +906,7 @@
                                     <th th:text="#{orders.history.prev_status}">الحالة السابقة</th>
                                     <th th:text="#{orders.history.new_status}">الحالة الجديدة</th>
                                     <th th:text="#{orders.history.by}">بواسطة</th>
-                                    <th th:text="#{orders.history.notes}">ملاحظات</th>
+                                    <th th:text="#{orders.history.notes}">ملاحظات/السبب</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -814,7 +919,22 @@
                                         th:text="${#locale.language == 'en' ? h.newStatus.englishName : h.newStatus.arabicName}">
                                     </td>
                                     <td th:text="${h.changedBy?.fullName ?: '-'}"></td>
-                                    <td th:text="${h.notes ?: '-'}"></td>
+                                    <td>
+                                        <div th:if="${h.rejectionReason != null}">
+                                            <strong style="color: var(--danger-400);">سبب الرفض:</strong>
+                                            <span th:text="${h.rejectionReason.arabicName}"></span>
+                                        </div>
+                                        <div th:if="${h.rejectionReasonNotes != null && !h.rejectionReasonNotes.isEmpty()}" style="font-size: 0.9em; color: var(--text-muted);">
+                                            <strong style="color: var(--danger-400);">التفاصيل:</strong>
+                                            <span th:text="${h.rejectionReasonNotes}"></span>
+                                        </div>
+                                        <div th:if="${h.notes != null && !h.notes.isEmpty()}" style="margin-top: 4px;">
+                                            <span th:text="${h.notes}"></span>
+                                        </div>
+                                        <div th:if="${h.rejectionReason == null && (h.rejectionReasonNotes == null || h.rejectionReasonNotes.isEmpty()) && (h.notes == null || h.notes.isEmpty())}">
+                                            -
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(history)}">
                                     <td colspan="5" style="text-align: center;" th:text="#{orders.history.empty}">لا
@@ -830,33 +950,34 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
 
-    <script th:inline="javascript">
+    <!-- Toggle functions: separate non-inline script to avoid Thymeleaf rendering issues breaking all functions -->
+    <script>
         function copyToClipboard(elementId, buttonElement) {
-            const textToCopy = document.getElementById(elementId).innerText.trim();
-            const originalText = buttonElement.innerHTML;
+            var textToCopy = document.getElementById(elementId).innerText.trim();
+            var originalText = buttonElement.innerHTML;
 
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                buttonElement.innerHTML = '✅ تم';
+            navigator.clipboard.writeText(textToCopy).then(function() {
+                buttonElement.innerHTML = '<i data-lucide="check-circle-2" class="inline-icon"></i> تم';
                 buttonElement.classList.replace('btn-secondary', 'btn-primary');
 
-                setTimeout(() => {
+                setTimeout(function() {
                     buttonElement.innerHTML = originalText;
                     buttonElement.classList.replace('btn-primary', 'btn-secondary');
                 }, 2000);
-            }).catch(err => {
+            }).catch(function(err) {
                 console.error('Failed to copy text: ', err);
-                buttonElement.innerHTML = '❌';
-                setTimeout(() => {
+                buttonElement.innerHTML = '<i data-lucide="x-circle" class="inline-icon"></i>';
+                setTimeout(function() {
                     buttonElement.innerHTML = originalText;
                 }, 2000);
             });
         }
 
         function calculateEditTotalAmount(event) {
-            const form = event.target.closest('form');
+            var form = event.target.closest('form');
             if (form) {
                 var shippingPrice = parseFloat(form.querySelector('input[name="shippingPrice"]').value) || 0;
                 var orderPrice = parseFloat(form.querySelector('input[name="orderPrice"]').value) || 0;
@@ -864,18 +985,81 @@
             }
         }
 
+        var REJECTION_STATUSES = ['REFUSED', 'CANCELLED', 'DEFERRED', 'PARTIAL_DELIVERY', 'RETURNED_TO_SENDER'];
+
         function togglePartialDelivery() {
-            const statusSelect = document.getElementById('statusSelect');
-            const partialDeliveryGroup = document.getElementById('partialDeliveryGroup');
-            if (statusSelect && partialDeliveryGroup) {
-                if (statusSelect.value === 'PARTIAL_DELIVERY') {
-                    partialDeliveryGroup.style.display = 'block';
-                } else {
-                    partialDeliveryGroup.style.display = 'none';
-                }
+            var statusSelect = document.getElementById('statusSelect');
+            if (!statusSelect) return;
+
+            var val = statusSelect.value;
+            var partialDeliveryGroup = document.getElementById('partialDeliveryGroup');
+            var rejReasonGroup = document.getElementById('statusRejectionReasonGroup');
+            var rejNotesGroup = document.getElementById('statusRejectionNotesGroup');
+            var rejPaymentGroup = document.getElementById('statusRejectionPaymentGroup');
+
+            var isRejectionStatus = REJECTION_STATUSES.indexOf(val) !== -1;
+            var isPartial = val === 'PARTIAL_DELIVERY';
+
+            // إظهار حقل الاستلام الجزئي عند PARTIAL_DELIVERY أو أي حالة رفض/إرجاع
+            if (partialDeliveryGroup) {
+                partialDeliveryGroup.style.display = isPartial ? 'block' : 'none';
+            }
+
+            // إظهار حقول سبب الرفض ومبلغ الرفض
+            if (rejReasonGroup) rejReasonGroup.style.display = isRejectionStatus ? 'block' : 'none';
+            if (rejPaymentGroup) rejPaymentGroup.style.display = isRejectionStatus ? 'block' : 'none';
+
+            // إخفاء ملاحظات السبب عند اختيار حالة غير رفض
+            if (!isRejectionStatus && rejNotesGroup) rejNotesGroup.style.display = 'none';
+
+            // إذا كانت حالة رفض وكان السبب "OTHER" → إظهار ملاحظات السبب
+            if (isRejectionStatus) {
+                toggleStatusReasonNotes();
             }
         }
 
+        function toggleStatusReasonNotes() {
+            var select = document.getElementById('statusRejectionReasonSelect');
+            var notesGroup = document.getElementById('statusRejectionNotesGroup');
+            if (select && notesGroup) {
+                notesGroup.style.display = (select.value === 'OTHER') ? 'block' : 'none';
+            }
+        }
+
+        function toggleReasonNotes() {
+            var select = document.getElementById('rejectionReasonSelect');
+            var notesGroup = document.getElementById('rejectionReasonNotesGroup');
+            if (select && notesGroup) {
+                notesGroup.style.display = (select.value === 'OTHER') ? 'block' : 'none';
+            }
+        }
+
+        // إضافة event listeners عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function () {
+            // ربط حدث تغيير الحالة
+            var statusSelect = document.getElementById('statusSelect');
+            if (statusSelect) {
+                statusSelect.addEventListener('change', togglePartialDelivery);
+                // تشغيل مبدئي لضبط حالة الحقول
+                togglePartialDelivery();
+            }
+
+            // ربط حدث تغيير سبب الرفض في فورم الحالة
+            var statusRejSelect = document.getElementById('statusRejectionReasonSelect');
+            if (statusRejSelect) {
+                statusRejSelect.addEventListener('change', toggleStatusReasonNotes);
+            }
+
+            // ربط حدث تغيير سبب الرفض في فورم التعديل
+            var editRejSelect = document.getElementById('rejectionReasonSelect');
+            if (editRejSelect) {
+                editRejSelect.addEventListener('change', toggleReasonNotes);
+            }
+        });
+    </script>
+
+    <!-- Thymeleaf inline variables (isolated to avoid breaking other functions) -->
+    <script th:inline="javascript">
         var currentEditGov = /*[[${order.governorate?.name()}]]*/ '';
         var currentEditCenter = /*[[${order.center}]]*/ '';
         var currentEditArea = /*[[${order.area}]]*/ '';
@@ -884,16 +1068,16 @@
             currentEditGov = govKey;
             var centerSel = document.getElementById('editCenterSelect');
             var areaSel = document.getElementById('editAreaSelect');
-            if(!centerSel || !areaSel) return;
-            
+            if (!centerSel || !areaSel) return;
+
             centerSel.innerHTML = '<option value="">اختر المركز</option>';
             areaSel.innerHTML = '<option value="">اختر المنطقة</option>';
             if (!govKey) return;
 
             fetch('/api/zones/' + govKey)
-                .then(r => r.json())
-                .then(centers => {
-                    centers.forEach(c => {
+                .then(function(r) { return r.json(); })
+                .then(function(centers) {
+                    centers.forEach(function(c) {
                         var opt = document.createElement('option');
                         opt.value = c.name; opt.textContent = c.name;
                         if (c.name === currentEditCenter) opt.selected = true;
@@ -902,37 +1086,37 @@
                     if (currentEditCenter) {
                         onEditCenterChange(currentEditCenter);
                     }
-                }).catch(e => console.error(e));
+                }).catch(function(e) { console.error(e); });
         }
 
         function onEditCenterChange(centerName) {
             currentEditCenter = centerName;
             var areaSel = document.getElementById('editAreaSelect');
-            if(!areaSel) return;
-            
+            if (!areaSel) return;
+
             areaSel.innerHTML = '<option value="">اختر المنطقة</option>';
             if (!centerName || !currentEditGov) return;
 
             fetch('/api/zones/' + currentEditGov + '/' + encodeURIComponent(centerName))
-                .then(r => r.json())
-                .then(areas => {
-                    areas.forEach(a => {
+                .then(function(r) { return r.json(); })
+                .then(function(areas) {
+                    areas.forEach(function(a) {
                         var opt = document.createElement('option');
                         opt.value = a.name; opt.textContent = a.name;
                         if (a.name === currentEditArea) opt.selected = true;
                         areaSel.appendChild(opt);
                     });
-                }).catch(e => console.error(e));
+                }).catch(function(e) { console.error(e); });
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            togglePartialDelivery();
+        document.addEventListener('DOMContentLoaded', function () {
             if (currentEditGov) {
                 onEditGovChange(currentEditGov);
             }
         });
     </script>
 
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

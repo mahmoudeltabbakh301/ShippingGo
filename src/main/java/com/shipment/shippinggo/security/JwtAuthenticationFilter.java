@@ -63,6 +63,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    // Add X-User-Role header to the response so mobile app detects role changes
+                    if (userDetails instanceof com.shipment.shippinggo.entity.User u) {
+                        response.setHeader("X-User-Role", u.getRole().name());
+                    }
                 }
             }
         } catch (Exception e) {

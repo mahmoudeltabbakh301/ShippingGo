@@ -145,7 +145,7 @@
 /* Stats Grid - Dashboard Override */
 .dashboard-stats-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: var(--space-4);
     margin-bottom: var(--space-8);
     animation: fadeIn 0.5s ease-out 0.2s both;
@@ -233,9 +233,8 @@
     color: var(--text-tertiary);
     font-size: 0.8rem;
     font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    word-break: break-word;
+    line-height: 1.3;
 }
 
 /* Two Column Layout */
@@ -719,4 +718,460 @@
         text-align: center;
         justify-content: center;
     }
+}
+
+/* =====================================================
+   Quick Actions Hub
+   ===================================================== */
+.quick-actions-hub {
+    margin-bottom: var(--space-6);
+    animation: fadeIn 0.4s ease-out 0.05s both;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-3);
+}
+
+@media (max-width: 1200px) {
+    .quick-actions-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+    .quick-actions-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .quick-actions-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.quick-action-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-xl);
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+}
+
+.quick-action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+    transition: left 0.5s ease;
+}
+
+.quick-action-card:hover::before {
+    left: 100%;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-xl);
+    border-color: var(--gray-400);
+}
+
+[data-theme="dark"] .quick-action-card:hover {
+    border-color: var(--gray-600);
+}
+
+.quick-action-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    transition: all 0.25s ease;
+}
+
+[data-theme="dark"] .quick-action-icon {
+    background: var(--gray-300);
+    color: var(--gray-800);
+}
+
+.quick-action-card:hover .quick-action-icon {
+    background: var(--gray-950);
+    color: var(--text-inverse);
+    transform: scale(1.1);
+}
+
+[data-theme="dark"] .quick-action-card:hover .quick-action-icon {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.quick-action-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.quick-action-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.quick-action-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--gray-950);
+    color: var(--text-inverse);
+    animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+[data-theme="dark"] .quick-action-badge {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+/* =====================================================
+   Pending Alerts Strip
+   ===================================================== */
+.pending-alerts-strip {
+    margin-bottom: var(--space-6);
+    animation: fadeIn 0.4s ease-out 0.1s both;
+}
+
+.alerts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+}
+
+.alert-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.alert-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.alert-chip-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-full);
+    font-size: 0.85rem;
+}
+
+.alert-chip-icon.chip-warning {
+    background: #fef3c7;
+    color: #b45309;
+}
+[data-theme="dark"] .alert-chip-icon.chip-warning {
+    background: #451a03;
+    color: #fcd34d;
+}
+
+.alert-chip-icon.chip-info {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+[data-theme="dark"] .alert-chip-icon.chip-info {
+    background: #1e3a5f;
+    color: #93c5fd;
+}
+
+.alert-chip-icon.chip-danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+[data-theme="dark"] .alert-chip-icon.chip-danger {
+    background: #450a0a;
+    color: #fca5a5;
+}
+
+.alert-chip-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    font-size: 0.65rem;
+    font-weight: 800;
+    background: var(--gray-950);
+    color: var(--text-inverse);
+}
+
+[data-theme="dark"] .alert-chip-count {
+    background: var(--gray-200);
+    color: var(--gray-900);
+}
+
+.alert-chip-action {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-inline-start: var(--space-1);
+}
+
+.alert-chip:hover .alert-chip-action {
+    color: var(--text-primary);
+}
+
+.alerts-all-clear {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+/* =====================================================
+   Financial Summary Strip
+   ===================================================== */
+.financial-summary-section {
+    margin-bottom: var(--space-6);
+    animation: fadeIn 0.5s ease-out 0.15s both;
+}
+
+.financial-summary-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.financial-summary-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.financial-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+}
+
+@media (max-width: 1200px) {
+    .financial-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+    .financial-grid { grid-template-columns: 1fr; }
+}
+
+.finance-card {
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-5);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-card);
+}
+
+.finance-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-xl);
+}
+
+.finance-card-accent {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+}
+
+.finance-card-accent.accent-collected {
+    background: linear-gradient(90deg, var(--gray-800), var(--gray-950));
+}
+
+.finance-card-accent.accent-shipping {
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+.finance-card-accent.accent-net {
+    background: linear-gradient(90deg, #059669, #10b981);
+}
+
+.finance-card-accent.accent-refundable {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.finance-card-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-2);
+}
+
+.finance-card-value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.finance-card-currency {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    margin-inline-start: var(--space-1);
+}
+
+/* =====================================================
+   Shimmer Animation (for loading / progress)
+   ===================================================== */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* =====================================================
+   Dynamic Card Coloring
+   ===================================================== */
+.card-glow-success {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 1px #05966933, var(--shadow-card) !important;
+    background: linear-gradient(135deg, var(--surface-card) 85%, #05966610 100%);
+}
+
+.card-glow-success .dashboard-stat-icon {
+    background: #059669 !important;
+    color: #fff !important;
+}
+
+.card-glow-success .dashboard-stat-value {
+    color: #059669;
+}
+
+.card-glow-danger {
+    border-color: #dc2626 !important;
+    box-shadow: 0 0 0 1px #dc262633, var(--shadow-card) !important;
+    background: linear-gradient(135deg, var(--surface-card) 85%, #dc262610 100%);
+}
+
+.card-glow-danger .dashboard-stat-icon {
+    background: #dc2626 !important;
+    color: #fff !important;
+}
+
+.card-glow-danger .dashboard-stat-value {
+    color: #dc2626;
+}
+
+[data-theme="dark"] .card-glow-success {
+    box-shadow: 0 0 12px #05966933, var(--shadow-card) !important;
+    background: linear-gradient(135deg, var(--surface-card) 80%, #05966618 100%);
+}
+
+[data-theme="dark"] .card-glow-danger {
+    box-shadow: 0 0 12px #dc262633, var(--shadow-card) !important;
+    background: linear-gradient(135deg, var(--surface-card) 80%, #dc262618 100%);
+}
+
+/* =====================================================
+   Mini Sparkline Charts in Stat Cards
+   ===================================================== */
+.sparkline-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 32px;
+    opacity: 0.15;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.dashboard-stat-card:hover .sparkline-container,
+.finance-card:hover .sparkline-container {
+    opacity: 0.3;
+    transition: opacity 0.3s ease;
+}
+
+.sparkline-container svg {
+    width: 100%;
+    height: 100%;
+}
+
+.sparkline-line {
+    fill: none;
+    stroke: var(--gray-600);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.sparkline-area {
+    fill: var(--gray-400);
+    opacity: 0.3;
+}
+
+.card-glow-success .sparkline-line {
+    stroke: #059669;
+}
+.card-glow-success .sparkline-area {
+    fill: #059669;
+}
+
+.card-glow-danger .sparkline-line {
+    stroke: #dc2626;
+}
+.card-glow-danger .sparkline-area {
+    fill: #dc2626;
 }

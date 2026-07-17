@@ -28,6 +28,7 @@
     <link rel="stylesheet" th:href="@{/css/pages/map.css}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -36,7 +37,7 @@
 
         <main class="main-content" style="padding: 16px; overflow: hidden;">
             <div class="page-header" style="margin-bottom: 12px;">
-                <h1 class="page-title">🗺 <span th:text="#{dashboard.map.title}">الخريطة الحية للمناديب</span></h1>
+                <h1 class="page-title"><i data-lucide="map" class="inline-icon"></i> <span th:text="#{dashboard.map.title}">الخريطة الحية للمناديب</span></h1>
             </div>
 
             <div class="map-container">
@@ -44,7 +45,7 @@
                 <div class="courier-panel" id="courierPanel">
                     <div class="courier-panel-header">
                         <h3>
-                            👥 <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
+                            <i data-lucide="users" class="inline-icon"></i> <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
                             <span class="courier-count-badge" id="courierCount">0</span>
                         </h3>
                     </div>
@@ -88,14 +89,14 @@
 
                     <!-- Mobile Panel Toggle -->
                     <button class="panel-toggle-btn" id="panelToggle" onclick="togglePanel()">
-                        👥 <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
+                        <i data-lucide="users" class="inline-icon"></i> <span th:text="#{dashboard.map.couriers_label}">المناديب</span>
                     </button>
                 </div>
             </div>
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -160,8 +161,8 @@
                 var statusLabel = courier.online ? labelOnline : labelOffline;
 
                 return '<div class="courier-popup" style="text-align: ' + (isRTL ? 'right' : 'left') + '; direction: ' + (isRTL ? 'rtl' : 'ltr') + ';">'
-                    + '<div class="popup-name">👤 ' + escapeHtml(courier.fullName) + '</div>'
-                    + '<div class="popup-detail">📞 ' + escapeHtml(courier.phone || '') + '</div>'
+                    + '<div class="popup-name"><i data-lucide="user" class="inline-icon"></i> ' + escapeHtml(courier.fullName) + '</div>'
+                    + '<div class="popup-detail"><i data-lucide="phone" class="inline-icon"></i> ' + escapeHtml(courier.phone || '') + '</div>'
                     + '<div class="popup-detail">⏱ ' + labelLastUpdate.replace('{0}', dateStr) + '</div>'
                     + '<div class="popup-status ' + statusClass + '">'
                     + '<span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:currentColor;"></span> '
@@ -348,6 +349,7 @@
         })();
         /*]]>*/
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

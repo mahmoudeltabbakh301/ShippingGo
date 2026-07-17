@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'تفاصيل الشاحنة ' + ${vehicle.plateNumber} + ' - ShippingGo'">تفاصيل الشاحنة</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .info-item { background: var(--bg-secondary); padding: 16px; border-radius: 10px; border: 1px solid var(--border-color); }
+        .info-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
+        .info-value { font-size: 16px; font-weight: 600; }
+        .qr-container { text-align: center; padding: 20px; background: white; border-radius: 10px; display: inline-block; }
+        .qr-container img { width: 200px; height: 200px; }
+        .trip-status-badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .trip-status-badge.preparing { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .trip-status-badge.in-transit { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .trip-status-badge.arrived { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+        .trip-status-badge.completed { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+        .trip-status-badge.returning { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .trip-status-badge.returned { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+    </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><i data-lucide="truck" class="inline-icon"></i> [[${vehicle.plateNumber}]]</h1>
+                    <p style="color: var(--text-tertiary); margin-top: var(--space-1);">
+                        <span th:text="${vehicle.vehicleType.arabicName}"></span> •
+                        <span style="font-family: monospace;" th:text="${vehicle.code}"></span>
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <a th:href="@{/vehicles/{id}/qr(id=${vehicle.id})}" class="btn btn-secondary" target="_blank"><i data-lucide="smartphone" class="inline-icon"></i> طباعة QR</a>
+                    <a th:href="@{/vehicles}" class="btn btn-secondary">← كل الشاحنات</a>
+                </div>
+            </div>
+
+            <!-- Vehicle Info -->
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">رقم اللوحة</div>
+                    <div class="info-value" th:text="${vehicle.plateNumber}"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">النوع</div>
+                    <div class="info-value" th:text="${vehicle.vehicleType.arabicName}"></div>
+                </div>
+                <div class="info-item" th:if="${vehicle.model}">
+                    <div class="info-label">الموديل</div>
+                    <div class="info-value" th:text="${vehicle.model}"></div>
+                </div>
+                <div class="info-item" th:if="${vehicle.color}">
+                    <div class="info-label">اللون</div>
+                    <div class="info-value" th:text="${vehicle.color}"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">السائق</div>
+                    <div class="info-value" th:text="${vehicle.driverName ?: '—'}"></div>
+                    <small th:if="${vehicle.driverPhone}" th:text="${vehicle.driverPhone}" style="color: var(--text-tertiary);"></small>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">السعة</div>
+                    <div class="info-value" th:text="${vehicle.capacity ?: '—'}"></div>
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="stats-grid" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-icon transit"><i data-lucide="map"></i></div>
+                    <div class="stat-value" th:text="${totalTrips}">0</div>
+                    <div class="stat-label">رحلات مكتملة</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon delivered"><i data-lucide="package"></i></div>
+                    <div class="stat-value" th:text="${totalOrdersTransported}">0</div>
+                    <div class="stat-label">طلبات منقولة</div>
+                </div>
+            </div>
+
+            <!-- QR Code -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div class="card-header"><h3 class="card-title"><i data-lucide="smartphone" class="inline-icon"></i> كود الشاحنة (QR)</h3></div>
+                <div style="text-align: center; padding: 24px;">
+                    <div class="qr-container">
+                        <img th:src="@{/vehicles/{id}/qr(id=${vehicle.id})}" alt="QR Code">
+                    </div>
+                    <p style="margin-top: 12px; font-family: monospace; font-size: 16px; font-weight: 700;" th:text="${vehicle.code}"></p>
+                    <p style="color: var(--text-tertiary); font-size: 13px;">يمكنك طباعة هذا الكود ولصقه على الشاحنة للتعرف عليها</p>
+                </div>
+            </div>
+
+            <!-- Trip History -->
+            <div class="card">
+                <div class="card-header"><h3 class="card-title"><i data-lucide="clipboard-list" class="inline-icon"></i> سجل الرحلات</h3></div>
+                <div th:if="${vehicleTrips == null or vehicleTrips.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    لا توجد رحلات مسجلة لهذه الشاحنة بعد.
+                </div>
+                <div th:if="${vehicleTrips != null and !vehicleTrips.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>كود الرحلة</th>
+                                <th>التاريخ</th>
+                                <th>الوجهة</th>
+                                <th>عدد الطلبات</th>
+                                <th>الحالة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="trip : ${vehicleTrips}">
+                                <td style="font-family: monospace;" th:text="${trip.code}"></td>
+                                <td th:text="${#temporals.format(trip.tripDate, 'yyyy-MM-dd')}"></td>
+                                <td th:text="${trip.destinationOrganization != null ? trip.destinationOrganization.name : 'محلي'}"></td>
+                                <td th:text="${trip.orderCount}"></td>
+                                <td>
+                                    <span class="trip-status-badge"
+                                          th:classappend="${trip.status.name() == 'PREPARING' ? 'preparing' : (trip.status.name() == 'IN_TRANSIT' ? 'in-transit' : (trip.status.name() == 'ARRIVED' ? 'arrived' : (trip.status.name() == 'RETURNING' ? 'returning' : 'completed')))}"
+                                          th:text="${trip.status.arabicName}"></span>
+                                </td>
+                                <td><a th:href="@{/trips/{id}(id=${trip.id})}" class="btn btn-sm btn-secondary">عرض</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
+</body>
+</html>

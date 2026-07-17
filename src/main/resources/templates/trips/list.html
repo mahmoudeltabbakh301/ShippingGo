@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html th:lang="${#locale.language}" th:dir="${#locale.language == 'ar' ? 'rtl' : 'ltr'}"
+    xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الرحلات - ShippingGo</title>
+    <script>
+        (function () {
+            var theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/components/sidebar.css}">
+    <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
+    <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <link rel="stylesheet" th:href="@{/css/components/forms.css}">
+    <style>
+        .trip-status-badge { display: inline-flex; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .trip-status-badge.preparing { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
+        .trip-status-badge.in-transit { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .trip-status-badge.arrived { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+        .trip-status-badge.completed { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+        .trip-status-badge.returning { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .trip-status-badge.returned { background: rgba(107, 114, 128, 0.12); color: #6b7280; }
+        .trip-status-badge.cancelled { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .filter-btn { padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+            border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-secondary);
+            cursor: pointer; text-decoration: none; }
+        .filter-btn:hover, .filter-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .trip-code { font-family: monospace; font-size: 13px; font-weight: 600; }
+        
+        .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; overflow-x: auto; }
+        .tab-btn { padding: 10px 16px; font-size: 14px; font-weight: 600; color: var(--text-secondary); text-decoration: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+        .tab-btn:hover { color: var(--primary-color); }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+    </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+        <main class="main-content">
+            <!-- Alerts -->
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i><span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i><span th:text="${error}"></span></div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title"><i data-lucide="map" class="inline-icon"></i> الرحلات</h1>
+                    <p class="text-muted">إدارة رحلات الشحن بين المنظمات وتتبع حالاتها</p>
+                </div>
+                <div sec:authorize="hasAnyRole('ADMIN', 'MANAGER')">
+                    <a th:href="@{/trips/new}" class="btn btn-primary">+ إنشاء رحلة</a>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <a th:href="@{/trips(tab='all')}" class="tab-btn" th:classappend="${currentTab == 'all' ? 'active' : ''}">كل الرحلات</a>
+                <a th:href="@{/trips(tab='incoming')}" class="tab-btn" th:classappend="${currentTab == 'incoming' ? 'active' : ''}">رحلات قادمة (إلينا)</a>
+                <a th:href="@{/trips(tab='outgoing')}" class="tab-btn" th:classappend="${currentTab == 'outgoing' ? 'active' : ''}">رحلات منطلقة (منا)</a>
+                <a th:href="@{/trips(tab='incoming_returns')}" class="tab-btn" th:classappend="${currentTab == 'incoming_returns' ? 'active' : ''}">مرتجعات قادمة (إلينا)</a>
+                <a th:href="@{/trips(tab='outgoing_returns')}" class="tab-btn" th:classappend="${currentTab == 'outgoing_returns' ? 'active' : ''}">مرتجعات ذاهبة (منا)</a>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-bar">
+                <a th:href="@{/trips(tab=${currentTab})}" class="filter-btn" th:classappend="${currentStatus == null ? 'active' : ''}">الكل</a>
+                <a th:each="s : ${statuses}" th:href="@{/trips(tab=${currentTab}, status=${s.name()})}" class="filter-btn"
+                   th:classappend="${currentStatus != null && currentStatus.name() == s.name() ? 'active' : ''}"
+                   th:text="${s.arabicName}"></a>
+            </div>
+
+            <!-- Trips Table -->
+            <div class="card">
+                <div th:if="${trips == null or trips.isEmpty()}"
+                    style="text-align: center; padding: var(--space-6); color: var(--text-secondary);">
+                    لا توجد رحلات بعد.
+                </div>
+                <div th:if="${trips != null and !trips.isEmpty()}" class="table-container" style="border: none;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>كود الرحلة</th>
+                                <th>الشاحنة</th>
+                                <th>من</th>
+                                <th>إلى</th>
+                                <th>التاريخ</th>
+                                <th>عدد الطلبات</th>
+                                <th>الحالة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="trip : ${trips}">
+                                <td class="trip-code" th:text="${trip.code}"></td>
+                                <td>
+                                    <span th:text="${trip.vehicle.plateNumber}"></span>
+                                    <br><small th:if="${trip.vehicle.driverName}" th:text="${trip.vehicle.driverName}" style="color: var(--text-tertiary);"></small>
+                                </td>
+                                <td th:text="${trip.originOrganization.name}"></td>
+                                <td th:text="${trip.destinationOrganization != null ? trip.destinationOrganization.name : '—'}"></td>
+                                <td th:text="${#temporals.format(trip.tripDate, 'yyyy-MM-dd')}"></td>
+                                <td>
+                                    <span class="badge badge-primary" th:text="${trip.orderCount}"></span>
+                                </td>
+                                <td>
+                                    <span class="trip-status-badge"
+                                          th:classappend="${trip.status.name() == 'PREPARING' ? 'preparing' : (trip.status.name() == 'IN_TRANSIT' ? 'in-transit' : (trip.status.name() == 'ARRIVED' ? 'arrived' : (trip.status.name() == 'RETURNING' ? 'returning' : (trip.status.name() == 'CANCELLED' ? 'cancelled' : 'completed'))))}"
+                                          th:text="${trip.status.arabicName}"></span>
+                                </td>
+                                <td>
+                                    <a th:href="@{/trips/{id}(id=${trip.id})}" class="btn btn-sm btn-secondary">عرض التفاصيل</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
+    <script th:src="@{/js/sidebar.js}"></script>
+    <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
+</body>
+</html>

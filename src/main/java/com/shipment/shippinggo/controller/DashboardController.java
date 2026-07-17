@@ -111,15 +111,16 @@ public class DashboardController {
         model.addAttribute("courierDisplayNames", courierDisplayNames);
 
         // Prepare chart data (JSON for JavaScript)
-        model.addAttribute("chartLabels", new String[]{"تم التسليم", "في الطريق", "انتظار", "مرفوض", "ملغي", "مؤجل", "استلام جزئي"});
+        model.addAttribute("chartLabels", new String[]{"تم التسليم", "في الطريق", "انتظار", "مرفوض", "ملغي", "مؤجل", "استلام جزئي", "مرتجع"});
         model.addAttribute("chartValues", new long[]{
                 stats.getDeliveredCount(),
-                stats.getInTransitCount(),
+                stats.getInTransitStatusCount() + stats.getPickedUpCount() + stats.getOutForDeliveryCount(),
                 stats.getWaitingCount(),
                 stats.getRefusedCount(),
                 stats.getCancelledCount(),
                 stats.getDeferredCount(),
-                stats.getPartialDeliveryCount()
+                stats.getPartialDeliveryCount(),
+                stats.getReturnedToSenderCount()
         });
 
         // Admin specifically sees pending memberships and shared organizations

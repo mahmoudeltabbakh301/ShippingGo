@@ -1,5 +1,13 @@
 package com.shipment.shippinggo.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.Store;
 import com.shipment.shippinggo.entity.StoreIntegration;
@@ -7,13 +15,6 @@ import com.shipment.shippinggo.enums.IntegrationPlatform;
 import com.shipment.shippinggo.exception.DuplicateResourceException;
 import com.shipment.shippinggo.exception.ResourceNotFoundException;
 import com.shipment.shippinggo.repository.StoreIntegrationRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
 @Service
 public class StoreIntegrationService {

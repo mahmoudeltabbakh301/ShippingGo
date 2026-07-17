@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,21 +35,21 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title" th:text="#{accounts.index.title}">💰 أيام الحسابات</h1>
+                <h1 class="page-title" th:text="#{accounts.index.title}"><i data-lucide="wallet" class="inline-icon"></i> أيام الحسابات</h1>
                 <div class="page-actions">
-                    <a th:href="@{/accounts/rewards}" class="btn btn-primary">🏆 المكافآت والتارجت</a>
+                    <a th:href="@{/accounts/rewards}" class="btn btn-primary"><i data-lucide="trophy" class="inline-icon"></i> المكافآت والتارجت</a>
                     <a th:href="@{/accounts/settings}" class="btn btn-secondary"
-                        th:text="#{accounts.day.btn_commission_settings}">⚙️ إعدادات العمولات</a>
+                        th:text="#{accounts.day.btn_commission_settings}"><i data-lucide="settings" class="inline-icon"></i> إعدادات العمولات</a>
                 </div>
             </div>
 
@@ -56,7 +57,7 @@
             <div class="card"
                 style="margin-bottom: var(--space-4); background: linear-gradient(135deg, var(--success-500), var(--success-400));">
                 <div style="padding: var(--space-4);">
-                    <h3 style="margin: 0; color: white;" th:text="#{accounts.index.system_title}">📊 نظام الحسابات
+                    <h3 style="margin: 0; color: white;" th:text="#{accounts.index.system_title}"><i data-lucide="bar-chart-3" class="inline-icon"></i> نظام الحسابات
                         المرتبط بأيام العمل</h3>
                     <p style="margin: var(--space-2) 0 0 0; color: rgba(255,255,255,0.9);"
                         th:text="#{accounts.index.system_desc}">
@@ -68,15 +69,15 @@
             <!-- Account Days List -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{accounts.index.business_days_title}">🗓️ أيام العمل</h3>
+                    <h3 class="card-title" th:text="#{accounts.index.business_days_title}"><i data-lucide="calendar" class="inline-icon"></i> أيام العمل</h3>
                 </div>
 
                 <div th:if="${accountDays.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📭</div>
+                    <div class="table-empty-icon"><i data-lucide="mail-x"></i></div>
                     <div class="table-empty-text" th:text="#{accounts.index.empty}">لا توجد أيام حسابات. أنشئ يوم عمل
                         جديد من صفحة الأوردرات.</div>
                     <a th:href="@{/business-days/new}" class="btn btn-primary" style="margin-top: var(--space-4);"
-                        th:text="#{accounts.index.btn_create_day}">➕
+                        th:text="#{accounts.index.btn_create_day}"><i data-lucide="plus" class="inline-icon"></i>
                         إنشاء يوم عمل</a>
                 </div>
 
@@ -96,7 +97,7 @@
                                 <td>
                                     <a th:href="@{/accounts/day/{id}(id=${day.id})}"
                                         style="color: var(--primary-400); font-weight: 600;">
-                                        💰 <span th:text="${day.name}">يوم العمل</span>
+                                        <i data-lucide="wallet" class="inline-icon"></i> <span th:text="${day.name}">يوم العمل</span>
                                     </a>
                                 </td>
                                 <td th:text="${day.businessDay.date}">2026-02-06</td>
@@ -110,11 +111,11 @@
                                 <td>
                                     <a th:href="@{/accounts/day/{id}(id=${day.id})}" class="btn btn-sm btn-primary"
                                         th:text="#{accounts.index.btn_view_accounts}">
-                                        💰 عرض الحسابات
+                                        <i data-lucide="wallet" class="inline-icon"></i> عرض الحسابات
                                     </a>
                                     <a th:href="@{/business-days/{id}(id=${day.businessDay.id})}"
                                         class="btn btn-sm btn-secondary" th:text="#{accounts.index.btn_view_orders}">
-                                        📦 عرض الأوردرات
+                                        <i data-lucide="package" class="inline-icon"></i> عرض الأوردرات
                                     </a>
                                 </td>
                             </tr>
@@ -140,8 +141,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

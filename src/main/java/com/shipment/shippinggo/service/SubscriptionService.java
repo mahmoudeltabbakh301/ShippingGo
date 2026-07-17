@@ -38,6 +38,12 @@ public class SubscriptionService {
      */
     @Transactional
     public Subscription createTrialSubscription(Organization organization) {
+        // استثناء المكاتب الافتراضية والعملاء من نظام الاشتراكات
+        if (organization.getType() == com.shipment.shippinggo.enums.OrganizationType.VIRTUAL_OFFICE ||
+            organization.getType() == com.shipment.shippinggo.enums.OrganizationType.CLIENT) {
+            return null;
+        }
+
         // لا ننشئ اشتراك إذا كان موجوداً بالفعل
         if (subscriptionRepository.existsByOrganizationId(organization.getId())) {
             return subscriptionRepository.findByOrganizationId(organization.getId()).orElse(null);

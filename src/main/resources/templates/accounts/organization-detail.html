@@ -25,6 +25,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -34,24 +35,24 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${success}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${success}"></span>
             </div>
             <div th:if="${error}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${error}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <h1 class="page-title">
-                    🏢 <span th:text="${targetOrganization.name}">اسم المنظمة</span>
+                    <i data-lucide="building-2" class="inline-icon"></i> <span th:text="${targetOrganization.name}">اسم المنظمة</span>
                 </h1>
                 <div class="page-actions" style="display: flex; gap: var(--space-2);">
                     <a th:href="@{/accounts/organization/{id}/export(id=${targetOrganization.id}, businessDayId=${businessDayId}, direction=${direction})}"
                         class="btn btn-primary" style="background-color: #217346; border-color: #217346;"
                         title="تصدير للـ Excel">
-                        📊 تصدير إكسيل
+                        <i data-lucide="bar-chart-3" class="inline-icon"></i> تصدير إكسيل
                     </a>
                     <a th:if="${businessDayId != null}" th:href="@{/accounts/day/{id}(id=${businessDayId})}"
                         class="btn btn-secondary" th:text="#{accounts.courier.btn_back_day}">← العودة لحسابات اليوم</a>
@@ -154,7 +155,7 @@
             <!-- Orders Table -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title" th:text="#{accounts.courier.orders_title}">📦 الأوردرات المسندة</h3>
+                    <h3 class="card-title" th:text="#{accounts.courier.orders_title}"><i data-lucide="package" class="inline-icon"></i> الأوردرات المسندة</h3>
                 </div>
 
                 <div th:if="${orders != null && !orders.isEmpty()}" class="table-container" style="border: none;">
@@ -190,7 +191,7 @@
                                     <span
                                         th:text="${order.assignedToCourier != null ? (courierDisplayNames != null && courierDisplayNames.containsKey(order.assignedToCourier.id) ? courierDisplayNames.get(order.assignedToCourier.id) : order.assignedToCourier.fullName) : '-'}">-</span>
                                     <span th:if="${order.assignedToCourier != null && order.assignedToCourier.isVirtual()}"
-                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات">🚫</span>
+                                        style="color: #e65100; font-size: 0.75em;" title="مندوب افتراضي - لا يمكنه تحديث الحالات"><i data-lucide="ban"></i></span>
                                 </td>
 
                                 <td>
@@ -224,7 +225,7 @@
                 </div>
 
                 <div th:if="${orders == null || orders.isEmpty()}" class="text-center" style="padding: var(--space-8);">
-                    <div style="font-size: 3rem; margin-bottom: var(--space-4);">📦</div>
+                    <div style="font-size: 3rem; margin-bottom: var(--space-4);"><i data-lucide="package"></i></div>
                     <h3 th:text="#{accounts.org.empty_orders}">لا توجد أوردرات</h3>
                     <p class="text-muted" th:text="#{accounts.org.empty_orders_desc}">لم يتم إسناد أي أوردرات لهذه
                         المنظمة</p>
@@ -234,8 +235,9 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

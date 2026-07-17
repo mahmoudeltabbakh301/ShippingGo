@@ -19,4 +19,7 @@ public interface SupportTicketRepository extends JpaRepository<SupportTicket, Lo
     long countByStatus(TicketStatus status);
 
     long countByOrganizationId(Long organizationId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(st) FROM SupportTicket st WHERE st.organization.id = :orgId AND st.status IN ('OPEN', 'IN_PROGRESS')")
+    long countOpenByOrganizationId(@org.springframework.data.repository.query.Param("orgId") Long orgId);
 }

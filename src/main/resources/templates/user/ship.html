@@ -74,6 +74,7 @@
             gap: 0.5rem;
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -83,19 +84,19 @@
         <main class="main-content">
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📦 <span th:text="#{user.ship.title}">توصيل شحنة</span></h1>
+                <h1 class="page-title"><i data-lucide="package" class="inline-icon"></i> <span th:text="#{user.ship.title}">توصيل شحنة</span></h1>
                 <p class="text-secondary" th:text="#{user.ship.subtitle}">اختر شركة أو مكتب شحن قريب منك لإرسال طلبك</p>
             </div>
 
             <!-- Location Search -->
             <div class="card mb-4">
                 <div class="card-body text-center">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+                    <div style="font-size: 3rem; margin-bottom: 1rem;"><i data-lucide="map-pin"></i></div>
                     <h3 th:text="#{user.ship.search_title}">ابحث عن أقرب الشركات والمكاتب</h3>
                     <p class="text-muted" th:text="#{user.ship.search_subtitle}">استخدم موقعك الحالي للعثور على أقرب
                         نقاط الشحن إليك</p>
                     <button id="locateBtn" class="btn btn-primary" onclick="findNearby()">
-                        <span>📡 <span th:text="#{user.ship.btn_locate}">تحديد موقعي والبحث</span></span>
+                        <span><i data-lucide="radar" class="inline-icon"></i> <span th:text="#{user.ship.btn_locate}">تحديد موقعي والبحث</span></span>
                     </button>
                     <div id="locationStatus" class="mt-3 text-muted" style="display: none;"
                         th:text="#{user.ship.status_locating}">جاري تحديد الموقع...</div>
@@ -124,11 +125,11 @@
                         th:text="${org.name}">Company Name</a>
                     <div class="org-details">
                         <div class="org-detail-item" th:if="${org.address}">
-                            <span>📍</span>
+                            <span><i data-lucide="map-pin"></i></span>
                             <span th:text="${org.address}">Address</span>
                         </div>
                         <div class="org-detail-item" th:if="${org.phone}">
-                            <span>📞</span>
+                            <span><i data-lucide="phone"></i></span>
                             <span th:text="${org.phone}">Phone</span>
                         </div>
                     </div>
@@ -147,11 +148,11 @@
                         th:text="${org.name}">Office Name</a>
                     <div class="org-details">
                         <div class="org-detail-item" th:if="${org.address}">
-                            <span>📍</span>
+                            <span><i data-lucide="map-pin"></i></span>
                             <span th:text="${org.address}">Address</span>
                         </div>
                         <div class="org-detail-item" th:if="${org.phone}">
-                            <span>📞</span>
+                            <span><i data-lucide="phone"></i></span>
                             <span th:text="${org.phone}">Phone</span>
                         </div>
                     </div>
@@ -163,7 +164,7 @@
             <!-- Empty State -->
             <div class="card" th:if="${#lists.isEmpty(companies) && #lists.isEmpty(offices)}">
                 <div class="table-empty">
-                    <div class="table-empty-icon">🏢</div>
+                    <div class="table-empty-icon"><i data-lucide="building-2"></i></div>
                     <div class="table-empty-text" th:text="#{user.ship.empty}">لا توجد شركات أو مكاتب شحن متاحة حالياً
                     </div>
                 </div>
@@ -172,7 +173,7 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -266,7 +267,7 @@
                 color: '#fff',
                 weight: 2,
                 fillOpacity: 0.9
-            }).addTo(nearbyMap).bindPopup('📍 [[#{user.ship.js.map_current_location}]]');
+            }).addTo(nearbyMap).bindPopup('<i data-lucide="map-pin" class="inline-icon"></i> [[#{user.ship.js.map_current_location}]]');
 
             var bounds = L.latLngBounds([[userLat, userLng]]);
 
@@ -303,10 +304,10 @@
                         <div class="badge badge-primary">${distance} [[#{user.ship.js.km}]]</div>
                     </div>
                     <div class="org-details">
-                        ${org.address ? `<div class="org-detail-item"><span>📍</span><span>${org.address}</span></div>` : ''}
-                        ${org.phone ? `<div class="org-detail-item"><span>📞</span><span>${org.phone}</span></div>` : ''}
+                        ${org.address ? `<div class="org-detail-item"><span><i data-lucide="map-pin"></i></span><span>${org.address}</span></div>` : ''}
+                        ${org.phone ? `<div class="org-detail-item"><span><i data-lucide="phone"></i></span><span>${org.phone}</span></div>` : ''}
                         <div class="org-detail-item">
-                            <span>🏢</span>
+                            <span><i data-lucide="building-2"></i></span>
                             <span>${org.type === 'COMPANY' ? '[[#{user.ship.js.type_company}]]' : '[[#{user.ship.js.type_office}]]'}</span>
                         </div>
                     </div>
@@ -322,6 +323,7 @@
             container.scrollIntoView({ behavior: 'smooth' });
         }
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

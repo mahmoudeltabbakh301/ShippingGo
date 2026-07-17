@@ -103,7 +103,6 @@ public class AutoDistributionService {
      * @param executedBy المستخدم المنفذ
      * @return نتيجة التوزيع
      */
-    @Transactional
     public DistributionResult autoDistribute(List<Long> orderIds, Long orgId, User executedBy) {
         List<Order> orders = orderRepository.findAllById(orderIds);
         List<CourierZoneAssignment> allZones = zoneAssignmentRepository.findByOrganizationIdAndActiveTrue(orgId);

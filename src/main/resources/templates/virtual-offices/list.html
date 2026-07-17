@@ -31,8 +31,8 @@
             z-index: 1100;
             left: 0; top: 0;
             width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.15);
-            backdrop-filter: none;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
         }
         .vo-modal-overlay.show {
             display: flex;
@@ -42,7 +42,7 @@
 
         /* ===== Modal Box ===== */
         .vo-modal-box {
-            background-color: var(--bg-primary);
+            background-color: var(--surface-card);
             border-radius: 12px;
             padding: 28px;
             max-width: 520px;
@@ -121,15 +121,15 @@
             width: 100%;
             padding: 8px 10px;
             border-radius: 6px;
-            border: 1px solid var(--border-color);
-            background: var(--bg-primary);
+            border: 1px solid var(--surface-border);
+            background: var(--surface-bg);
             color: var(--text-primary);
             font-size: 14px;
         }
         .vo-form-input:focus {
             outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 99, 102, 241), 0.15);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
         }
         .vo-form-grid {
             display: grid;
@@ -143,7 +143,7 @@
             justify-content: flex-end;
             margin-top: 18px;
             padding-top: 14px;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--surface-border);
         }
         .vo-form-divider {
             margin: 16px 0;
@@ -156,6 +156,7 @@
             to { transform: translateY(0); opacity: 1; }
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -165,18 +166,18 @@
         <main class="main-content">
             <!-- Alerts -->
             <div th:if="${successMessage}" class="alert alert-success">
-                <span>✓</span>
+                <i data-lucide="check-circle-2" class="alert-icon"></i>
                 <span th:text="${successMessage}"></span>
             </div>
             <div th:if="${errorMessage}" class="alert alert-danger">
-                <span>✕</span>
+                <i data-lucide="x-circle" class="alert-icon"></i>
                 <span th:text="${errorMessage}"></span>
             </div>
 
             <!-- Page Header -->
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🏢 <span th:text="#{virtual_offices.title}">المكاتب الافتراضية</span></h1>
+                    <h1 class="page-title"><i data-lucide="building-2" class="inline-icon"></i> <span th:text="#{virtual_offices.title}">المكاتب الافتراضية</span></h1>
                     <p class="text-muted" th:text="#{virtual_offices.description}">إدارة المكاتب الافتراضية وإسناد الطلبات لها</p>
                 </div>
                 <div sec:authorize="hasRole('ADMIN')">
@@ -215,7 +216,7 @@
                                         <button type="button" class="btn btn-sm btn-secondary"
                                             th:data-id="${vo.id}"
                                             th:data-name="${vo.name}"
-                                            onclick="openEditModal(this)">✏️</button>
+                                            onclick="openEditModal(this)"><i data-lucide="pencil" class="inline-icon"></i></button>
                                         <button type="button" class="btn btn-sm btn-danger"
                                             th:data-id="${vo.id}"
                                             th:data-name="${vo.name}"
@@ -234,7 +235,7 @@
             <!-- ==================== -->
             <div id="deleteModal" class="vo-modal-overlay" onclick="if(event.target===this) closeDeleteModal()">
                 <div class="vo-modal-box">
-                    <div class="vo-delete-icon">⚠️</div>
+                    <div class="vo-delete-icon"><i data-lucide="alert-triangle"></i></div>
                     <div class="vo-delete-title"
                         th:text="#{virtual_offices.delete.modal.title}">تأكيد حذف المكتب الافتراضي</div>
                     <div class="vo-delete-message">
@@ -242,7 +243,7 @@
                         <strong id="deleteVoName" style="color: var(--primary-color);"></strong>؟
                     </div>
                     <div class="vo-delete-warning">
-                        <strong>⚠️ <span th:text="#{virtual_offices.delete.modal.warning_title}">تنبيه</span>:</strong><br>
+                        <strong><i data-lucide="alert-triangle" class="inline-icon"></i> <span th:text="#{virtual_offices.delete.modal.warning_title}">تنبيه</span>:</strong><br>
                         <span th:text="#{virtual_offices.delete.modal.warning1}">• لن يمكن إسناد أي طلبات جديدة لهذا المكتب بعد الحذف.</span><br>
                         <span th:text="#{virtual_offices.delete.modal.warning2}">• سيتم الاحتفاظ باسم المكتب في جميع السجلات التاريخية.</span><br>
                         <span th:text="#{virtual_offices.delete.modal.warning3}">• هذا الإجراء لا يمكن التراجع عنه.</span>
@@ -325,7 +326,7 @@
             <div id="editModal" class="vo-modal-overlay" onclick="if(event.target===this) closeEditModal()">
                 <div class="vo-modal-box">
                     <div class="vo-modal-header">
-                        <h2>✏️ <span th:text="#{virtual_offices.modal.title}">تعديل المكتب الافتراضي</span></h2>
+                        <h2><i data-lucide="pencil" class="inline-icon"></i> <span th:text="#{virtual_offices.modal.title}">تعديل المكتب الافتراضي</span></h2>
                         <button type="button" class="vo-modal-close" onclick="closeEditModal()">&times;</button>
                     </div>
                     <form id="editForm" method="post">
@@ -383,7 +384,7 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
 
@@ -435,6 +436,7 @@
         });
         /*]]>*/
     </script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

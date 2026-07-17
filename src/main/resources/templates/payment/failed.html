@@ -68,21 +68,23 @@
             margin-top: var(--space-3);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
     <div class="result-card">
-        <div class="result-icon">❌</div>
+        <div class="result-icon"><i data-lucide="x-circle"></i></div>
         <h1 class="result-title">فشل عملية الدفع</h1>
         <p class="result-text">
             لم تتم عملية الدفع بنجاح. يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.
         </p>
         <a th:href="@{/payment/subscribe}" class="btn-retry">
-            🔄 حاول مرة أخرى
+            <i data-lucide="repeat" class="inline-icon"></i> حاول مرة أخرى
         </a>
         <a th:href="@{/dashboard}" class="btn-back">
             العودة للوحة التحكم
         </a>
     </div>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

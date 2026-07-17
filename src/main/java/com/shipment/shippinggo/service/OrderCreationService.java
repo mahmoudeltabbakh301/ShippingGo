@@ -5,6 +5,8 @@ import com.shipment.shippinggo.entity.*;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.repository.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,8 @@ import java.math.BigDecimal;
 
 @Service
 public class OrderCreationService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderCreationService.class);
 
     private final OrderRepository orderRepository;
     private final BusinessDayRepository businessDayRepository;
@@ -32,6 +36,8 @@ public class OrderCreationService {
     private final com.shipment.shippinggo.repository.ClientOrgRepository clientOrgRepository;
     private final OrderAssignmentService orderAssignmentService;
     private final OrderStatusService orderStatusService;
+    private final OrganizationResolverService organizationResolverService;
+    private final InvoiceService invoiceService;
 
     public OrderCreationService(OrderRepository orderRepository,
             BusinessDayRepository businessDayRepository,
@@ -47,7 +53,9 @@ public class OrderCreationService {
             VirtualOfficeRepository virtualOfficeRepository,
             com.shipment.shippinggo.repository.ClientOrgRepository clientOrgRepository,
             OrderAssignmentService orderAssignmentService,
-            OrderStatusService orderStatusService) {
+            OrderStatusService orderStatusService,
+            OrganizationResolverService organizationResolverService,
+            InvoiceService invoiceService) {
         this.orderRepository = orderRepository;
         this.businessDayRepository = businessDayRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
@@ -63,6 +71,8 @@ public class OrderCreationService {
         this.clientOrgRepository = clientOrgRepository;
         this.orderAssignmentService = orderAssignmentService;
         this.orderStatusService = orderStatusService;
+        this.organizationResolverService = organizationResolverService;
+        this.invoiceService = invoiceService;
     }
 
     // حفظ الطلب في قاعدة البيانات بدون أي منطق إضافي
@@ -104,7 +114,16 @@ public class OrderCreationService {
                 .creatorOrganization(ownerOrganization)
                 .build();
 
-        return orderRepository.save(order);
+        Order savedOrder = orderRepository.save(order);
+
+        // إنشاء فاتورة تلقائياً للأوردر
+        try {
+            invoiceService.generateInvoiceForOrder(ownerOrganization, businessDay, savedOrder.getId(), createdBy);
+        } catch (Exception e) {
+            log.warn("فشل إنشاء فاتورة تلقائية للأوردر {}: {}", savedOrder.getId(), e.getMessage());
+        }
+
+        return savedOrder;
     }
 
     // إدخال طلبات متعددة دفعة واحدة (Batch Insert) لتحسين الأداء
@@ -144,7 +163,18 @@ public class OrderCreationService {
             orders.add(order);
         }
 
-        return orderRepository.saveAll(orders);
+        java.util.List<Order> savedOrders = orderRepository.saveAll(orders);
+
+        // إنشاء فواتير تلقائياً لجميع الأوردرات
+        for (Order savedOrder : savedOrders) {
+            try {
+                invoiceService.generateInvoiceForOrder(ownerOrganization, businessDay, savedOrder.getId(), createdBy);
+            } catch (Exception e) {
+                log.warn("فشل إنشاء فاتورة تلقائية للأوردر {}: {}", savedOrder.getId(), e.getMessage());
+            }
+        }
+
+        return savedOrders;
     }
 
     // تعديل بيانات الطلب مع الاحتفاظ بسجل التغييرات (Logs) والتحقق من الصلاحيات
@@ -282,6 +312,25 @@ public class OrderCreationService {
             order.setCompanyName(dto.getCompanyName());
         }
 
+        // تحديث سبب الرفض
+        if (dto.getRejectionReason() != order.getRejectionReason()) {
+            if (dto.getRejectionReason() != null) {
+                changesLog.append(String.format("تعديل سبب الرفض إلى '%s'. ", dto.getRejectionReason().getArabicName()));
+            } else if (order.getRejectionReason() != null) {
+                changesLog.append("إزالة سبب الرفض. ");
+            }
+            order.setRejectionReason(dto.getRejectionReason());
+        }
+
+        // تحديث تفاصيل سبب الرفض
+        String dtoNotes = dto.getRejectionReasonNotes();
+        String orderNotes = order.getRejectionReasonNotes();
+        if (dtoNotes != null && !dtoNotes.equals(orderNotes)) {
+            order.setRejectionReasonNotes(dtoNotes);
+        } else if (dtoNotes == null && orderNotes != null && dto.getRejectionReason() == null) {
+            order.setRejectionReasonNotes(null);
+        }
+
         Order savedOrder = orderRepository.save(order);
 
         if (changesLog.length() > 0) {
@@ -379,31 +428,13 @@ public class OrderCreationService {
     // === Helper methods / دوال مساعدة ===
 
     // الحصول على المنظمة التي ينتمي إليها المستخدم (الشركة، المكتب، إلخ) أو عضوياته
+    /**
+     * @deprecated استخدم {@link OrganizationResolverService#resolveUserOrganization(User)} بدلاً.
+     * تم الإبقاء عليها للتوافقية — تُفوّض للـ service الجديد.
+     */
+    @Deprecated
     Organization resolveUserOrganization(User user) {
-        if (user == null)
-            return null;
-
-        Organization org = companyRepository.findByAdminId(user.getId()).stream().findFirst()
-                .map(c -> (Organization) c)
-                .orElseGet(() -> officeRepository.findByAdminId(user.getId()).stream().findFirst()
-                        .map(o -> (Organization) o)
-                        .orElseGet(() -> virtualOfficeRepository.findByAdminId(user.getId()).stream().findFirst()
-                                .map(vo -> (Organization) vo)
-                                .orElseGet(() -> storeRepository.findByAdminId(user.getId()).stream().findFirst()
-                                        .map(s -> (Organization) s)
-                                        .orElseGet(() -> clientOrgRepository.findByAdminId(user.getId()).stream().findFirst()
-                                                .map(c -> (Organization) c)
-                                                .orElse(null)))));
-
-        if (org == null) {
-            org = membershipRepository.findByUserAndStatus(user,
-                    com.shipment.shippinggo.enums.MembershipStatus.ACCEPTED)
-                    .stream().findFirst()
-                    .map(m -> m.getOrganization())
-                    .orElse(null);
-        }
-
-        return org;
+        return organizationResolverService.resolveUserOrganization(user);
     }
 
     private String getDistrictFallback(String center, String area) {

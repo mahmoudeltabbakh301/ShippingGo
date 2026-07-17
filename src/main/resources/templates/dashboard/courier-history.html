@@ -26,6 +26,7 @@
     <link rel="stylesheet" th:href="@{/css/components/buttons.css}">
     <link rel="stylesheet" th:href="@{/css/components/forms.css}">
     <link rel="stylesheet" th:href="@{/css/components/tables.css}">
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -35,7 +36,7 @@
         <main class="main-content">
             <!-- Page Header -->
             <div class="page-header">
-                <h1 class="page-title">📅 <span th:text="#{dashboard.courier.history.title}">سجل الأيام</span></h1>
+                <h1 class="page-title"><i data-lucide="calendar-days" class="inline-icon"></i> <span th:text="#{dashboard.courier.history.title}">سجل الأيام</span></h1>
                 <a th:href="@{/dashboard/courier}" class="btn btn-secondary"
                     th:text="#{dashboard.courier.history.back}">
                     ← العودة لليوم
@@ -45,12 +46,12 @@
             <!-- Days List -->
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">🗓️ <span th:text="#{dashboard.courier.history.previous_days}">الأيام
+                    <h3 class="card-title"><i data-lucide="calendar" class="inline-icon"></i> <span th:text="#{dashboard.courier.history.previous_days}">الأيام
                             السابقة</span></h3>
                 </div>
 
                 <div th:if="${dayLogs.isEmpty()}" class="table-empty">
-                    <div class="table-empty-icon">📭</div>
+                    <div class="table-empty-icon"><i data-lucide="mail-x"></i></div>
                     <div class="table-empty-text" th:text="#{dashboard.courier.history.no_logs}">لا توجد سجلات أيام
                         سابقة</div>
                 </div>
@@ -101,9 +102,10 @@
         </main>
     </div>
 
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

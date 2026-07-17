@@ -90,6 +90,7 @@
             color: var(--text-primary);
         }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 
 <body>
@@ -135,7 +136,7 @@
                 <!-- Optional decorative background element -->
                 <div
                     style="position: absolute; right: -5%; top: -20%; font-size: 15rem; opacity: 0.05; transform: rotate(15deg); user-select: none;">
-                    🏢</div>
+                    <i data-lucide="building-2" class="inline-icon"></i></div>
             </div>
 
             <div class="profile-content">
@@ -145,7 +146,7 @@
                         th:text="#{org.profile.info_title}">المعلومات الأساسية</h3>
 
                     <div class="info-item">
-                        <div class="info-item-icon">📍</div>
+                        <div class="info-item-icon"><i data-lucide="map-pin"></i></div>
                         <div class="info-item-content">
                             <div class="info-item-label" th:text="#{org.profile.label_address}">العنوان</div>
                             <div class="info-item-value" th:text="${organization.address}">العنوان بالتفصيل</div>
@@ -153,7 +154,7 @@
                     </div>
 
                     <div class="info-item" th:if="${organization.governorate}">
-                        <div class="info-item-icon">🗺️</div>
+                        <div class="info-item-icon"><i data-lucide="map"></i></div>
                         <div class="info-item-content">
                             <div class="info-item-label" th:text="#{org.profile.label_gov}">المحافظة</div>
                             <div class="info-item-value" th:text="${organization.governorate.arabicName}">
@@ -162,7 +163,7 @@
                     </div>
 
                     <div class="info-item">
-                        <div class="info-item-icon">📅</div>
+                        <div class="info-item-icon"><i data-lucide="calendar-days"></i></div>
                         <div class="info-item-content">
                             <div class="info-item-label" th:text="#{org.profile.label_joined}">تاريخ الانضمام</div>
                             <div class="info-item-value"
@@ -178,7 +179,7 @@
                             th:text="#{org.profile.contact_title}">تواصل معنا</h3>
 
                         <div class="info-item">
-                            <div class="info-item-icon">📞</div>
+                            <div class="info-item-icon"><i data-lucide="phone"></i></div>
                             <div class="info-item-content">
                                 <div class="info-item-label" th:text="#{org.profile.label_phone}">رقم الهاتف</div>
                                 <div class="info-item-value" dir="ltr" style="text-align: right;"
@@ -187,7 +188,7 @@
                         </div>
 
                         <div class="info-item">
-                            <div class="info-item-icon">📧</div>
+                            <div class="info-item-icon"><i data-lucide="mail"></i></div>
                             <div class="info-item-content">
                                 <div class="info-item-label" th:text="#{org.profile.label_email}">البريد الإلكتروني
                                 </div>
@@ -207,11 +208,11 @@
                         <div style="display: flex; flex-direction: column; gap: var(--space-3);">
                             <div th:if="${organization.acceptsInternalShipments}" class="badge badge-success"
                                 style="padding: var(--space-2); display: flex; align-items: center; gap: var(--space-2); font-size: 0.9rem;">
-                                <span>✅</span> <span th:text="#{org.profile.service_internal}">تقبل شحنات داخلية</span>
+                                <span><i data-lucide="check-circle-2"></i></span> <span th:text="#{org.profile.service_internal}">تقبل شحنات داخلية</span>
                             </div>
                             <div th:if="${organization.acceptsExternalShipments}" class="badge badge-primary"
                                 style="padding: var(--space-2); display: flex; align-items: center; gap: var(--space-2); font-size: 0.9rem;">
-                                <span>🌍</span> <span th:text="#{org.profile.service_external}">تقبل شحنات خارجية
+                                <span><i data-lucide="globe"></i></span> <span th:text="#{org.profile.service_external}">تقبل شحنات خارجية
                                     (محافظات)</span>
                             </div>
                         </div>
@@ -282,8 +283,9 @@
     </div>
 
     <!-- Mobile Menu Toggle -->
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 
 </html>

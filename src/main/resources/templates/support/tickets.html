@@ -27,24 +27,25 @@
         .empty-state { text-align: center; padding: var(--space-8); color: var(--text-muted); }
         .empty-state-icon { font-size: 3rem; margin-bottom: var(--space-3); }
     </style>
+    <script th:src="@{/js/lucide.min.js}"></script>
 </head>
 <body>
     <div class="app-layout">
         <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
         <main class="main-content">
-            <div th:if="${success}" class="alert alert-success"><span>✓</span> <span th:text="${success}"></span></div>
-            <div th:if="${error}" class="alert alert-danger"><span>✕</span> <span th:text="${error}"></span></div>
+            <div th:if="${success}" class="alert alert-success"><i data-lucide="check-circle-2" class="alert-icon"></i> <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-danger"><i data-lucide="x-circle" class="alert-icon"></i> <span th:text="${error}"></span></div>
 
             <div class="page-header">
                 <div>
-                    <h1 class="page-title">🎫 تذاكر الدعم الفني</h1>
+                    <h1 class="page-title"><i data-lucide="life-buoy" class="inline-icon"></i> تذاكر الدعم الفني</h1>
                     <p class="page-subtitle">تواصل مع إدارة المنصة</p>
                 </div>
-                <a th:href="@{/support/new}" class="btn btn-primary">➕ تذكرة جديدة</a>
+                <a th:href="@{/support/new}" class="btn btn-primary"><i data-lucide="plus" class="inline-icon"></i> تذكرة جديدة</a>
             </div>
 
             <div th:if="${#lists.isEmpty(tickets)}" class="empty-state">
-                <div class="empty-state-icon">🎫</div>
+                <div class="empty-state-icon"><i data-lucide="life-buoy"></i></div>
                 <p>لا توجد تذاكر دعم فني حالياً</p>
                 <a th:href="@{/support/new}" class="btn btn-primary" style="margin-top: var(--space-3);">إنشاء أول تذكرة</a>
             </div>
@@ -77,8 +78,9 @@
             </div>
         </main>
     </div>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">☰</button>
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()"><i data-lucide="menu"></i></button>
     <script th:src="@{/js/sidebar.js}"></script>
     <script th:src="@{/js/preferences.js}"></script>
+    <script>document.addEventListener("DOMContentLoaded",function(){if(typeof lucide!=="undefined"){lucide.createIcons();}});</script>
 </body>
 </html>

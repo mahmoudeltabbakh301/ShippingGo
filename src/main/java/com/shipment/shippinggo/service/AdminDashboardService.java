@@ -6,9 +6,13 @@ import com.shipment.shippinggo.entity.Organization;
 import com.shipment.shippinggo.entity.User;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.enums.MembershipStatus;
+import com.shipment.shippinggo.enums.ShipmentRequestStatus;
 import com.shipment.shippinggo.enums.Role;
 import com.shipment.shippinggo.repository.MembershipRepository;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.ShipmentRequestRepository;
+import com.shipment.shippinggo.repository.SupportTicketRepository;
+import com.shipment.shippinggo.repository.TripRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +22,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.shipment.shippinggo.dto.AccountSummaryDTO;
+
 @Service
 @Transactional(readOnly = true)
 public class AdminDashboardService {
@@ -25,13 +31,25 @@ public class AdminDashboardService {
     private final OrderRepository orderRepository;
     private final OrganizationService organizationService;
     private final MembershipRepository membershipRepository;
+    private final ShipmentRequestRepository shipmentRequestRepository;
+    private final SupportTicketRepository supportTicketRepository;
+    private final TripRepository tripRepository;
+    private final AccountSummaryService accountSummaryService;
 
     public AdminDashboardService(OrderRepository orderRepository,
                                   OrganizationService organizationService,
-                                  MembershipRepository membershipRepository) {
+                                  MembershipRepository membershipRepository,
+                                  ShipmentRequestRepository shipmentRequestRepository,
+                                  SupportTicketRepository supportTicketRepository,
+                                  TripRepository tripRepository,
+                                  AccountSummaryService accountSummaryService) {
         this.orderRepository = orderRepository;
         this.organizationService = organizationService;
         this.membershipRepository = membershipRepository;
+        this.shipmentRequestRepository = shipmentRequestRepository;
+        this.supportTicketRepository = supportTicketRepository;
+        this.tripRepository = tripRepository;
+        this.accountSummaryService = accountSummaryService;
     }
 
     /**
@@ -44,20 +62,54 @@ public class AdminDashboardService {
         long totalOrders = orderRepository.countAllOrdersForOrgDashboard(orgId, businessDayId);
 
         long waitingCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.WAITING);
-        long inTransitCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.IN_TRANSIT);
+        long inTransitStatusCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.IN_TRANSIT);
+        long pickedUpCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.PICKED_UP);
+        long outForDeliveryCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.OUT_FOR_DELIVERY);
+        long inTransitCount = orderRepository.countOrdersWithCouriersForDashboard(orgId, businessDayId);
         long deliveredCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.DELIVERED);
         long refusedCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.REFUSED);
         long cancelledCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.CANCELLED);
         long deferredCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.DEFERRED);
         long partialDeliveryCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.PARTIAL_DELIVERY);
+        long returnedToSenderCount = orderRepository.countAllOrdersForOrgDashboardByStatus(orgId, businessDayId, OrderStatus.RETURNED_TO_SENDER);
 
         long ownedOrdersCount = orderRepository.countTodayOrdersByOwnerOrg(orgId, businessDayId);
         long assignedOrdersCount = totalOrders - ownedOrdersCount;
 
         BigDecimal totalDeliveredAmount = orderRepository.sumAllDeliveredAmountForOrgDashboard(orgId, businessDayId);
 
+        // Financial summary — use AccountSummaryService (same logic as accounts page)
+        List<Organization> linkedOrganizations = organizationService.getLinkedOrganizations(org);
+        List<User> couriers = organizationService.getCouriersByOrganization(org);
+        List<AccountSummaryDTO> accountSummaries = accountSummaryService.getAllAccountSummariesByBusinessDay(
+                org, linkedOrganizations, couriers, businessDayId);
+        BigDecimal totalCommissions = accountSummaries.stream()
+                .map(s -> s.getTotalCommissions() != null ? s.getTotalCommissions() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal safeDelivered = totalDeliveredAmount != null ? totalDeliveredAmount : BigDecimal.ZERO;
+        BigDecimal safeCommissions = totalCommissions != null ? totalCommissions : BigDecimal.ZERO;
+        BigDecimal netMerchantDue = safeDelivered.subtract(safeCommissions);
+
+        // Orders with non-virtual organizations
+        long ordersWithOrganizationsCount = orderRepository.countOrdersWithNonVirtualOrgsForDashboard(orgId, businessDayId);
+
+        long warehouseReturnPendingCount = orderRepository.countAllWarehouseReturnPendingForOrgDashboard(orgId, businessDayId);
+        long warehouseReceiptConfirmedCount = orderRepository.countAllWarehouseReceiptConfirmedForOrgDashboard(orgId, businessDayId);
+        
+        long ordersAssignedToCourierCount = orderRepository.countAllOrdersAssignedToCourierForOrgDashboard(orgId, businessDayId);
+        long unassignedWaitingOrdersCount = orderRepository.countUnassignedWaitingOrdersForOrgDashboard(orgId, businessDayId);
+
         long totalActiveCouriersCount = orderRepository.countAllActiveCouriersForOrgDashboard(orgId, businessDayId);
         long activeAssignedOrgsCount = orderRepository.countAllActiveAssignedOrgsForOrgDashboard(orgId, businessDayId);
+
+        // Pending alerts
+        long pendingShipmentRequestsCount = shipmentRequestRepository.countByOrganizationIdAndStatus(orgId, ShipmentRequestStatus.PENDING);
+        long pendingMembershipsCount = membershipRepository.findByOrganizationIdAndStatus(orgId, MembershipStatus.PENDING).size();
+        long openSupportTicketsCount = supportTicketRepository.countOpenByOrganizationId(orgId);
+
+        // Active operations
+        long activeTripsCount = tripRepository.countActiveTripsForOrg(orgId);
+        long ordersInTripsCount = tripRepository.countOrdersInActiveTripsForOrg(orgId);
 
         // جلب معرفات المناديب الداخليين
         Set<Long> internalCourierIds = membershipRepository.findByOrganizationIdAndStatus(orgId, MembershipStatus.ACCEPTED)
@@ -119,12 +171,29 @@ public class AdminDashboardService {
                 .assignedOrdersCount(assignedOrdersCount)
                 .waitingCount(waitingCount)
                 .inTransitCount(inTransitCount)
+                .inTransitStatusCount(inTransitStatusCount)
+                .pickedUpCount(pickedUpCount)
+                .outForDeliveryCount(outForDeliveryCount)
+                .ordersAssignedToCourierCount(ordersAssignedToCourierCount)
                 .deliveredCount(deliveredCount)
                 .refusedCount(refusedCount)
                 .cancelledCount(cancelledCount)
                 .deferredCount(deferredCount)
                 .partialDeliveryCount(partialDeliveryCount)
-                .totalDeliveredAmount(totalDeliveredAmount != null ? totalDeliveredAmount : BigDecimal.ZERO)
+                .returnedToSenderCount(returnedToSenderCount)
+                .warehouseReturnPendingCount(warehouseReturnPendingCount)
+                .warehouseReceiptConfirmedCount(warehouseReceiptConfirmedCount)
+                .totalDeliveredAmount(safeDelivered)
+                .totalCommissions(safeCommissions)
+                .netMerchantDue(netMerchantDue)
+                .ordersWithOrganizationsCount(ordersWithOrganizationsCount)
+                .unassignedWaitingOrdersCount(unassignedWaitingOrdersCount)
+                .pendingShipmentRequestsCount(pendingShipmentRequestsCount)
+                .pendingMembershipsCount(pendingMembershipsCount)
+                .openSupportTicketsCount(openSupportTicketsCount)
+                .activeTripsCount(activeTripsCount)
+                .ordersInTripsCount(ordersInTripsCount)
+                .businessDayOpen(true)
                 .activeCouriersCount(totalActiveCouriersCount)
                 .activeOwnedCouriersCount(internalPerformances.size())
                 .activeExternalCouriersCount(activeExternalCount)

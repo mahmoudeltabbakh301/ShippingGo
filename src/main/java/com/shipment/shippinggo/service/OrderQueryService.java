@@ -15,6 +15,7 @@ import java.util.List;
 public class OrderQueryService {
 
     private final OrderRepository orderRepository;
+    private final OrderSearchRepository orderSearchRepository;
     private final BusinessDayRepository businessDayRepository;
     private final OrganizationRepository organizationRepository;
     private final OfficeRepository officeRepository;
@@ -22,12 +23,14 @@ public class OrderQueryService {
     private final OrderStatusHistoryRepository orderStatusHistoryRepository;
 
     public OrderQueryService(OrderRepository orderRepository,
+            OrderSearchRepository orderSearchRepository,
             BusinessDayRepository businessDayRepository,
             OrganizationRepository organizationRepository,
             OfficeRepository officeRepository,
             OrderAssignmentRepository orderAssignmentRepository,
             OrderStatusHistoryRepository orderStatusHistoryRepository) {
         this.orderRepository = orderRepository;
+        this.orderSearchRepository = orderSearchRepository;
         this.businessDayRepository = businessDayRepository;
         this.organizationRepository = organizationRepository;
         this.officeRepository = officeRepository;
@@ -94,7 +97,7 @@ public class OrderQueryService {
         if (code != null && code.trim().isEmpty())
             code = null;
 
-        return orderRepository.findOrdersWithFilters(organizationId, code, courierId, officeId, status, governorate, false)
+        return orderSearchRepository.findOrdersWithFilters(organizationId, code, courierId, officeId, status, governorate, false)
                 .stream()
                 .distinct()
                 .sorted((o1, o2) -> o2.getCreatedAt().compareTo(o1.getCreatedAt()))
@@ -117,7 +120,7 @@ public class OrderQueryService {
         if (code != null && code.trim().isEmpty())
             code = null;
 
-        List<Order> orders = orderRepository.findOrdersByBusinessDayWithFilters(businessDayId, search, code,
+        List<Order> orders = orderSearchRepository.findOrdersByBusinessDayWithFilters(businessDayId, search, code,
                 courierId, officeId, status, governorate, false);
 
         return orders.stream()
@@ -128,19 +131,19 @@ public class OrderQueryService {
 
     public List<Order> getOrdersByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
             Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate, org.springframework.data.domain.Pageable pageable) {
-        return orderRepository.findOrdersByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId, status,
+        return orderSearchRepository.findOrdersByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId, status,
                 governorate, noGovernorate, incomingFromId, outgoingToId, pageable);
     }
 
     public com.shipment.shippinggo.dto.BusinessDayStatsQueryResult getBusinessDayStatsWithFullFilters(Long businessDayId, Long orgId, String search, String code,
             Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
-        return orderRepository.getBusinessDayStatsWithFullFilters(businessDayId, orgId, search, code, courierId, status,
+        return orderSearchRepository.getBusinessDayStatsWithFullFilters(businessDayId, orgId, search, code, courierId, status,
                 governorate, noGovernorate, incomingFromId, outgoingToId);
     }
 
-    public List<Long> getWaitingOrderIdsByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
+    public List<Long> getBulkAssignableOrderIdsByBusinessDayWithFullFilters(Long businessDayId, Long orgId, String search, String code,
             Long courierId, Long incomingFromId, Long outgoingToId, OrderStatus status, Governorate governorate, Boolean noGovernorate) {
-        return orderRepository.findWaitingOrderIdsByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId, status,
+        return orderSearchRepository.findBulkAssignableOrderIdsByBusinessDayWithFullFilters(businessDayId, orgId, search, code, courierId, status,
                 governorate, noGovernorate, incomingFromId, outgoingToId);
     }
 
@@ -151,7 +154,7 @@ public class OrderQueryService {
         if (code != null && code.trim().isEmpty())
             code = null;
 
-        List<Order> orders = orderRepository.findCustodyOrdersWithFilters(orgId, search, code,
+        List<Order> orders = orderSearchRepository.findCustodyOrdersWithFilters(orgId, search, code,
                 courierId, status, governorate, false, incomingFromId, outgoingToId);
 
         return orders.stream()

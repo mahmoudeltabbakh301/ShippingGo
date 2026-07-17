@@ -14,6 +14,7 @@ import com.shipment.shippinggo.service.OrderInquiryService;
 import com.shipment.shippinggo.service.OrderLabelService;
 import com.shipment.shippinggo.service.OrderService;
 import com.shipment.shippinggo.service.OrganizationService;
+import com.shipment.shippinggo.service.VehicleService;
 import com.shipment.shippinggo.entity.OrderInquiry;
 import com.shipment.shippinggo.repository.VirtualOfficeRepository;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -43,6 +44,7 @@ public class BusinessDayController {
     private final VirtualOfficeRepository virtualOfficeRepository;
     private final OrderLabelService orderLabelService;
     private final OrderInquiryService orderInquiryService;
+    private final VehicleService vehicleService;
 
     public BusinessDayController(BusinessDayService businessDayService,
             OrganizationService organizationService,
@@ -50,7 +52,8 @@ public class BusinessDayController {
             ExcelExportService excelExportService,
             VirtualOfficeRepository virtualOfficeRepository,
             OrderLabelService orderLabelService,
-            OrderInquiryService orderInquiryService) {
+            OrderInquiryService orderInquiryService,
+            VehicleService vehicleService) {
         this.businessDayService = businessDayService;
         this.organizationService = organizationService;
         this.orderService = orderService;
@@ -58,6 +61,7 @@ public class BusinessDayController {
         this.virtualOfficeRepository = virtualOfficeRepository;
         this.orderLabelService = orderLabelService;
         this.orderInquiryService = orderInquiryService;
+        this.vehicleService = vehicleService;
     }
 
     @GetMapping
@@ -246,6 +250,7 @@ public class BusinessDayController {
 
         model.addAttribute("statuses", OrderStatus.values());
         model.addAttribute("governorates", Governorate.values());
+        model.addAttribute("vehicles", vehicleService.getVehiclesAvailableForAssignment(org.getId()));
 
         // استدعاء الإحصائيات الفورية من قاعدة البيانات بدلاً من التكرار (Loop)
         com.shipment.shippinggo.dto.BusinessDayStatsQueryResult stats = orderService.getBusinessDayStatsWithFullFilters(id, org.getId(), search, code,
@@ -334,9 +339,9 @@ public class BusinessDayController {
         return "business-days/fragments/order-rows :: orderRows";
     }
 
-    @GetMapping("/{id}/matching-waiting-order-ids")
+    @GetMapping("/{id}/matching-bulk-order-ids")
     @ResponseBody
-    public List<Long> getMatchingWaitingOrderIds(@PathVariable Long id,
+    public List<Long> getMatchingBulkOrderIds(@PathVariable Long id,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String code,
             @RequestParam(required = false) Long courierId,
@@ -359,7 +364,7 @@ public class BusinessDayController {
             }
         }
 
-        return orderService.getWaitingOrderIdsByBusinessDayWithFullFilters(id, org.getId(), search, code, courierId,
+        return orderService.getBulkAssignableOrderIdsByBusinessDayWithFullFilters(id, org.getId(), search, code, courierId,
                 incomingFromId, outgoingToId, status, govEnum, noGov);
     }
 

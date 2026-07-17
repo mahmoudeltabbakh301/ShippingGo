@@ -2,10 +2,13 @@ package com.shipment.shippinggo.service;
 
 import com.shipment.shippinggo.entity.Order;
 import com.shipment.shippinggo.entity.BusinessDay;
+import com.shipment.shippinggo.entity.Organization;
+import com.shipment.shippinggo.enums.OrderEventType;
 import com.shipment.shippinggo.enums.OrderStatus;
 import com.shipment.shippinggo.exception.BusinessLogicException;
 import com.shipment.shippinggo.exception.ResourceNotFoundException;
 import com.shipment.shippinggo.repository.OrderRepository;
+import com.shipment.shippinggo.repository.OrganizationRepository;
 import com.shipment.shippinggo.repository.BusinessDayRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +21,19 @@ public class WarehouseService {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final BusinessDayRepository businessDayRepository;
+    private final OrderEventService orderEventService;
+    private final OrganizationRepository organizationRepository;
 
     public WarehouseService(OrderRepository orderRepository,
             @org.springframework.context.annotation.Lazy OrderService orderService,
-            BusinessDayRepository businessDayRepository) {
+            BusinessDayRepository businessDayRepository,
+            OrderEventService orderEventService,
+            OrganizationRepository organizationRepository) {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.businessDayRepository = businessDayRepository;
+        this.orderEventService = orderEventService;
+        this.organizationRepository = organizationRepository;
     }
 
     /**
@@ -48,8 +57,19 @@ public class WarehouseService {
 
         List<Order> filtered = allOrders.stream()
                 .filter(o -> {
-                    // أوردرات في حالة WAITING = داخل المخزن الأساسي
+                    // أوردرات في حالة WAITING
                     if (o.getStatus() == OrderStatus.WAITING) {
+                        return true;
+                    }
+                    // أوردرات في حالة PICKED_UP = داخل المخزن الأساسي (إذا لم تكن مسندة أو إذا كانت المنظمة هي المستقبل)
+                    if (o.getStatus() == OrderStatus.PICKED_UP) {
+                        if (o.getAssignedToOrganization() != null && !o.getAssignedToOrganization().getId().equals(orgId)) {
+                            return false; // مسندة لمنظمة أخرى، تظهر في المخزن الخارجي
+                        }
+                        return true;
+                    }
+                    // أوردرات مرتجع للمرسل = في المخزن الأساسي
+                    if (o.getStatus() == OrderStatus.RETURNED_TO_SENDER) {
                         return true;
                     }
                     // أوردرات ملغية/مرفوضة/مؤجلة تعتمد على سياق المرتجع
@@ -93,9 +113,15 @@ public class WarehouseService {
 
         List<Order> filtered = allOrders.stream()
                 .filter(o -> {
-                    // في الطريق = في المخزن الخارجي
-                    if (o.getStatus() == OrderStatus.IN_TRANSIT) {
+                    // في الطريق أو خرج للتوصيل = في المخزن الخارجي
+                    if (o.getStatus() == OrderStatus.IN_TRANSIT || o.getStatus() == OrderStatus.OUT_FOR_DELIVERY) {
                         return true;
+                    }
+                    // أوردرات في حالة PICKED_UP ومسندة لمنظمة أخرى = في المخزن الخارجي بالنسبة للمرسل
+                    if (o.getStatus() == OrderStatus.PICKED_UP) {
+                        if (o.getAssignedToOrganization() != null && !o.getAssignedToOrganization().getId().equals(orgId)) {
+                            return true;
+                        }
                     }
                     // تم التسليم = في المخزن الخارجي (للعرض)
                     if (o.getStatus() == OrderStatus.DELIVERED) {
@@ -137,7 +163,12 @@ public class WarehouseService {
                     "لا يمكن تأكيد الاستلام إلا للأوردرات الملغية أو المرفوضة أو المؤجلة أو ذات الاستلام الجزئي");
         }
 
+        // جلب المنظمة لتسجيل الحدث
+        Organization confirmingOrg = organizationRepository.findById(organizationId).orElse(null);
+
         // تحديد هل المنظمة هي المالكة أو المسند إليها
+        // ملحوظة: يتم تغيير الحالة للطرف الي تم استلامها من المخزن فقط
+        // الطرف الي لسه راجعله الشحنه يفضل على الحاله الاخيره لحد ما يتم استلامها من المخزن هو كمان
         if (order.getOwnerOrganization() != null
                 && order.getOwnerOrganization().getId().equals(organizationId)) {
             order.setWarehouseReceiptConfirmedByOwner(true);
@@ -146,6 +177,21 @@ public class WarehouseService {
             order.setWarehouseReceiptConfirmedByAssignee(true);
         } else {
             throw new BusinessLogicException("المنظمة غير مرتبطة بهذا الأوردر");
+        }
+
+        // Step 5: Dual-write — تسجيل حدث تأكيد استلام المخزن
+        orderEventService.recordTypedEvent(order, OrderEventType.WAREHOUSE_RECEIPT_CONFIRMED, null, confirmingOrg,
+                "تأكيد استلام مخزن من " + (confirmingOrg != null ? confirmingOrg.getName() : organizationId));
+
+        // Step 3: إذا تم تأكيد الاستلام بالكامل من كل الأطراف → RETURNED_TO_SENDER
+        if (isReceiptFullyConfirmed(order)) {
+            OrderStatus previousStatus = order.getStatus();
+            order.setStatus(OrderStatus.RETURNED_TO_SENDER);
+
+            // تسجيل حدث مرتجع للمرسل
+            orderEventService.recordTypedEvent(order, OrderEventType.RETURNED_TO_OWNER, null, confirmingOrg,
+                    String.format("تم إرجاع الشحنة للمرسل بعد تأكيد كل الأطراف — الحالة السابقة: %s",
+                            previousStatus.getArabicName()));
         }
 
         orderRepository.save(order);

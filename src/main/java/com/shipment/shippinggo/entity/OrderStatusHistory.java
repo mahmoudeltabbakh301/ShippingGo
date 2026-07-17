@@ -24,10 +24,11 @@ public class OrderStatusHistory {
     private Order order;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "previous_status", length = 50)
     private OrderStatus previousStatus;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "new_status", nullable = false, length = 50)
     private OrderStatus newStatus;
 
     // السعر السابق
@@ -44,6 +45,15 @@ public class OrderStatusHistory {
 
     @Column(length = 65535)
     private String notes;
+
+    // سبب الرفض/الإلغاء/التأجيل
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rejection_reason")
+    private com.shipment.shippinggo.enums.RejectionReason rejectionReason;
+
+    // تفاصيل سبب الرفض
+    @Column(name = "rejection_reason_notes", length = 65535)
+    private String rejectionReasonNotes;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime changedAt;
